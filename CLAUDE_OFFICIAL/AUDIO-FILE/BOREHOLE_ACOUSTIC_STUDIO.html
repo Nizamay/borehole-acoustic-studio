@@ -197,6 +197,20 @@ canvas#chart{position:absolute;inset:0;width:100%;height:100%;}
 .mst.ok{color:var(--c-p);}.mst.dep-ok{color:var(--c-d);}
 input[type=file]{display:none;}
 
+/* ── CH-DATA-CUT light-theme overrides ────────────────────────── */
+#pane-ch {
+  --bg:#f4f5f7; --panel:#ffffff; --panel2:#f0f2f4;
+  --border:#dde1e6; --border2:#e4e8ec;
+  --text:#2a3040; --muted:#7f8a96; --muted2:#b8c2cc;
+}
+#pane-ch .topbar::after { opacity:.55; }
+#pane-ch .flip-btn.flipped { background:rgba(0,0,0,.04); }
+#pane-ch #hline { background:rgba(0,0,0,.15); }
+#pane-ch #zoom-rect { background:rgba(30,80,200,.06); border:1px solid rgba(30,80,200,.35); }
+#pane-ch .sb-scroll::-webkit-scrollbar-thumb { background:#d0d6dc; }
+#pane-ch #tt { background:rgba(20,25,35,.96); color:#dde6f0; }
+#pane-ch #mdl { background:#fff; border-color:#dde1e6; }
+
 
    NOISE-FILTERS CSS (scoped to .nf-root)
 ══════════════════════════════════════════════════════════ */
@@ -215,29 +229,30 @@ input[type=file]{display:none;}
 
 /* ── Header ─────────────────────────────────────────── */
 .nf-root header {
-  background:var(--black);color:var(--white);
+  background:#fff;color:var(--tx);
   padding:0 0 0 24px;
   display:flex;align-items:stretch;gap:0;
   flex-shrink:0;height:56px;
+  border-bottom:2px solid var(--red);
 }
 .hdr-logo{
   display:flex;align-items:center;gap:10px;padding-right:24px;
-  border-right:1px solid #333;
+  border-right:1px solid var(--bd);
 }
 .hdr-logo svg{width:28px;height:28px;fill:var(--red)}
-.hdr-title{font-size:13px;font-weight:600;letter-spacing:.5px;line-height:1.2}
-.hdr-ver{font-size:9px;color:#666;font-family:'IBM Plex Mono',monospace}
+.hdr-title{font-size:13px;font-weight:600;letter-spacing:.5px;line-height:1.2;color:var(--tx)}
+.hdr-ver{font-size:9px;color:var(--mu);font-family:'IBM Plex Mono',monospace}
 .hdr-brand{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:0 24px;border-right:1px solid #333;
+  padding:0 24px;border-right:1px solid var(--bd);
 }
 .hdr-co{font-size:18px;font-weight:700;letter-spacing:4px;color:var(--red);font-family:'IBM Plex Mono',monospace}
-.hdr-sub{font-size:9px;color:#888;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-top:1px}
+.hdr-sub{font-size:9px;color:var(--mu);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;margin-top:1px}
 .hdr-status{display:flex;align-items:center;gap:10px;padding:0 20px}
-.sdot{width:6px;height:6px;border-radius:50%;background:#444;transition:background .3s;flex-shrink:0}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--g3);transition:background .3s;flex-shrink:0}
 .sdot.on{background:var(--red);box-shadow:0 0 8px rgba(204,0,0,.5);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-#sTxt{font-size:10px;color:#888;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+#sTxt{font-size:10px;color:var(--mu);font-family:'IBM Plex Mono',monospace;white-space:nowrap}
 
 /* ── Layout ─────────────────────────────────────────── */
 .nf-root main {display:grid;grid-template-columns:290px 1fr;flex:1;min-height:0}
@@ -1367,11 +1382,11 @@ function draw(){
   _c={toX,toYP,toYT,toYD,toYC,fromX,fromYP,fromYT,fromYD,fromYC,L,T,PW,PH,x0,x1,view,pE,tE,dE,cE,warp,depDur,W,H};
 
   // bg
-  ctx.fillStyle='#080a0d'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='rgba(255,255,255,.012)'; ctx.fillRect(L,T,PW,PH);
+  ctx.fillStyle='#f4f5f7'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(255,255,255,.80)'; ctx.fillRect(L,T,PW,PH);
 
   // grid
-  ctx.strokeStyle='rgba(255,255,255,.04)'; ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(0,0,0,.07)'; ctx.lineWidth=1;
   for(let i=0;i<=6;i++){const y=T+i/6*PH;ctx.beginPath();ctx.moveTo(L,y);ctx.lineTo(L+PW,y);ctx.stroke();}
   for(let i=0;i<=10;i++){const x=L+i/10*PW;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,T+PH);ctx.stroke();}
 
@@ -1424,8 +1439,8 @@ function draw(){
     const tickStep=STEPS.find(s=>spanSec/s<=12)||STEPS[STEPS.length-1];
     const tStartUnix=pctToUnix(x0), tEndUnix=pctToUnix(x1);
     const firstTick=Math.ceil(tStartUnix/tickStep)*tickStep;
-    ctx.fillStyle='rgba(200,215,235,.88)'; ctx.font='8.5px JetBrains Mono,monospace'; ctx.textAlign='center';
-    ctx.strokeStyle='rgba(180,200,220,.3)'; ctx.lineWidth=1;
+    ctx.fillStyle='rgba(30,40,55,.82)'; ctx.font='8.5px JetBrains Mono,monospace'; ctx.textAlign='center';
+    ctx.strokeStyle='rgba(100,120,140,.3)'; ctx.lineWidth=1;
     for(let u=firstTick;u<=tEndUnix;u+=tickStep){
       const px=toX((u-S.dep.t0)/S.dep.dur*100);
       if(px<L||px>L+PW) continue;
@@ -1434,7 +1449,7 @@ function draw(){
     }
     if(spanSec>3600*3){
       const dayStep=86400, firstDay=Math.ceil(tStartUnix/dayStep)*dayStep;
-      ctx.fillStyle='rgba(160,185,210,.6)'; ctx.font='7.5px JetBrains Mono,monospace';
+      ctx.fillStyle='rgba(70,90,115,.5)'; ctx.font='7.5px JetBrains Mono,monospace';
       for(let u=firstDay;u<=tEndUnix;u+=dayStep){
         const px=toX((u-S.dep.t0)/S.dep.dur*100);
         if(px<L||px>L+PW) continue;
@@ -1450,8 +1465,8 @@ function draw(){
     const tickStep = STEPS.find(s=>spanSec/s<=10) || STEPS[STEPS.length-1];
     const tStart = x0/100*effDur, tEnd = x1/100*effDur;
     const firstTick = Math.ceil(tStart/tickStep)*tickStep;
-    ctx.fillStyle='rgba(200,215,235,.88)'; ctx.font='8.5px JetBrains Mono,monospace'; ctx.textAlign='center';
-    ctx.strokeStyle='rgba(180,200,220,.3)'; ctx.lineWidth=1;
+    ctx.fillStyle='rgba(30,40,55,.82)'; ctx.font='8.5px JetBrains Mono,monospace'; ctx.textAlign='center';
+    ctx.strokeStyle='rgba(100,120,140,.3)'; ctx.lineWidth=1;
     const fmtRel = s => { const m=Math.floor(s/60), sec=Math.round(s%60); return m>0?m+'m'+String(sec).padStart(2,'0')+'s':sec+'s'; };
     for(let s=firstTick; s<=tEnd; s+=tickStep){
       const px = toX(s/effDur*100);
@@ -1459,11 +1474,11 @@ function draw(){
       ctx.beginPath();ctx.moveTo(px,T+PH);ctx.lineTo(px,T+PH+4);ctx.stroke();
       ctx.fillText(fmtRel(s), px, T+PH+14);
     }
-    ctx.fillStyle='rgba(140,160,185,.5)'; ctx.font='7.5px JetBrains Mono,monospace'; ctx.textAlign='left';
+    ctx.fillStyle='rgba(80,100,125,.5)'; ctx.font='7.5px JetBrains Mono,monospace'; ctx.textAlign='left';
     ctx.fillText('no depth file · relative time', L, T+PH+27);
   }
   if(S.zoomStack.length){
-    ctx.fillStyle='rgba(100,180,255,.4)'; ctx.font='8px JetBrains Mono,monospace'; ctx.textAlign='right';
+    ctx.fillStyle='rgba(30,80,200,.55)'; ctx.font='8px JetBrains Mono,monospace'; ctx.textAlign='right';
     ctx.fillText('×'+(S.zoomStack.length+1)+' ← drag left to unzoom',L+PW,T+PH+38);
   }
 
@@ -1612,7 +1627,7 @@ function draw(){
     ctx.fillRect(Math.min(x0c,x1c),T,Math.abs(x1c-x0c),PH);
   }
 
-  ctx.strokeStyle='rgba(26,32,48,1)'; ctx.lineWidth=1; ctx.strokeRect(L,T,PW,PH);
+  ctx.strokeStyle='rgba(190,200,212,1)'; ctx.lineWidth=1; ctx.strokeRect(L,T,PW,PH);
 }
 
 // ════════════════════════ NEAREST LOOKUPS ════════════════
