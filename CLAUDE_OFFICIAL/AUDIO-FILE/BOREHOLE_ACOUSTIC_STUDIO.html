@@ -136,6 +136,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:11
 .shift-reset{font-size:9px;color:var(--muted);cursor:pointer;padding:0 3px;}
 .shift-reset:hover{color:#ef4444;}
 
+/* SENSOR OFFSET ROWS */
+.off-sub{font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:5px 0 3px;}
+.off-row{display:flex;align-items:center;gap:4px;margin-bottom:4px;}
+.off-lbl{font-size:8.5px;font-weight:700;width:28px;text-align:right;white-space:nowrap;font-family:'IBM Plex Mono',monospace;}
+.off-num{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--border2);border-radius:3px;color:var(--text);font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 5px;outline:none;}
+.off-num:focus{border-color:#6366f1;}
+.off-unit{font-size:8px;color:var(--muted);white-space:nowrap;width:12px;}
+
 /* FIXES */
 #fix-list{display:flex;flex-direction:column;gap:3px;}
 .fix-item{display:flex;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--border);border-radius:3px;padding:4px 6px;font-size:8px;}
@@ -522,51 +530,43 @@ input[type=file]{display:none;}
 
   <!-- SENSOR OFFSET -->
   <div class="sbs">
-    <div class="sbt"><div class="sbt-bar" style="background:#6366f1"></div>Sensor Offset (ft)</div>
-    <div style="font-size:7.5px;color:var(--muted);margin-bottom:6px;line-height:1.5">
-      Starting borehole depth for each sensor recording. Sets the depth-axis origin when mapping frames to depth.
+    <div class="sbt"><div class="sbt-bar" style="background:#6366f1"></div>Sensor Offset (m from bottom)</div>
+    <div style="font-size:7.5px;color:var(--muted);margin-bottom:4px;line-height:1.5">
+      Distance from tool bottom (0) to each sensor. Applied to DEPT on LAS export.
     </div>
 
-    <div class="shift-block">
-      <div class="shift-hdr">
-        <span style="color:var(--c-p)">&#x1F4E1; BM Data</span>
-        <span id="off-disp-bm" style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">—</span>
-        <span class="shift-reset" onclick="resetOffset('bm')" title="Reset">&#x2715;</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
-        <input id="off-inp-bm" type="number" placeholder="0" step="1"
-          style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--border2);border-radius:3px;color:var(--text);font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 5px;outline:none"
-          oninput="onOffsetCh('bm',this.value)">
-        <span style="font-size:8px;color:var(--muted);white-space:nowrap">ft</span>
-      </div>
+    <div class="off-sub">BM channels</div>
+    <div class="off-row">
+      <div class="off-lbl" style="color:var(--c-p)">P</div>
+      <input id="off-inp-p" type="number" placeholder="0.00" step="0.01" class="off-num" oninput="onOffsetCh('p',this.value)">
+      <span class="off-unit">m</span>
+      <span class="shift-reset" onclick="resetOffset('p')" title="Reset">&#x2715;</span>
+    </div>
+    <div class="off-row">
+      <div class="off-lbl" style="color:var(--c-t)">T</div>
+      <input id="off-inp-t" type="number" placeholder="0.00" step="0.01" class="off-num" oninput="onOffsetCh('t',this.value)">
+      <span class="off-unit">m</span>
+      <span class="shift-reset" onclick="resetOffset('t')" title="Reset">&#x2715;</span>
+    </div>
+    <div class="off-row">
+      <div class="off-lbl" style="color:var(--c-ccl)">CCL</div>
+      <input id="off-inp-ccl" type="number" placeholder="0.00" step="0.01" class="off-num" oninput="onOffsetCh('ccl',this.value)">
+      <span class="off-unit">m</span>
+      <span class="shift-reset" onclick="resetOffset('ccl')" title="Reset">&#x2715;</span>
     </div>
 
-    <div class="shift-block" id="snl-off-block" style="opacity:.4;pointer-events:none">
-      <div class="shift-hdr">
-        <span style="color:var(--c-snl)">&#x1F399; TP-SNL</span>
-        <span id="off-disp-snl" style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">—</span>
-        <span class="shift-reset" onclick="resetOffset('snl')" title="Reset">&#x2715;</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
-        <input id="off-inp-snl" type="number" placeholder="0" step="1"
-          style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--border2);border-radius:3px;color:var(--text);font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 5px;outline:none"
-          oninput="onOffsetCh('snl',this.value)">
-        <span style="font-size:8px;color:var(--muted);white-space:nowrap">ft</span>
-      </div>
+    <div class="off-sub" style="margin-top:6px">SNL channels</div>
+    <div class="off-row" id="snl-off-block" style="opacity:.4;pointer-events:none">
+      <div class="off-lbl" style="color:var(--c-snl)">TP</div>
+      <input id="off-inp-snl" type="number" placeholder="0.00" step="0.01" class="off-num" oninput="onOffsetCh('snl',this.value)">
+      <span class="off-unit">m</span>
+      <span class="shift-reset" onclick="resetOffset('snl')" title="Reset">&#x2715;</span>
     </div>
-
-    <div class="shift-block" id="snl2-off-block" style="opacity:.4;pointer-events:none">
-      <div class="shift-hdr">
-        <span style="color:var(--c-snl);opacity:.7">&#x1F399; BT-SNL</span>
-        <span id="off-disp-snl2" style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">—</span>
-        <span class="shift-reset" onclick="resetOffset('snl2')" title="Reset">&#x2715;</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
-        <input id="off-inp-snl2" type="number" placeholder="0" step="1"
-          style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--border2);border-radius:3px;color:var(--text);font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 5px;outline:none"
-          oninput="onOffsetCh('snl2',this.value)">
-        <span style="font-size:8px;color:var(--muted);white-space:nowrap">ft</span>
-      </div>
+    <div class="off-row" id="snl2-off-block" style="opacity:.4;pointer-events:none">
+      <div class="off-lbl" style="color:var(--c-snl);opacity:.7">BT</div>
+      <input id="off-inp-snl2" type="number" placeholder="0.00" step="0.01" class="off-num" oninput="onOffsetCh('snl2',this.value)">
+      <span class="off-unit">m</span>
+      <span class="shift-reset" onclick="resetOffset('snl2')" title="Reset">&#x2715;</span>
     </div>
   </div>
 
@@ -1141,8 +1141,8 @@ const S={
   zoomStack:[],
   // shifts in % of timeline for each dataset
   shift:{bm:0, d:0, snl:0, snl2:0},
-  // sensor recording start depth offsets (ft)
-  offset:{bm:0, snl:0, snl2:0},
+  // sensor offsets from tool bottom (meters)
+  sensorOffset:{p:0, t:0, ccl:0, snl:0, snl2:0},
   fixes:[],
   bm:{},
   dep:null,
@@ -1284,18 +1284,12 @@ function resetShift(ch){
 
 // ════════════════════════ SENSOR OFFSET CONTROLS ════════════════
 function onOffsetCh(ch,v){
-  const val=parseFloat(v)||0;
-  S.offset[ch]=val;
-  const disp=document.getElementById('off-disp-'+ch);
-  if(disp) disp.textContent=val===0?'—':val.toFixed(1)+' ft';
-  if(ch==='bm') updateDepStats();
+  S.sensorOffset[ch]=parseFloat(v)||0;
   draw();
 }
 function resetOffset(ch){
-  S.offset[ch]=0;
+  S.sensorOffset[ch]=0;
   const inp=document.getElementById('off-inp-'+ch);if(inp)inp.value='';
-  const disp=document.getElementById('off-disp-'+ch);if(disp)disp.textContent='—';
-  if(ch==='bm') updateDepStats();
   draw();
 }
 
@@ -1382,7 +1376,7 @@ function nearestDepVal(xPct){
     const wx=warp(s/S.dep.dur*100);
     const dd=Math.abs(wx-xPct);if(dd<bd){bd=dd;b=d;}
   }
-  return b===null ? null : b + (S.offset?.bm||0);
+  return b;
 }
 function updateCutSidebar(){
   const fl=document.getElementById('cut-from-lbl'), tl=document.getElementById('cut-to-lbl');
@@ -1551,6 +1545,12 @@ function draw(){
     ctx.fillText('×'+(S.zoomStack.length+1)+' ← drag left to unzoom',L+PW,T+PH+38);
   }
 
+  // ── clip all data drawing to the plot rectangle ──
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(L, T, PW, PH);
+  ctx.clip();
+
   // ── DEPTH ──
   if(S.ch.d&&S.dep?.data?.length>1){
     const dep=S.dep.data, dur=S.dep.dur||1;
@@ -1669,6 +1669,9 @@ function draw(){
     }
   }
 
+  // ── end data clip ──
+  ctx.restore();
+
   // ── Fix markers ──
   S.fixes.forEach((f,i)=>{
     const x=toX(f.bmPct); if(x<L-8||x>L+PW+8) return;
@@ -1712,7 +1715,7 @@ function nearestDepValAt(xPct){
   const dur=_c.depDur||DEP_DUR;
   let b=null,bd=Infinity;
   for(const[s,d] of S.dep.data){const wx=warp(s/dur*100);const dd=Math.abs(wx-xPct);if(dd<bd){bd=dd;b=d;}}
-  return b===null ? null : b + (S.offset?.bm||0);
+  return b;
 }
 
 // ════════════════════════ MOUSE ══════════════════════════
@@ -1885,30 +1888,51 @@ function exportLAS(){
     };
   }
   const idxP=makeIdx(S.bm?.pressure,bmX), idxT=makeIdx(S.bm?.temperature,bmX), idxC=makeIdx(S.bm?.ccl,bmX);
+  const so=S.sensorOffset||{};
+  // DEPT reference = tool bottom depth from depth file.
+  // Sensor offsets (m from tool bottom) are stored in header for post-processing.
   const dRange=[Math.min(...rows.map(r=>r.d)),Math.max(...rows.map(r=>r.d))];
   const now=new Date().toISOString().slice(0,10);
+  const fmtOff=v=>(v||0).toFixed(3);
   let las=`~VERSION INFORMATION
  VERS.                    2.0: CWLS Log ASCII Standard
  WRAP.                     NO: One line per depth step
  PROG.        CH-DATA READER v1.5
 ~WELL INFORMATION
- STRT.FT       ${dRange[0].toFixed(2)}: START DEPTH
- STOP.FT       ${dRange[1].toFixed(2)}: STOP DEPTH
+ STRT.FT       ${dRange[0].toFixed(2)}: START DEPTH (tool bottom)
+ STOP.FT       ${dRange[1].toFixed(2)}: STOP DEPTH (tool bottom)
  STEP.FT               0.00: VARIABLE
  NULL.               -999.25: NULL VALUE
  DATE.               ${now}
  TIME-FROM.  ${fmtDatetime(rows[0].unix)}: CUT START
  TIME-TO.    ${fmtDatetime(rows[rows.length-1].unix)}: CUT END
+~PARAMETER INFORMATION
+# Sensor offsets (m from tool bottom). Measurement depth = DEPT + offset * 3.28084 ft
+ OFFS_P.M     ${fmtOff(so.p)}: Pressure sensor offset from tool bottom
+ OFFS_T.M     ${fmtOff(so.t)}: Temperature sensor offset from tool bottom
+ OFFS_CCL.M   ${fmtOff(so.ccl)}: CCL sensor offset from tool bottom
+ OFFS_SNL.M   ${fmtOff(so.snl)}: TP-SNL sensor offset from tool bottom
+ OFFS_SNL2.M  ${fmtOff(so.snl2)}: BT-SNL sensor offset from tool bottom
 ~CURVE INFORMATION
- DEPT.FT                : Measured Depth
- PRES.PSI               : BM Pressure (P1)
- TEMP.DEGC              : BM Temperature (T1)
+ DEPT.FT                : Tool Bottom Depth (add sensor offset for meas. depth)
+ DEPT_P.FT              : Pressure meas. depth (DEPT + OFFS_P * 3.28084)
+ DEPT_T.FT              : Temperature meas. depth (DEPT + OFFS_T * 3.28084)
+ DEPT_CCL.FT            : CCL meas. depth (DEPT + OFFS_CCL * 3.28084)
+ PRES.KPA               : BM Pressure
+ TEMP.DEGC              : BM Temperature
  CCL.                   : CCL Amplitude
-~A         DEPT         PRES         TEMP          CCL
+~A         DEPT       DEPT_P       DEPT_T     DEPT_CCL         PRES         TEMP          CCL
 `;
+  const M2FT=3.28084;
   for(const{d,wx,unix}of rows){
     const p=idxP(wx),t=idxT(wx),c=idxC(wx);
+    const dP=(d+(so.p||0)*M2FT).toFixed(2);
+    const dT=(d+(so.t||0)*M2FT).toFixed(2);
+    const dC=(d+(so.ccl||0)*M2FT).toFixed(2);
     las+=d.toFixed(2).padStart(12)+' '
+        +dP.padStart(12)+' '
+        +dT.padStart(12)+' '
+        +dC.padStart(12)+' '
         +(p===-999.25?'   -999.25':Math.round(p).toString().padStart(12))+' '
         +(t===-999.25?'   -999.25':t.toFixed(3).padStart(12))+' '
         +(c===-999.25?'   -999.25':c.toFixed(5).padStart(12))+'\n';
@@ -1963,13 +1987,10 @@ function parseDep(text,fname){
 }
 function updateDepStats(){
   const dep=S.dep; if(!dep)return;
-  const off=S.offset?.bm||0;
   const [dMin,dMax]=dep.drange;
-  const toFt=1; // already ft
-  const rng=Math.abs(dMax-dMin).toFixed(1);
-  document.getElementById('sr-dr').textContent=rng+' ft';
-  document.getElementById('sr-ds').textContent=(dMin+off).toFixed(1)+' ft';
-  document.getElementById('sr-de').textContent=(dMax+off).toFixed(1)+' ft';
+  document.getElementById('sr-dr').textContent=Math.abs(dMax-dMin).toFixed(1)+' ft';
+  document.getElementById('sr-ds').textContent=dMin.toFixed(1)+' ft';
+  document.getElementById('sr-de').textContent=dMax.toFixed(1)+' ft';
 }
 // ── Cooley-Tukey in-place FFT ─────────────────────────────────────────────
 function _fft(re, im) {
