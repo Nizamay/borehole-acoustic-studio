@@ -520,6 +520,56 @@ input[type=file]{display:none;}
     </div>
   </div>
 
+  <!-- SENSOR OFFSET -->
+  <div class="sbs">
+    <div class="sbt"><div class="sbt-bar" style="background:#6366f1"></div>Sensor Offset (ft)</div>
+    <div style="font-size:7.5px;color:var(--muted);margin-bottom:6px;line-height:1.5">
+      Starting borehole depth for each sensor recording. Sets the depth-axis origin when mapping frames to depth.
+    </div>
+
+    <div class="shift-block">
+      <div class="shift-hdr">
+        <span style="color:var(--c-p)">&#x1F4E1; BM Data</span>
+        <span id="off-disp-bm" style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">—</span>
+        <span class="shift-reset" onclick="resetOffset('bm')" title="Reset">&#x2715;</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
+        <input id="off-inp-bm" type="number" placeholder="0" step="1"
+          style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--border2);border-radius:3px;color:var(--text);font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 5px;outline:none"
+          oninput="onOffsetCh('bm',this.value)">
+        <span style="font-size:8px;color:var(--muted);white-space:nowrap">ft</span>
+      </div>
+    </div>
+
+    <div class="shift-block" id="snl-off-block" style="opacity:.4;pointer-events:none">
+      <div class="shift-hdr">
+        <span style="color:var(--c-snl)">&#x1F399; TP-SNL</span>
+        <span id="off-disp-snl" style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">—</span>
+        <span class="shift-reset" onclick="resetOffset('snl')" title="Reset">&#x2715;</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
+        <input id="off-inp-snl" type="number" placeholder="0" step="1"
+          style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--border2);border-radius:3px;color:var(--text);font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 5px;outline:none"
+          oninput="onOffsetCh('snl',this.value)">
+        <span style="font-size:8px;color:var(--muted);white-space:nowrap">ft</span>
+      </div>
+    </div>
+
+    <div class="shift-block" id="snl2-off-block" style="opacity:.4;pointer-events:none">
+      <div class="shift-hdr">
+        <span style="color:var(--c-snl);opacity:.7">&#x1F399; BT-SNL</span>
+        <span id="off-disp-snl2" style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted)">—</span>
+        <span class="shift-reset" onclick="resetOffset('snl2')" title="Reset">&#x2715;</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
+        <input id="off-inp-snl2" type="number" placeholder="0" step="1"
+          style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--border2);border-radius:3px;color:var(--text);font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 5px;outline:none"
+          oninput="onOffsetCh('snl2',this.value)">
+        <span style="font-size:8px;color:var(--muted);white-space:nowrap">ft</span>
+      </div>
+    </div>
+  </div>
+
   <!-- DEPTH FILE -->
   <div class="sbs">
     <div class="sbt"><div class="sbt-bar" style="background:var(--c-d)"></div>Depth File</div>
@@ -1091,6 +1141,8 @@ const S={
   zoomStack:[],
   // shifts in % of timeline for each dataset
   shift:{bm:0, d:0, snl:0, snl2:0},
+  // sensor recording start depth offsets (ft)
+  offset:{bm:0, snl:0, snl2:0},
   fixes:[],
   bm:{},
   dep:null,
@@ -1230,6 +1282,23 @@ function resetShift(ch){
   draw();
 }
 
+// ════════════════════════ SENSOR OFFSET CONTROLS ════════════════
+function onOffsetCh(ch,v){
+  const val=parseFloat(v)||0;
+  S.offset[ch]=val;
+  const disp=document.getElementById('off-disp-'+ch);
+  if(disp) disp.textContent=val===0?'—':val.toFixed(1)+' ft';
+  if(ch==='bm') updateDepStats();
+  draw();
+}
+function resetOffset(ch){
+  S.offset[ch]=0;
+  const inp=document.getElementById('off-inp-'+ch);if(inp)inp.value='';
+  const disp=document.getElementById('off-disp-'+ch);if(disp)disp.textContent='—';
+  if(ch==='bm') updateDepStats();
+  draw();
+}
+
 // ════════════════════════ TOGGLES ════════════════════════
 function toggleCh(ch){
   if(ch==='snl'&&!S.snl)return;
@@ -1313,7 +1382,7 @@ function nearestDepVal(xPct){
     const wx=warp(s/S.dep.dur*100);
     const dd=Math.abs(wx-xPct);if(dd<bd){bd=dd;b=d;}
   }
-  return b;
+  return b===null ? null : b + (S.offset?.bm||0);
 }
 function updateCutSidebar(){
   const fl=document.getElementById('cut-from-lbl'), tl=document.getElementById('cut-to-lbl');
@@ -1643,7 +1712,7 @@ function nearestDepValAt(xPct){
   const dur=_c.depDur||DEP_DUR;
   let b=null,bd=Infinity;
   for(const[s,d] of S.dep.data){const wx=warp(s/dur*100);const dd=Math.abs(wx-xPct);if(dd<bd){bd=dd;b=d;}}
-  return b;
+  return b===null ? null : b + (S.offset?.bm||0);
 }
 
 // ════════════════════════ MOUSE ══════════════════════════
@@ -1889,7 +1958,18 @@ function parseDep(text,fname){
   document.getElementById('dz-dep').className='dz loaded-d';
   document.getElementById('dz-dep').innerHTML='<div>📏 <strong>'+fname+'</strong></div><div class="dz-name">'+data.length.toLocaleString()+' rows</div>';
   document.getElementById('st-dep').textContent=fname+' · '+data.length.toLocaleString()+' pts';
+  updateDepStats();
   draw();
+}
+function updateDepStats(){
+  const dep=S.dep; if(!dep)return;
+  const off=S.offset?.bm||0;
+  const [dMin,dMax]=dep.drange;
+  const toFt=1; // already ft
+  const rng=Math.abs(dMax-dMin).toFixed(1);
+  document.getElementById('sr-dr').textContent=rng+' ft';
+  document.getElementById('sr-ds').textContent=(dMin+off).toFixed(1)+' ft';
+  document.getElementById('sr-de').textContent=(dMax+off).toFixed(1)+' ft';
 }
 // ── Cooley-Tukey in-place FFT ─────────────────────────────────────────────
 function _fft(re, im) {
@@ -2015,6 +2095,7 @@ function parseSNL(buf,slot,fname){
     document.getElementById('dz-snl').querySelector('.dz-name').textContent=data.spectra.length.toLocaleString()+' frames';
     ['pill-snl','lb-snl'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.opacity='1';el.style.pointerEvents='auto';}});
     const sb=document.getElementById('snl-shift-block');if(sb)sb.style.cssText='';
+    const ob=document.getElementById('snl-off-block');if(ob)ob.style.cssText='';
     S.ch.snl=true;
     document.getElementById('pill-snl').className='pill on-snl';
     document.getElementById('lb-snl').className='log-btn on-snl';
@@ -2024,6 +2105,7 @@ function parseSNL(buf,slot,fname){
     document.getElementById('dz-snl2').querySelector('.dz-name').textContent=data.spectra.length.toLocaleString()+' frames';
     ['pill-snl2','lb-snl2'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.opacity='1';el.style.pointerEvents='auto';}});
     const sb2=document.getElementById('snl2-shift-block');if(sb2)sb2.style.cssText='';
+    const ob2=document.getElementById('snl2-off-block');if(ob2)ob2.style.cssText='';
     S.ch.snl2=true;
     const p2=document.getElementById('pill-snl2');if(p2)p2.className='pill on-snl';
     const lb2=document.getElementById('lb-snl2');if(lb2)lb2.className='log-btn on-snl';
