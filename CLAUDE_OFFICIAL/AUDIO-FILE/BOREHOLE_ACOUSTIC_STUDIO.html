@@ -1857,6 +1857,7 @@ function loadFile(type,input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
   if(type==='dep'){reader.onload=e=>parseDep(e.target.result,file.name);reader.readAsText(file);}
+  else if(type==='snl'||type==='snl2'){reader.onload=e=>parseSNL(e.target.result,type,file.name);reader.readAsArrayBuffer(file);}
   else{reader.onload=e=>parseDmp(e.target.result,type,file.name);reader.readAsArrayBuffer(file);}
 }
 function parseDep(text,fname){
@@ -1890,6 +1891,105 @@ function parseDep(text,fname){
   document.getElementById('st-dep').textContent=fname+' · '+data.length.toLocaleString()+' pts';
   draw();
 }
+// ── Cooley-Tukey in-place FFT ─────────────────────────────────────────────
+function _fft(re, im) {
+  const N = re.length;
+  for (let i = 1, j = 0; i < N; i++) {
+    let bit = N >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) { [re[i],re[j]]=[re[j],re[i]]; [im[i],im[j]]=[im[j],im[i]]; }
+  }
+  for (let len = 2; len <= N; len <<= 1) {
+    const ang = -2*Math.PI/len, wRe = Math.cos(ang), wIm = Math.sin(ang);
+    for (let i = 0; i < N; i += len) {
+      let cRe = 1, cIm = 0;
+      for (let j = 0; j < (len>>1); j++) {
+        const uR=re[i+j],uI=im[i+j];
+        const vR=re[i+j+(len>>1)]*cRe-im[i+j+(len>>1)]*cIm;
+        const vI=re[i+j+(len>>1)]*cIm+im[i+j+(len>>1)]*cRe;
+        re[i+j]=uR+vR; im[i+j]=uI+vI;
+        re[i+j+(len>>1)]=uR-vR; im[i+j+(len>>1)]=uI-vI;
+        const nr=cRe*wRe-cIm*wIm; cIm=cRe*wIm+cIm*wRe; cRe=nr;
+      }
+    }
+  }
+}
+
+// ── Raw DMP binary parser: reads int16 PCM starting at HEADER, computes STFT ─
+function _parseDmpRaw(buf, filename, HEADER, FFT_SIZE, SR) {
+  const MAX_FRAMES = 20000;
+  if (buf.byteLength < HEADER + FFT_SIZE * 2) return null;
+  const samples = new Int16Array(buf, HEADER);
+  const N = samples.length;
+  const hopSize = Math.max(FFT_SIZE, Math.floor(N / MAX_FRAMES));
+  const win = new Float32Array(FFT_SIZE);
+  for (let i = 0; i < FFT_SIZE; i++) win[i] = 0.5*(1-Math.cos(2*Math.PI*i/(FFT_SIZE-1)));
+  const nBins = FFT_SIZE / 2 + 1;
+  const freqs = Array.from({length: nBins}, (_, i) => i * SR / FFT_SIZE);
+  const times = [], spectra = [];
+  for (let start = 0; start + FFT_SIZE <= N; start += hopSize) {
+    const re = new Float32Array(FFT_SIZE); const im = new Float32Array(FFT_SIZE);
+    for (let i = 0; i < FFT_SIZE; i++) re[i] = (samples[start+i] / 32768) * win[i];
+    _fft(re, im);
+    const spec = new Float32Array(nBins);
+    for (let k = 0; k < nBins; k++)
+      spec[k] = 10*Math.log10(re[k]*re[k] + im[k]*im[k] + 1e-20) - 20*Math.log10(FFT_SIZE);
+    times.push(start / SR);
+    spectra.push(spec);
+  }
+  if (times.length < 4) return null;
+  return { times, freqs, spectra, filename, sampleRate: SR };
+}
+
+// ── DMP binary parser — tries multiple header/FFT/SR configs ─────────────────
+// TP-ALFA: 256-byte header, 512-pt FFT @ 1800 Hz
+// BT-ALFA: 256-byte header, 2048-pt FFT @ 3600 Hz
+function parseDmpBinary(buf, filename, headerOverride) {
+  const HEADER = headerOverride !== undefined ? headerOverride : 256;
+  const configs = [
+    [HEADER, 512,  1800],
+    [HEADER, 2048, 3600],
+    [HEADER, 2048, 1800],
+    [0,      512,  1800],
+    [0,      2048, 3600],
+    [512,    512,  1800],
+  ];
+  for (const [hdr, fft, sr] of configs) {
+    const r = _parseDmpRaw(buf, filename, hdr, fft, sr);
+    if (r) return r;
+  }
+  return null;
+}
+
+// ── GST binary parser (LogWiz GEO_01 format) ─────────────────────────────────
+function parseGSTBinary(buf, filename) {
+  const bytes = new Uint8Array(buf);
+  // Magic: "GEO_01"
+  if (bytes[0]!==0x47||bytes[1]!==0x45||bytes[2]!==0x4F||
+      bytes[3]!==0x5F||bytes[4]!==0x30||bytes[5]!==0x31) return null;
+  const dv = new DataView(buf);
+  const FILE_HDR = 776, REC_SIZE = 72, N_BINS = 512;
+  if (buf.byteLength < FILE_HDR + N_BINS * REC_SIZE) return null;
+  const dataOffset0 = dv.getUint32(FILE_HDR + 38, true);
+  const sampleIntUs = dv.getUint32(FILE_HDR + 42, true);
+  const nSamples    = dv.getUint32(FILE_HDR + 56, true);
+  if (nSamples < 2 || sampleIntUs === 0) return null;
+  if (dataOffset0 + N_BINS * nSamples * 4 > buf.byteLength) return null;
+  const maxFreq = 900;
+  const freqs = Array.from({length: N_BINS}, (_, i) => (i / (N_BINS-1)) * maxFreq);
+  const dtSec = sampleIntUs / 1e6;
+  const times = Array.from({length: nSamples}, (_, i) => i * dtSec);
+  const spectra = [];
+  for (let i = 0; i < nSamples; i++) {
+    const spec = new Float32Array(N_BINS);
+    for (let b = 0; b < N_BINS; b++)
+      spec[b] = dv.getFloat32(dataOffset0 + b * nSamples * 4 + i * 4, true);
+    spectra.push(spec);
+  }
+  return { times, freqs, spectra, filename, sampleRate: 1/dtSec };
+}
+
 function parseSNL(buf,slot,fname){
   let data=parseGSTBinary(buf,fname);
   if(!data) data=parseDmpBinary(buf,fname);
