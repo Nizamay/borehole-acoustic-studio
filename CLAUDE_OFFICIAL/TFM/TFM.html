@@ -2331,13 +2331,10 @@ function renderMinimap(){
   });
   Object.values(_mmTg).forEach(g=>{
     if(g.dir==='diamond'){
-      // Observer: ◆ first (below), then ring on top so ring is always visible over ◆
+      // Observer: ◆ only — ring drawn via layout.shapes (pixel-sized, always visible)
       traces.push({type:'scatter',mode:'text',x:g.lons,y:g.lats,
         text:g.lons.map(()=>'◆'),textfont:{size:16,color:g.color,family:'Arial'},
         textposition:'middle center',hoverinfo:'skip',showlegend:false});
-      traces.push({type:'scatter',mode:'markers',x:g.lons,y:g.lats,
-        marker:{size:23,color:'rgba(0,0,0,0)',symbol:'circle-open',line:{color:g.color,width:2}},
-        hoverinfo:'skip',showlegend:false});
     } else {
       traces.push({type:'scatter',mode:'text',x:g.lons,y:g.lats,
         text:g.lons.map(()=>g.sym),
@@ -2428,7 +2425,10 @@ function renderMinimap(){
     yaxis:{title:{text:isUTM()?'N':'',font:{size:7}},color:'#5a7599',gridcolor:'#1f2d45',tickfont:{family:'IBM Plex Mono',size:7},scaleanchor:'x',scaleratio:1,autorange:true},
     showlegend:false,clickmode:'event',
     annotations:_mmAnnots,
-    shapes:[],
+    shapes:pts.filter(p=>wellSymbol(p.k).dir==='diamond').map(p=>({
+      type:'circle',xref:'x',yref:'y',xsizemode:'pixel',ysizemode:'pixel',
+      xanchor:p.lon,yanchor:p.lat,x0:-11,y0:-11,x1:11,y1:11,
+      fillcolor:'rgba(0,0,0,0)',line:{color:wellSymbol(p.k).color,width:1.5},layer:'above'})),
   },{responsive:true,displaylogo:false,
     modeBarButtonsToRemove:['select2d','lasso2d','zoom2d','zoomIn2d','zoomOut2d','autoScale2d'],
     scrollZoom:true,
@@ -2590,6 +2590,11 @@ function renderXS(){
 
     annots.push({x:xc,y:-_xsTriH/2,xref:'x',yref:'y',text:`<b>${wd.well.replace('NIMR-','').replace('NR-','')}</b>`,
       showarrow:false,font:{size:8,color:'#d8e4f0',family:'IBM Plex Mono'},yshift:18});
+    // Observer ring — pixel-sized circle shape, always visible above traces
+    if(wellSymbol(k).dir==='diamond'){const _wsc=wellSymbol(k).color;
+      shapes.push({type:'circle',xref:'x',yref:'y',xsizemode:'pixel',ysizemode:'pixel',
+        xanchor:xc,yanchor:-_xsTriH/2,x0:-14,y0:-14,x1:14,y1:14,
+        fillcolor:'rgba(0,0,0,0)',line:{color:_wsc,width:2},layer:'above'});}
 
     // store per-well fill points for 2D interpolation below
     // (actual filtering uses per-well formation bounds if scope=fm)
@@ -2711,16 +2716,12 @@ function renderXS(){
   });
   Object.values(_xsTg).forEach(g=>{
     if(g.dir==='diamond'){
-      // Observer: ◆ first (below), then ring on top so ring is always visible over ◆
+      // Observer: ◆ only — ring is drawn via layout.shapes (pixel-sized, always visible)
       traces.push({type:'scatter',mode:'text',
         x:g.xs,y:g.xs.map(()=>-_xsTriH/2),
         text:g.xs.map(()=>'◆'),
         textfont:{size:22,color:g.color,family:'Arial'},
         textposition:'middle center',hoverinfo:'skip',showlegend:false});
-      traces.push({type:'scatter',mode:'markers',
-        x:g.xs,y:g.xs.map(()=>-_xsTriH/2),
-        marker:{size:32,color:'rgba(0,0,0,0)',symbol:'circle-open',line:{color:g.color,width:2}},
-        hoverinfo:'skip',showlegend:false});
     } else {
       traces.push({type:'scatter',mode:'text',
         x:g.xs,y:g.xs.map(()=>-_xsTriH/2),
@@ -2930,13 +2931,10 @@ function renderMap(){
   _coordOnly.forEach(k=>{const c=S.coords[k];if(c)_addSmSym(c.lon,c.lat,k);});
   Object.values(_smTg).forEach(g=>{
     if(g.dir==='diamond'){
-      // Observer: ◆ first (below), then ring on top so ring is always visible over ◆
+      // Observer: ◆ only — ring drawn via layout.shapes (pixel-sized, always visible)
       traces.push({type:'scatter',mode:'text',x:g.lons,y:g.lats,
         text:g.lons.map(()=>'◆'),textfont:{size:18,color:g.color,family:'Arial'},
         textposition:'middle center',hoverinfo:'skip',showlegend:false});
-      traces.push({type:'scatter',mode:'markers',x:g.lons,y:g.lats,
-        marker:{size:26,color:'rgba(0,0,0,0)',symbol:'circle-open',line:{color:g.color,width:2}},
-        hoverinfo:'skip',showlegend:false});
     } else {
       traces.push({type:'scatter',mode:'text',x:g.lons,y:g.lats,
         text:g.lons.map(()=>g.sym),
@@ -2989,7 +2987,10 @@ function renderMap(){
     margin:{l:50,r:30,t:36,b:50},
     dragmode:'zoom',
     annotations:_smCrwdAnnots,
-    shapes:[],
+    shapes:_smAllC.filter(p=>wellSymbol(p.key).dir==='diamond').map(p=>({
+      type:'circle',xref:'x',yref:'y',xsizemode:'pixel',ysizemode:'pixel',
+      xanchor:p.lon,yanchor:p.lat,x0:-13,y0:-13,x1:13,y1:13,
+      fillcolor:'rgba(0,0,0,0)',line:{color:wellSymbol(p.key).color,width:2},layer:'above'})),
   };
 
   Plotly.react('plot-map',traces,layout,{
