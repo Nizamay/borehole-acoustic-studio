@@ -2877,7 +2877,7 @@ function renderMap(){
     const side=_smCrwdSide[p.key];
     return{x:p.lon,y:p.lat,xref:'x',yref:'y',
       ax:side==='left'?-55:55,ay:-22,axref:'pixel',ayref:'pixel',
-      text:`<b>${p.nm}</b>`,showarrow:true,arrowhead:0,arrowwidth:1,arrowcolor:'#5a7599',
+      text:p.nm,showarrow:true,arrowhead:0,arrowwidth:1,arrowcolor:'#5a7599',
       font:{size:8,color:'#000000',family:'IBM Plex Mono'},
       xanchor:side==='left'?'right':'left'};
   });
@@ -2913,7 +2913,7 @@ function renderMap(){
     traces.push({type:'scatter',mode:'markers+text',
       x:g.pts.map(p=>p.lon),y:g.pts.map(p=>p.lat),
       marker:{size:g.ph,color:'rgba(0,0,0,0)',opacity:0},
-      text:g.pts.map(p=>`<b>${p.nm}</b>`),
+      text:g.pts.map(p=>p.nm),
       textposition:g.pts.map(p=>_smTxtPos(p.key)),
       textfont:{family:'IBM Plex Mono',size:8,color:'#000000'},
       hoverinfo:'skip',showlegend:false});
