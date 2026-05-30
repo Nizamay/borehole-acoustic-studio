@@ -136,6 +136,36 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:11
 .shift-reset{font-size:9px;color:var(--muted);cursor:pointer;padding:0 3px;}
 .shift-reset:hover{color:#ef4444;}
 
+/* DEPTH COLUMN MAPPER MODAL */
+#dep-map-mo{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);}
+#dep-map-mo.show{display:flex;}
+#dep-map-dlg{background:#f4f5f7;color:#2a3040;font-family:'IBM Plex Mono',monospace;border:1px solid #dde1e6;border-radius:7px;width:480px;max-width:96vw;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.55);}
+.dm-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid #dde1e6;}
+.dm-title{font-size:12px;font-weight:700;letter-spacing:.06em;color:#2a3040;}
+.dm-title span{color:#CC0000;margin-right:4px;}
+.dm-close{width:22px;height:22px;border:1px solid #dde1e6;background:#fff;color:#8a9ab0;border-radius:3px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;}
+.dm-close:hover{color:#CC0000;border-color:#CC0000;}
+.dm-body{padding:14px 16px;}
+.dm-section-label{font-size:8.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8a9ab0;margin-bottom:6px;}
+.dm-preview{background:#fff;border:1px solid #dde1e6;border-radius:4px;padding:7px 10px;margin-bottom:14px;font-size:9px;color:#2a3040;overflow-x:auto;white-space:pre;line-height:1.7;max-height:90px;overflow-y:auto;}
+.dm-col-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.dm-col-label{font-size:9px;font-weight:600;color:#2a3040;width:42px;flex-shrink:0;}
+.dm-col-select{flex:0 0 130px;background:#fff;border:1px solid #dde1e6;border-radius:3px;color:#2a3040;font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 5px;outline:none;}
+.dm-col-select:focus{border-color:#6366f1;}
+.dm-col-sample{font-size:8.5px;color:#8a9ab0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dm-extra-row{display:flex;align-items:center;gap:10px;margin-top:10px;}
+.dm-extra-label{font-size:9px;color:#2a3040;width:80px;flex-shrink:0;}
+.dm-extra-select{background:#fff;border:1px solid #dde1e6;border-radius:3px;color:#2a3040;font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 5px;outline:none;min-width:130px;}
+.dm-extra-select:focus{border-color:#6366f1;}
+.dm-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #dde1e6;background:#f4f5f7;}
+.dm-btn{padding:5px 14px;border-radius:4px;font-size:9px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-weight:600;transition:all .15s;}
+.dm-btn.primary{background:#CC0000;border:1px solid #CC0000;color:#fff;}
+.dm-btn.primary:hover{background:#a80000;border-color:#a80000;}
+.dm-btn.secondary{background:#fff;border:1px solid #dde1e6;color:#2a3040;}
+.dm-btn.secondary:hover{border-color:#8a9ab0;}
+.dep-recfg{font-size:8px;color:var(--muted);cursor:pointer;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:var(--panel2);margin-top:4px;display:inline-block;}
+.dep-recfg:hover{color:var(--c-d);border-color:var(--c-d);}
+
 /* SENSOR OFFSET ROWS */
 .off-sub{font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:5px 0 3px;}
 .off-row{display:flex;align-items:center;gap:4px;margin-bottom:4px;}
@@ -574,6 +604,7 @@ input[type=file]{display:none;}
   <div class="sbs">
     <div class="sbt"><div class="sbt-bar" style="background:var(--c-d)"></div>Depth File</div>
     <div class="dz" id="dz-dep" onclick="triggerLoad('dep')"><div>&#x1F4CF; Depth .txt</div><div class="dz-name" id="dz-dep-info">No file</div></div>
+    <div id="dep-recfg-wrap" style="display:none;margin-top:4px"><span class="dep-recfg" onclick="depReConfigure()">&#x2699; Reconfigure columns</span></div>
     <div style="margin-top:7px">
       <div class="sr-row"><span class="sl-lbl">Range</span><span id="sr-dr" style="color:var(--c-d);font-size:10px">—</span></div>
       <div class="sr-row"><span class="sl-lbl">Start</span><span id="sr-ds" style="font-size:8.5px">—</span></div>
@@ -748,6 +779,44 @@ input[type=file]{display:none;}
         <div style="flex:1"><div class="mt dep">Depth File &middot; .txt</div><div class="md">Time&ndash;Depth log (TSV)</div><div class="mh2">Date &middot; Time &middot; Depth &middot; 1 Hz</div></div>
         <div class="mst dep-ok" id="ms-dep-st">&#x2713; Loaded</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- DEPTH COLUMN MAPPER MODAL -->
+<div id="dep-map-mo">
+  <div id="dep-map-dlg">
+    <div class="dm-head">
+      <div class="dm-title"><span>&#x1F4CF;</span><span id="dm-filename">depth.txt</span> &mdash; Column Mapping</div>
+      <button class="dm-close" onclick="depMapClose()">&#x2715;</button>
+    </div>
+    <div class="dm-body">
+      <div class="dm-section-label">Header preview (first 6 rows)</div>
+      <div class="dm-preview" id="dm-preview-box"></div>
+      <div class="dm-section-label">Column assignments</div>
+      <div id="dm-col-rows"></div>
+      <div class="dm-extra-row">
+        <span class="dm-extra-label">Date format:</span>
+        <select class="dm-extra-select" id="dm-datefmt">
+          <option value="M/D/YYYY">M/D/YYYY</option>
+          <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+          <option value="D.M.YYYY">D.M.YYYY</option>
+          <option value="DD.MM.YYYY">DD.MM.YYYY</option>
+          <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+          <option value="DD-MM-YYYY">DD-MM-YYYY</option>
+        </select>
+      </div>
+      <div class="dm-extra-row">
+        <span class="dm-extra-label">Depth unit:</span>
+        <select class="dm-extra-select" id="dm-depunit">
+          <option value="ft">ft</option>
+          <option value="m">m</option>
+        </select>
+      </div>
+    </div>
+    <div class="dm-foot">
+      <button class="dm-btn secondary" onclick="depMapClose()">Cancel</button>
+      <button class="dm-btn primary" onclick="applyDepMap()">&#x2713; Apply &amp; Load</button>
     </div>
   </div>
 </div>
@@ -1953,35 +2022,340 @@ function loadFile(type,input){
   else if(type==='snl'||type==='snl2'){reader.onload=e=>parseSNL(e.target.result,type,file.name);reader.readAsArrayBuffer(file);}
   else{reader.onload=e=>parseDmp(e.target.result,type,file.name);reader.readAsArrayBuffer(file);}
 }
-function parseDep(text,fname){
-  const lines=text.split(/\r?\n/);const data=[];let t0=null;
-  const hdr=lines[0]?lines[0].toLowerCase():'';
-  const isMeters=hdr.includes('[m]')||hdr.includes('_m\t')||hdr.includes('meter');
-  let prevRawTs=null, rollover=0;
-  for(let i=0;i<lines.length;i++){
-    const line=lines[i].trim();if(!line)continue;
-    const p=line.split('\t');if(p.length<2)continue;
-    let ts=null;
-    const m1=p[0].match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
-    if(m1){const[,mo,dy,yr,hr,mn]=m1;const dt=new Date(yr+'-'+mo.padStart(2,'0')+'-'+dy.padStart(2,'0')+'T'+hr.padStart(2,'0')+':'+mn+':00');if(!isNaN(dt))ts=Math.floor(dt.getTime()/1000);}
-    if(ts===null&&p.length>=3){const m2=p[0].match(/^(\d{2})-(\d{2})-(\d{4})$/);if(m2){const[,mo,dy,yr]=m2;const dt=new Date(`${yr}-${mo}-${dy}T${p[1]}`);if(!isNaN(dt))ts=Math.floor(dt.getTime()/1000);}}
-    if(ts===null){const m3=p[0].match(/(\d+):(\d+):(\d+)/);if(m3)ts=+m3[1]*3600+ +m3[2]*60+ +m3[3];}
-    if(ts===null){const v=parseFloat(p[0]);if(!isNaN(v))ts=v;}
-    if(ts===null)continue;
-    // midnight rollover: if time jumps back >1 hour, add 86400
-    if(prevRawTs!==null&&ts<prevRawTs-3600)rollover+=86400;
-    prevRawTs=ts; ts+=rollover;
-    if(t0===null)t0=ts;
-    const rawD=parseFloat(p[p.length-1]);
-    if(!isNaN(rawD))data.push([ts-t0,rawD]);
+// Module-level raw lines storage for reconfigure support
+let _depRawLines = null;
+let _depRawFname = null;
+
+function parseDep(text, fname) {
+  const lines = text.split(/\r?\n/);
+  _depRawLines = lines;
+  _depRawFname = fname;
+  const cfg = detectDepCols(lines);
+  if (cfg.confident) {
+    applyDepParse(lines, cfg, fname);
+  } else {
+    showDepMapModal(lines, fname, cfg);
   }
-  if(!data.length)return;
-  S.dep={data,filename:fname,dur:data[data.length-1][0],t0,drange:[Math.min(...data.map(d=>d[1])),Math.max(...data.map(d=>d[1]))]};
-  const toFt=isMeters?3.28084:1.0;
+}
+
+// ── Column detection ──────────────────────────────────────────────────────────
+function detectDepCols(lines) {
+  // detect separator
+  const firstLine = lines[0] || '';
+  let sep = '\t';
+  if ((firstLine.match(/;/g)||[]).length > (firstLine.match(/,/g)||[]).length &&
+      (firstLine.match(/;/g)||[]).length > (firstLine.match(/\t/g)||[]).length) sep = ';';
+  else if ((firstLine.match(/,/g)||[]).length > (firstLine.match(/\t/g)||[]).length) sep = ',';
+
+  const parts0 = firstLine.split(sep);
+  const nCols = parts0.length;
+
+  // check if first row is a header (contains letters)
+  const hasHeader = /[a-zA-Z]/.test(firstLine);
+
+  let colDate = -1, colTime = -1, colDatetime = -1, colDepth = -1;
+  let dateFormat = 'M/D/YYYY';
+  let depthUnit = 'ft';
+
+  if (hasHeader) {
+    parts0.forEach((h, i) => {
+      const lh = h.trim().toLowerCase();
+      if (lh === 'datetime' || lh === 'date_time' || lh === 'timestamp') colDatetime = i;
+      else if (lh === 'date' || lh === 'dat') colDate = i;
+      else if (lh === 'time' || lh === 'tim') colTime = i;
+      if (lh === 'depth' || lh === 'dept' || lh.includes('[ft]') || lh.includes('[m]')) colDepth = i;
+    });
+    if (firstLine.toLowerCase().includes('[m]') || firstLine.toLowerCase().includes('_m\t') || firstLine.toLowerCase().includes('meter')) depthUnit = 'm';
+  }
+
+  // find first data row (skip header if present)
+  let dataStartIdx = hasHeader ? 1 : 0;
+  while (dataStartIdx < lines.length && !lines[dataStartIdx].trim()) dataStartIdx++;
+  const dataRow = lines[dataStartIdx] ? lines[dataStartIdx].trim().split(sep) : [];
+
+  if (!hasHeader && dataRow.length > 0) {
+    // scan data row for patterns
+    dataRow.forEach((v, i) => {
+      const val = v.trim();
+      // date patterns
+      if (/^\d{1,2}[\/]\d{1,2}[\/]\d{4}$/.test(val)) { if (colDate === -1) colDate = i; }
+      else if (/^\d{1,2}[.]\d{1,2}[.]\d{4}$/.test(val)) { if (colDate === -1) colDate = i; }
+      else if (/^\d{4}-\d{2}-\d{2}$/.test(val)) { if (colDate === -1) colDate = i; }
+      // datetime combined (date + time in same cell)
+      else if (/^\d{1,2}[\/]\d{1,2}[\/]\d{4}\s+\d{1,2}:\d{2}/.test(val)) { if (colDatetime === -1) colDatetime = i; }
+      // time pattern
+      else if (/^\d{1,2}:\d{2}:\d{2}$/.test(val) || /^\d{1,2}:\d{2}$/.test(val)) { if (colTime === -1) colTime = i; }
+      // numeric → candidate for depth (but row index detection below takes priority)
+      else if (/^-?\d+(\.\d+)?$/.test(val)) {
+        // if it looks like a row index (small integer at position 0), skip it
+        if (i === 0 && parseInt(val) >= 0 && parseInt(val) < 10000 && !val.includes('.')) {
+          // likely row index — skip
+        } else {
+          if (colDepth === -1) colDepth = i;
+        }
+      }
+    });
+  }
+
+  // If header-detected depth not found yet but dataRow has columns, find last numeric col
+  if (colDepth === -1 && dataRow.length > 0) {
+    for (let i = dataRow.length - 1; i >= 0; i--) {
+      if (/^-?\d+(\.\d+)?$/.test(dataRow[i].trim())) {
+        // skip if it's the same as date/time/datetime cols or index col
+        if (i !== colDate && i !== colTime && i !== colDatetime) { colDepth = i; break; }
+      }
+    }
+  }
+
+  // Combined datetime detection from data row when columns > 2
+  if (colDatetime === -1 && colDate !== -1 && colTime !== -1 && dataRow.length > 0) {
+    // separate date+time cols is fine, no combined needed
+  }
+
+  // detect dateFormat from first data value in colDate
+  if (colDate !== -1 && dataRow[colDate]) {
+    const dv = dataRow[colDate].trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dv)) dateFormat = 'YYYY-MM-DD';
+    else if (/^\d{2}-\d{2}-\d{4}$/.test(dv)) dateFormat = 'DD-MM-YYYY';
+    else if (/^\d{2}\.\d{2}\.\d{4}$/.test(dv)) dateFormat = 'DD.MM.YYYY';
+    else if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(dv)) dateFormat = 'D.M.YYYY';
+    else if (/^\d{2}\/\d{2}\/\d{4}$/.test(dv)) dateFormat = 'MM/DD/YYYY';
+    else dateFormat = 'M/D/YYYY';
+  } else if (colDatetime !== -1 && dataRow[colDatetime]) {
+    const dv = dataRow[colDatetime].trim();
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(dv)) dateFormat = 'M/D/YYYY';
+    else if (/^\d{2}-\d{2}-\d{4}/.test(dv)) dateFormat = 'DD-MM-YYYY';
+    else if (/^\d{4}-\d{2}-\d{2}/.test(dv)) dateFormat = 'YYYY-MM-DD';
+  }
+
+  const confident = colDepth !== -1 && (colDatetime !== -1 || colDate !== -1 || colTime !== -1);
+
+  return { sep, nCols, hasHeader, colDate, colTime, colDatetime, colDepth, dateFormat, depthUnit, confident };
+}
+
+// ── Column mapper dialog ──────────────────────────────────────────────────────
+function showDepMapModal(lines, fname, cfg) {
+  document.getElementById('dm-filename').textContent = fname;
+
+  // preview
+  const previewLines = lines.filter(l => l.trim()).slice(0, 6);
+  document.getElementById('dm-preview-box').textContent = previewLines.join('\n');
+
+  // build col rows
+  const dataRow = (lines.find((l, i) => l.trim() && (!cfg.hasHeader || i > 0)) || '').trim().split(cfg.sep);
+  const headerRow = cfg.hasHeader ? lines[0].trim().split(cfg.sep) : null;
+  const colOptions = [
+    { value: 'skip',     label: 'Skip' },
+    { value: 'date',     label: 'Date' },
+    { value: 'time',     label: 'Time' },
+    { value: 'datetime', label: 'DateTime' },
+    { value: 'depth',    label: 'Depth' },
+  ];
+  const autoAssign = col => {
+    if (col === cfg.colDatetime) return 'datetime';
+    if (col === cfg.colDate) return 'date';
+    if (col === cfg.colTime) return 'time';
+    if (col === cfg.colDepth) return 'depth';
+    return 'skip';
+  };
+
+  const container = document.getElementById('dm-col-rows');
+  container.innerHTML = '';
+  const nCols = Math.max(cfg.nCols, dataRow.length);
+  for (let i = 0; i < nCols; i++) {
+    const row = document.createElement('div');
+    row.className = 'dm-col-row';
+    const lbl = document.createElement('span');
+    lbl.className = 'dm-col-label';
+    lbl.textContent = 'Col ' + i + ':';
+    const sel = document.createElement('select');
+    sel.className = 'dm-col-select';
+    sel.id = 'dm-col-' + i;
+    colOptions.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.value; o.textContent = opt.label;
+      if (opt.value === autoAssign(i)) o.selected = true;
+      sel.appendChild(o);
+    });
+    const sample = document.createElement('span');
+    sample.className = 'dm-col-sample';
+    const hdrName = headerRow ? (headerRow[i] || '') : '';
+    const sampleVal = dataRow[i] !== undefined ? dataRow[i].trim() : '';
+    sample.textContent = hdrName ? '"' + hdrName + '"  →  "' + sampleVal + '"' : '"' + sampleVal + '"';
+    row.appendChild(lbl); row.appendChild(sel); row.appendChild(sample);
+    container.appendChild(row);
+  }
+
+  // set date format
+  document.getElementById('dm-datefmt').value = cfg.dateFormat;
+  document.getElementById('dm-depunit').value = cfg.depthUnit;
+
+  // store reference
+  document.getElementById('dep-map-mo')._pendingLines = lines;
+  document.getElementById('dep-map-mo')._pendingFname = fname;
+  document.getElementById('dep-map-mo')._pendingCfg = cfg;
+
+  document.getElementById('dep-map-mo').classList.add('show');
+}
+
+function depMapClose() {
+  document.getElementById('dep-map-mo').classList.remove('show');
+}
+
+function applyDepMap() {
+  const mo = document.getElementById('dep-map-mo');
+  const lines = mo._pendingLines;
+  const fname = mo._pendingFname;
+  const baseCfg = mo._pendingCfg;
+
+  // read selections
+  let colDate = -1, colTime = -1, colDatetime = -1, colDepth = -1;
+  const nCols = baseCfg.nCols;
+  for (let i = 0; i < nCols; i++) {
+    const el = document.getElementById('dm-col-' + i);
+    if (!el) continue;
+    const v = el.value;
+    if (v === 'date') colDate = i;
+    else if (v === 'time') colTime = i;
+    else if (v === 'datetime') colDatetime = i;
+    else if (v === 'depth') colDepth = i;
+  }
+
+  const dateFormat = document.getElementById('dm-datefmt').value;
+  const depthUnit = document.getElementById('dm-depunit').value;
+
+  depMapClose();
+  applyDepParse(lines, { ...baseCfg, colDate, colTime, colDatetime, colDepth, dateFormat, depthUnit }, fname);
+}
+
+function depReConfigure() {
+  if (!_depRawLines || !_depRawFname) return;
+  const cfg = detectDepCols(_depRawLines);
+  showDepMapModal(_depRawLines, _depRawFname, cfg);
+}
+
+// ── Core parser (config-driven) ───────────────────────────────────────────────
+function parseDepDatetime(datePart, timePart, dateFormat) {
+  let isoDate = '';
+  const d = (datePart || '').trim();
+  const t = (timePart || '').trim();
+  if (!d && !t) return null;
+  if (!d) {
+    // time-only: return seconds since midnight
+    const m = t.match(/^(\d+):(\d+):(\d+)/);
+    if (m) return +m[1]*3600 + +m[2]*60 + +m[3];
+    return null;
+  }
+  // parse date based on format
+  let yr='', mo='', dy='';
+  if (dateFormat === 'YYYY-MM-DD') {
+    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) { yr=m[1]; mo=m[2]; dy=m[3]; }
+  } else if (dateFormat === 'DD-MM-YYYY') {
+    const m = d.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (m) { dy=m[1]; mo=m[2]; yr=m[3]; }
+  } else if (dateFormat === 'DD.MM.YYYY' || dateFormat === 'D.M.YYYY') {
+    const m = d.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (m) { dy=m[1].padStart(2,'0'); mo=m[2].padStart(2,'0'); yr=m[3]; }
+  } else if (dateFormat === 'MM/DD/YYYY') {
+    const m = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (m) { mo=m[1]; dy=m[2]; yr=m[3]; }
+  } else {
+    // M/D/YYYY default
+    const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) { mo=m[1].padStart(2,'0'); dy=m[2].padStart(2,'0'); yr=m[3]; }
+    else {
+      // try combined datetime in d (e.g. "5/29/2026 3:06:27")
+      const mc = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}:\d{2}(?::\d{2})?)/);
+      if (mc) {
+        mo=mc[1].padStart(2,'0'); dy=mc[2].padStart(2,'0'); yr=mc[3];
+        isoDate = yr+'-'+mo+'-'+dy;
+        const tCombined = mc[4].replace(/^(\d):/, '0$1:');
+        const dt = new Date(isoDate+'T'+tCombined);
+        return isNaN(dt)?null:Math.floor(dt.getTime()/1000);
+      }
+    }
+  }
+  if (!yr) return null;
+  isoDate = yr+'-'+mo+'-'+dy;
+  if (!t) {
+    const dt = new Date(isoDate+'T00:00:00');
+    return isNaN(dt)?null:Math.floor(dt.getTime()/1000);
+  }
+  // Pad single-digit hour to ensure valid ISO 8601 (HH:MM:SS)
+  const tPadded = t.replace(/^(\d):/, '0$1:');
+  const dt = new Date(isoDate+'T'+tPadded);
+  return isNaN(dt)?null:Math.floor(dt.getTime()/1000);
+}
+
+function applyDepParse(lines, cfg, fname) {
+  const { sep, hasHeader, colDate, colTime, colDatetime, colDepth, dateFormat, depthUnit } = cfg;
+  const data = [];
+  let t0 = null;
+  let prevRawTs = null, rollover = 0;
+
+  const startIdx = hasHeader ? 1 : 0;
+  for (let i = startIdx; i < lines.length; i++) {
+    const line = lines[i].trim(); if (!line) continue;
+    const p = line.split(sep);
+
+    let ts = null;
+
+    if (colDatetime !== -1 && p[colDatetime] !== undefined) {
+      // combined datetime cell
+      const dtStr = p[colDatetime].trim();
+      // try as combined
+      ts = parseDepDatetime(dtStr, '', dateFormat);
+      if (ts === null) {
+        // maybe it's just date, look for separate time in next column
+        const tcol = colTime !== -1 ? colTime : colDatetime + 1;
+        const timeStr = p[tcol] !== undefined ? p[tcol].trim() : '';
+        ts = parseDepDatetime(dtStr, timeStr, dateFormat);
+      }
+    } else if (colDate !== -1) {
+      const dateStr = p[colDate] !== undefined ? p[colDate].trim() : '';
+      const timeStr = colTime !== -1 && p[colTime] !== undefined ? p[colTime].trim() : '';
+      ts = parseDepDatetime(dateStr, timeStr, dateFormat);
+    } else if (colTime !== -1 && p[colTime] !== undefined) {
+      // time-only
+      const m = p[colTime].trim().match(/^(\d+):(\d+):(\d+)/);
+      if (m) ts = +m[1]*3600 + +m[2]*60 + +m[3];
+    }
+
+    // fallback legacy: try p[0] as combined datetime or float
+    if (ts === null) {
+      const v0 = p[0] ? p[0].trim() : '';
+      const m1 = v0.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
+      if (m1) {
+        const dt = new Date(m1[3]+'-'+m1[1].padStart(2,'0')+'-'+m1[2].padStart(2,'0')+'T'+m1[4].padStart(2,'0')+':'+m1[5].padStart(2,'0')+':00');
+        if (!isNaN(dt)) ts = Math.floor(dt.getTime()/1000);
+      }
+      if (ts === null) { const v = parseFloat(v0); if (!isNaN(v)) ts = v; }
+    }
+
+    if (ts === null) continue;
+
+    // midnight rollover
+    if (prevRawTs !== null && ts < prevRawTs - 3600) rollover += 86400;
+    prevRawTs = ts; ts += rollover;
+    if (t0 === null) t0 = ts;
+
+    const rawD = colDepth !== -1 && p[colDepth] !== undefined ? parseFloat(p[colDepth]) : parseFloat(p[p.length - 1]);
+    if (!isNaN(rawD)) data.push([ts - t0, rawD]);
+  }
+
+  if (!data.length) return;
+
+  S.dep = { data, filename: fname, dur: data[data.length-1][0], t0,
+    drange: [Math.min(...data.map(d=>d[1])), Math.max(...data.map(d=>d[1]))] };
+
+  const toFt = depthUnit === 'm' ? 3.28084 : 1.0;
   STUDIO.depth = { times: data.map(d=>d[0]), depths: data.map(d=>d[1]*toFt) };
-  document.getElementById('dz-dep').className='dz loaded-d';
-  document.getElementById('dz-dep').innerHTML='<div>📏 <strong>'+fname+'</strong></div><div class="dz-name">'+data.length.toLocaleString()+' rows</div>';
-  document.getElementById('st-dep').textContent=fname+' · '+data.length.toLocaleString()+' pts';
+
+  document.getElementById('dz-dep').className = 'dz loaded-d';
+  document.getElementById('dz-dep').innerHTML = '<div>&#x1F4CF; <strong>'+fname+'</strong></div><div class="dz-name">'+data.length.toLocaleString()+' rows</div>';
+  document.getElementById('dep-recfg-wrap').style.display = 'block';
+  document.getElementById('st-dep').textContent = fname + ' · ' + data.length.toLocaleString() + ' pts';
   updateDepStats();
   draw();
 }
