@@ -1477,9 +1477,12 @@ function render3D(){
   const dm=S.depthMode.g;
   const traces=[];
 
-  // Wells
+  // Wells — collect label coords for a single unified trace (avoids per-trace perspective scaling bug)
+  const _3dLblX=[],_3dLblY=[],_3dLblT=[];
   wks.forEach((k,ki)=>{
     const wd=S.wells[k];const xy=rXY(k);if(!xy)return;
+    _3dLblX.push(xy.lon);_3dLblY.push(xy.lat);
+    _3dLblT.push(wd.well.replace(/^[A-Za-z]{1,8}[-_.]/,''));
     const arr=cArr(wd,colorBy)||[];
     const xs=[],ys=[],zs=[],cs2=[],txts=[];
 
@@ -1523,11 +1526,13 @@ function render3D(){
           tickfont:{family:'IBM Plex Mono',size:8,color:'#d8e4f0'}}:null},
       text:txts,hoverinfo:'text',name:wd.well,showlegend:true,
       projection:{x:{show:false},y:{show:false},z:{show:false}}});
-    traces.push({type:'scatter3d',mode:'text',x:[xy.lon],y:[xy.lat],z:[0],
-      text:[wd.well.replace('NIMR-','').replace('NR-','')],
-      textfont:{size:11,color:'#d8e4f0',family:'IBM Plex Mono'},textposition:'bottom center',
-      hoverinfo:'skip',showlegend:false});
   });
+  // Single unified label trace — all well names in one trace to prevent per-trace perspective scaling bug
+  if(_3dLblX.length)traces.push({type:'scatter3d',mode:'text',
+    x:_3dLblX,y:_3dLblY,z:_3dLblX.map(()=>0),
+    text:_3dLblT,
+    textfont:{size:11,color:'#d8e4f0',family:'IBM Plex Mono'},textposition:'bottom center',
+    hoverinfo:'skip',showlegend:false,name:'__wlbl__'});
 
   // Tops
   if(showTops){
