@@ -2593,7 +2593,7 @@ function renderXS(){
     // Observer ring — pixel-sized circle shape, always visible above traces
     if(wellSymbol(k).dir==='diamond'){const _wsc=wellSymbol(k).color;
       shapes.push({type:'circle',xref:'x',yref:'y',xsizemode:'pixel',ysizemode:'pixel',
-        xanchor:xc,yanchor:-_xsTriH/2,x0:-14,y0:-14,x1:14,y1:14,
+        xanchor:xc,yanchor:-_xsTriH/2,x0:-11,y0:-11,x1:11,y1:11,
         fillcolor:'rgba(0,0,0,0)',line:{color:_wsc,width:2},layer:'above'});}
 
     // store per-well fill points for 2D interpolation below
@@ -2878,7 +2878,7 @@ function renderMap(){
     return{x:p.lon,y:p.lat,xref:'x',yref:'y',
       ax:side==='left'?-55:55,ay:-22,axref:'pixel',ayref:'pixel',
       text:`<b>${p.nm}</b>`,showarrow:true,arrowhead:0,arrowwidth:1,arrowcolor:'#5a7599',
-      font:{size:8,color:'#b0bec8',family:'IBM Plex Mono'},
+      font:{size:8,color:'#000000',family:'IBM Plex Mono'},
       xanchor:side==='left'?'right':'left'};
   });
 
@@ -2915,7 +2915,7 @@ function renderMap(){
       marker:{size:g.ph,color:'rgba(0,0,0,0)',opacity:0},
       text:g.pts.map(p=>`<b>${p.nm}</b>`),
       textposition:g.pts.map(p=>_smTxtPos(p.key)),
-      textfont:{family:'IBM Plex Mono',size:8,color:'#b0bec8'},
+      textfont:{family:'IBM Plex Mono',size:8,color:'#000000'},
       hoverinfo:'skip',showlegend:false});
   });}
   // Unicode well symbols for ALL wells (pts + emptyPts + coord-only) — same style as 3D
@@ -2989,7 +2989,7 @@ function renderMap(){
     annotations:_smCrwdAnnots,
     shapes:_smAllC.filter(p=>wellSymbol(p.key).dir==='diamond').map(p=>({
       type:'circle',xref:'x',yref:'y',xsizemode:'pixel',ysizemode:'pixel',
-      xanchor:p.lon,yanchor:p.lat,x0:-13,y0:-13,x1:13,y1:13,
+      xanchor:p.lon,yanchor:p.lat,x0:-10,y0:-10,x1:10,y1:10,
       fillcolor:'rgba(0,0,0,0)',line:{color:wellSymbol(p.key).color,width:2},layer:'above'})),
   };
 
