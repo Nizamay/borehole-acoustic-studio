@@ -1,0 +1,3337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wellbore Survey Planner</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Акценты — красные (светлый интерфейс) */
+  --hal-red:     #991b1b;
+  --hal-coral:   #dc2626;
+  --hal-crimson: #7f1d1d;
+  --hal-white:   #ffffff;
+
+  /* App theme — light */
+  --bg:      #eef1f6;
+  --bg2:     #ffffff;
+  --bg3:     #f4f7fb;
+  --bg4:     #e8edf4;
+  --border:  #c8d0dc;
+  --border2: #a8b6c9;
+  --accent:  #dc2626;
+  --acc2:    #ef4444;
+  --red:     #dc2626;
+  --green:   #059669;
+  --blue:    #0369a1;
+  --cyan:    #e11d48;
+  --purple:  #7c3aed;
+  --text:    #1e293b;
+  --text2:   #64748b;
+  --text3:   #94a3b8;
+  --mono:    'Share Tech Mono', monospace;
+  --ui:      'Rajdhani', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 16px;
+  min-height: 100vh;
+}
+
+/* ── HEADER ─────────────────────────────────── */
+.hdr {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 24px;
+}
+.hdr-logo {
+  width: 34px; height: 34px;
+  background: var(--accent);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.hdr-title { font-size: 1.5rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text); }
+.hdr-sub   { font-family: var(--mono); font-size: 0.65rem; color: var(--text2); letter-spacing: 2px; }
+
+.hdr-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.units-toggle {
+  display: flex;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.units-toggle button {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.units-toggle button.active {
+  background: var(--accent);
+  color: var(--hal-white);
+  font-weight: 700;
+}
+
+/* ── MAIN LAYOUT ─────────────────────────────── */
+.app { display: flex; flex-direction: column; gap: 0; }
+
+/* ── TOOLBAR ─────────────────────────────────── */
+.toolbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toolbar label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.toolbar input, .toolbar select {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  padding: 5px 9px;
+  outline: none;
+}
+.toolbar input:focus, .toolbar select:focus { border-color: var(--accent); }
+.toolbar input { width: 120px; }
+.toolbar select { width: 160px; }
+
+.toolbar-sep { width: 1px; height: 28px; background: var(--border); margin: 0 4px; }
+
+.btn {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--hal-red); border-color: var(--hal-crimson); color: var(--hal-white); font-weight: 700; }
+.btn.primary:hover { background: var(--hal-coral); }
+.btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+/* ── SEGMENT TABLE ───────────────────────────── */
+.table-section {
+  padding: 16px 24px;
+  overflow-x: auto;
+}
+
+.seg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  min-width: 960px;
+}
+
+/* Loose layout for SEQ of EVENTS JPEG (avoids clipped inputs in html2canvas) */
+#allRunsCaptureBlock.seq-capture-shot {
+  overflow: visible !important;
+}
+#allRunsCaptureBlock.seq-capture-shot .table-section {
+  overflow: visible !important;
+  min-width: max-content;
+}
+#allRunsCaptureBlock.seq-capture-shot .seg-table {
+  min-width: 1320px !important;
+  table-layout: auto;
+}
+#allRunsCaptureBlock.seq-capture-shot .seg-table thead th {
+  padding: 12px 10px !important;
+  white-space: normal !important;
+  vertical-align: middle !important;
+}
+#allRunsCaptureBlock.seq-capture-shot .seg-table thead th:nth-child(2) { min-width: 11.5rem; }
+#allRunsCaptureBlock.seq-capture-shot .seg-table thead th:nth-child(3) { min-width: 7.5rem; }
+#allRunsCaptureBlock.seq-capture-shot .seg-table thead th:nth-child(6) { min-width: 8.5rem; }
+#allRunsCaptureBlock.seq-capture-shot .seg-table tbody td:nth-child(2) select { min-width: 10.5rem; }
+#allRunsCaptureBlock.seq-capture-shot .seg-table tbody td:nth-child(3) select { min-width: 7rem; }
+#allRunsCaptureBlock.seq-capture-shot .seg-table tbody td:nth-child(6) select { min-width: 8rem; }
+#allRunsCaptureBlock.seq-capture-shot .seg-table tbody td {
+  padding: 12px 8px !important;
+  vertical-align: middle !important;
+  overflow: visible !important;
+  font-size: 1.144rem !important; /* 0.88rem × 1.3 — данные ниже thead */
+}
+#allRunsCaptureBlock.seq-capture-shot .seg-table tbody td[colspan="14"] {
+  font-size: 0.975rem !important; /* 0.75rem × 1.3 — заголовки RUN внутри tbody */
+}
+#allRunsCaptureBlock.seq-capture-shot .seg-table td input,
+#allRunsCaptureBlock.seq-capture-shot .seg-table td select {
+  padding: 9px 8px !important;
+  line-height: 1.45 !important;
+  min-height: 42px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  font-size: 1.144rem !important;
+}
+#allRunsCaptureBlock.seq-capture-shot .seg-table td.td-dash {
+  font-size: 1.144rem !important;
+  color: #94a3b8 !important;
+}
+#allRunsCaptureBlock.seq-capture-shot .seg-table tbody .btn-insert-row {
+  font-size: 16.9px !important;
+}
+#allRunsCaptureBlock.seq-capture-shot .seg-table tbody .btn-del-row {
+  font-size: 18.2px !important;
+}
+
+.seg-table thead th {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 9px 10px;
+  text-align: center;
+  color: var(--text2);
+  letter-spacing: 1px;
+  font-weight: 400;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.seg-table tbody td {
+  border: 1px solid var(--border);
+  padding: 5px 6px;
+  vertical-align: middle;
+}
+
+.seg-table tbody tr:hover td { background: rgba(185,28,28,0.06); }
+.seg-table tbody tr.row-selected td { background: rgba(185,28,28,0.12); }
+
+.seg-table td input,
+.seg-table td select {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  padding: 6px 8px;
+  width: 100%;
+  outline: none;
+  text-align: center;
+}
+.seg-table td input:focus { background: rgba(185,28,28,0.08); border-radius: 2px; }
+.seg-table td select { cursor: pointer; }
+.seg-table td select option { background: var(--bg2); color: var(--text); }
+
+.seg-table td.td-num {
+  color: var(--text2);
+  text-align: center;
+  width: 32px;
+}
+
+.seg-table td.td-depth {
+  color: var(--accent);
+  text-align: center;
+  font-weight: 700;
+  width: 80px;
+}
+
+.seg-table td.td-result {
+  color: var(--green);
+  text-align: center;
+  width: 80px;
+}
+
+.mode-badge {
+  display: inline-block;
+  border-radius: 2px;
+  padding: 2px 7px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.mode-cont { background: rgba(59,163,208,0.15); color: var(--blue); border: 1px solid rgba(59,163,208,0.3); }
+.mode-stat { background: rgba(155,114,232,0.15); color: var(--purple); border: 1px solid rgba(155,114,232,0.3); }
+
+.btn-del-row {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 3px 7px;
+  border-radius: 2px;
+  transition: color 0.15s;
+  font-family: var(--mono);
+}
+.btn-del-row:hover { color: var(--red); }
+
+.btn-insert-row {
+  background: none; border: none;
+  color: var(--text3); cursor: pointer;
+  font-size: 13px; padding: 2px 5px;
+  border-radius: 2px; transition: color 0.15s;
+  font-family: var(--mono);
+}
+.btn-insert-row:hover { color: var(--cyan); }
+
+/* Mode select styling */
+.mode-select { text-align: center; }
+
+/* Conditional cells */
+.cell-disabled { opacity: 0.25; pointer-events: none; }
+
+/* Inactive numeric cells — em dash (no faint placeholder numbers) */
+.seg-table td.td-dash {
+  text-align: center;
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  padding: 6px 8px;
+  user-select: none;
+}
+
+/* ── STATS ROW ───────────────────────────────── */
+.stats-row {
+  display: flex;
+  gap: 10px;
+  padding: 0 24px 14px;
+  flex-wrap: wrap;
+}
+
+.stat-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 9px 16px;
+  min-width: 120px;
+}
+.stat-box .slabel {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text2);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.stat-box .sval {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--hal-coral);
+}
+.stat-box .sunit { font-size: 0.7rem; color: var(--text2); margin-left: 3px; }
+
+/* ── CHART ───────────────────────────────────── */
+.chart-section {
+  padding: 0 24px 24px;
+}
+
+.chart-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 18px 18px 10px;
+}
+
+.chart-hdr {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.chart-run-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.leg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 0.67rem;
+  color: var(--text2);
+  letter-spacing: 1px;
+}
+
+.leg-line { width: 20px; height: 2.5px; border-radius: 2px; }
+.leg-dash { width: 20px; height: 0; border-top: 2.5px dashed var(--cyan); }
+.leg-dot  { width: 20px; height: 0; border-top: 2.5px dotted var(--blue); }
+
+.canvas-wrap { position: relative; width: 100%; }
+canvas { display: block; width: 100%; }
+
+.empty-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 340px;
+  color: var(--text2);
+  gap: 12px;
+}
+.empty-icon { font-size: 44px; opacity: 0.25; }
+.empty-txt  { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 2px; }
+
+/* ── RUN TABS ────────────────────────────────── */
+.run-tabs-bar {
+  display: flex;
+  gap: 6px;
+  padding: 12px 24px 0;
+  flex-wrap: wrap;
+}
+
+.rtab {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px 3px 0 0;
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.rtab:hover { color: var(--text); border-color: var(--border2); }
+.rtab.active { background: var(--bg2); border-color: var(--hal-coral); border-bottom-color: var(--bg2); color: var(--hal-coral); }
+.rtab .rdot { width: 8px; height: 8px; border-radius: 50%; }
+.rtab .rclose { margin-left: 4px; opacity: 0.4; transition: opacity 0.15s; }
+.rtab .rclose:hover { opacity: 1; color: var(--red); }
+
+/* ── RUN MANAGER ─────────────────────────────── */
+.run-manager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.run-name-input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  padding: 5px 10px;
+  outline: none;
+  width: 140px;
+}
+.run-name-input:focus { border-color: var(--accent); }
+
+
+/* ── JPEG MODAL ─────────────────────────────────── */
+.jpeg-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  z-index: 9999;
+  overflow: auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.jpeg-modal.open { display: flex; flex-direction: column; align-items: center; }
+.jpeg-modal-img {
+  max-width: 100%;
+  border: 2px solid var(--hal-red);
+  border-radius: 4px;
+  cursor: zoom-in;
+}
+.jpeg-modal-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.jpeg-modal-bar span {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: #aaa;
+  letter-spacing: 1px;
+}
+.jpeg-close {
+  background: var(--hal-red);
+  border: none;
+  color: #ffffff;
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 7px 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+.jpeg-save {
+  background: #22c55e;
+  border: none;
+  color: #ffffff;
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 7px 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-decoration: none;
+}
+
+/* ── DEFAULTS PANEL ─────────────────────────────── */
+.defaults-panel {
+  background: var(--bg2);
+  border-bottom: 2px solid var(--hal-red);
+  padding: 14px 24px;
+}
+.defaults-title {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: var(--hal-coral);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+.defaults-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+.def-field { display: flex; flex-direction: column; gap: 3px; }
+.def-field label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+.def-field input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.def-field input:focus { border-color: var(--hal-coral); }
+.def-apply-btn {
+  align-self: flex-end;
+  margin-top: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr" style="position:relative;">
+  <!-- Left: HAL logo + app title -->
+  <svg width="52" height="42" viewBox="0 0 52 42" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+    <rect width="52" height="42" rx="3" fill="#991b1b"/>
+    <text x="26" y="27" text-anchor="middle" font-family="Rajdhani,sans-serif" font-weight="800" font-size="16" fill="#ffffff" letter-spacing="2">HAL</text>
+  </svg>
+  <div>
+    <div class="hdr-title">Logging Procedure Calculator</div>
+    <div class="hdr-sub">WELLBORE SURVEY — TIME CALCULATOR & VISUALIZER</div>
+  </div>
+
+  <!-- Center: HALLIBURTON branding -->
+  <div style="position:absolute;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;">
+    <div style="font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:6px;color:var(--text);text-transform:uppercase;line-height:1.1;">HALLIBURTON</div>
+    <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text2);letter-spacing:2px;margin-top:1px;">by Niyaz Ikhsanov</div>
+    <div style="font-family:var(--mono);font-size:0.55rem;color:var(--text3);letter-spacing:2px;margin-top:6px;">GP | WP | MENA, 2026</div>
+  </div>
+
+  <!-- Right: units + export buttons -->
+  <div class="hdr-right">
+    <button class="btn" onclick="saveProject()" style="font-size:0.78rem;padding:5px 12px;border-color:var(--hal-coral);color:var(--hal-coral);">💾 Save</button>
+    <label class="btn" style="font-size:0.78rem;padding:5px 12px;cursor:pointer;" title="Load project JSON">📂 Load<input type="file" accept=".json" onchange="loadProject(event)" style="display:none"></label>
+    <div style="width:1px;height:24px;background:var(--border);margin:0 4px;"></div>
+    <button class="btn" onclick="exportExcel()" style="font-size:0.78rem;padding:5px 12px;">⬇ Excel</button>
+    <button class="btn" onclick="saveChartJPEG()" style="font-size:0.78rem;padding:5px 12px;">📷 JPEG</button>
+    <button class="btn" onclick="resetAllCallouts()" style="font-size:0.78rem;padding:5px 12px;" title="Reset manual label positions">↺ Reset Labels</button>
+    <div style="width:1px;height:24px;background:var(--border);margin:0 4px;"></div>
+    <span style="font-family:var(--mono);font-size:0.68rem;color:var(--text2);letter-spacing:2px;">UNITS:</span>
+    <div class="units-toggle">
+      <button id="btnEmp" class="active" onclick="setUnits('emp')">ft / min</button>
+      <button id="btnSI"  onclick="setUnits('si')">m / min</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEFAULTS PANEL -->
+<div class="defaults-panel">
+  <div class="defaults-title">▸ Well Defaults</div>
+  <div class="defaults-grid">
+    <div class="def-field" style="grid-column:1/3">
+      <label>Well Name</label>
+      <input type="text" id="def-wellname" placeholder="e.g. WELL-A-01" />
+    </div>
+    <div class="def-field">
+      <label>Top (<span class="u-depth">ft</span>)</label>
+      <input type="number" id="def-top" placeholder="0" value="0" />
+    </div>
+    <div class="def-field">
+      <label>Bottom (<span class="u-depth">ft</span>)</label>
+      <input type="number" id="def-bottom" placeholder="2000" />
+    </div>
+    <div class="def-field">
+      <label>DOWN / UP Speed (<span class="u-speed">ft/min</span>)</label>
+      <input type="number" id="def-contspeed" placeholder="30" value="30" />
+    </div>
+    <div class="def-field">
+      <label>Station Length (<span class="u-depth">ft</span>)</label>
+      <input type="number" id="def-stlen" placeholder="30" value="30" />
+    </div>
+    <div class="def-field">
+      <label>Station Time (sec)</label>
+      <input type="number" id="def-sttime" placeholder="45" value="45" />
+    </div>
+    <div class="def-field">
+      <label>Long Station Time (min)</label>
+      <input type="number" id="def-lstime" placeholder="60" value="60" />
+    </div>
+    <div class="def-field">
+      <label>Speed Btw Stations (<span class="u-speed">ft/min</span>)</label>
+      <input type="number" id="def-stspeed" placeholder="20" value="20" />
+    </div>
+    <div class="def-field">
+      <label>RIH / POOH Speed (<span class="u-speed">ft/min</span>)</label>
+      <input type="number" id="def-rihspeed" placeholder="50" value="50" />
+    </div>
+    <div class="def-field" style="justify-content:flex-end;align-items:center;flex-direction:row;gap:8px;padding-top:18px;">
+      <input type="checkbox" id="chkCompressY" checked
+        style="width:16px;height:16px;accent-color:var(--hal-coral);cursor:pointer;flex-shrink:0;"
+        onchange="recheckCompress()" />
+      <label for="chkCompressY"
+        style="font-family:var(--mono);font-size:0.7rem;color:var(--text);letter-spacing:1px;cursor:pointer;text-transform:uppercase;">
+        Compress Y (transit zone)
+      </label>
+    </div>
+    <div class="def-field def-apply-btn">
+      <label>&nbsp;</label>
+      <button class="btn primary" onclick="applyDefaults()">↓ Apply Defaults</button>
+    </div>
+  </div>
+</div>
+
+<!-- RUN MANAGER BAR -->
+<div class="run-manager">
+  <span style="font-family:var(--mono);font-size:0.68rem;color:var(--text2);letter-spacing:2px;">RUN NAME:</span>
+  <input class="run-name-input" id="newRunName" placeholder="RUN-01" />
+  <button class="btn primary" onclick="addRun()">+ New Run</button>
+  <button class="btn danger"  onclick="deleteRun()">Delete Run</button>
+  <button class="btn" onclick="copyRunToClipboard()" title="Copy this run's segments">⎘ Copy Run</button>
+  <button class="btn" onclick="pasteRunFromClipboard()" title="Paste copied segments into this run">⎗ Paste Run</button>
+  <span style="font-family:var(--mono);font-size:0.68rem;color:var(--text2);margin-left:8px;" id="runInfo"></span>
+</div>
+
+<!-- RUN TABS -->
+<div class="run-tabs-bar" id="runTabs"></div>
+
+<!-- SEGMENT TABLE (+ stats JPEG capture region) -->
+<div id="allRunsCaptureBlock">
+<div class="table-section">
+  <table class="seg-table" id="segTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Condition</th>
+        <th>Direction</th>
+        <th>Top (<span class="u-depth">ft</span>)</th>
+        <th>Bottom (<span class="u-depth">ft</span>)</th>
+        <th>Mode</th>
+        <th>Cont Speed (<span class="u-speed">ft/min</span>)</th>
+        <th>St Interval (<span class="u-depth">ft</span>)</th>
+        <th>St Duration (sec)</th>
+        <th>Speed btw St (<span class="u-speed">ft/min</span>)</th>
+        <th>Main Tool</th>
+        <th>Seg Time (min)</th>
+        <th>Seg Time (hr)</th>
+        <th>⌫</th>
+      </tr>
+    </thead>
+    <tbody id="segBody"></tbody>
+  </table>
+</div>
+
+<div id="tableActionsRow" style="padding:0 24px 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+  <button class="btn primary" onclick="addRow()">+ Add Segment</button>
+  <button class="btn" onclick="calcAndDraw()">▶ Calculate & Visualize</button>
+  <button type="button" class="btn" onclick="saveSeqOfEventsJPEG()" title="JPEG: текущая вкладка (RUN / All Runs) + статистика">📷 SEQ of EVENTS (JPEG)</button>
+  <span id="tableMsg" style="font-family:var(--mono);font-size:0.7rem;color:var(--text2);"></span>
+</div>
+
+<!-- STATS -->
+<div class="stats-row" id="statsRow" style="display:none">
+  <div class="stat-box"><div class="slabel">Total Depth</div><div class="sval" id="s-depth">—<span class="sunit"></span></div></div>
+  <div class="stat-box"><div class="slabel">Segments</div><div class="sval" id="s-segs">—</div></div>
+  <div class="stat-box"><div class="slabel">Total Time (min)</div><div class="sval" id="s-time">—</div></div>
+  <div class="stat-box"><div class="slabel">Total Time (hrs)</div><div class="sval" id="s-hrs">—</div></div>
+  <div class="stat-box" style="min-width:180px"><div class="slabel">Duration (d : h : m)</div><div class="sval" id="s-dhm" style="font-size:1rem;letter-spacing:1px;">—</div></div>
+  <div class="stat-box"><div class="slabel">Total Stations</div><div class="sval" id="s-st">—</div></div>
+</div>
+
+</div>
+<!-- END allRunsCaptureBlock -->
+
+<!-- CHART -->
+<div class="chart-section">
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div>
+        <div class="chart-run-title" id="chartRunTitle">—</div>
+      </div>
+      <div class="chart-legend">
+        <div class="leg"><div class="leg-line" style="background:var(--red)"></div>Descent Cont</div>
+        <div class="leg"><div class="leg-line" style="background:var(--green)"></div>Ascent Cont</div>
+        <div class="leg"><div class="leg-line" style="background:var(--purple)"></div>Stations move</div>
+        <div class="leg"><div class="leg-dash"></div>Station hold</div>
+        <div class="leg"><div class="leg-line" style="background:#f59e0b;border-top:2.5px dashed #f59e0b;background:none"></div>Long Station</div>
+      </div>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="chart"></canvas>
+      <div class="empty-chart" id="emptyChart">
+        <div class="empty-icon">📡</div>
+        <div class="empty-txt">Add segments and click Calculate</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JPEG MODAL -->
+<div class="jpeg-modal" id="jpegModal" onclick="closeJpegModal(event)">
+  <div class="jpeg-modal-bar">
+    <button class="jpeg-close" onclick="var m=document.getElementById('jpegModal');m.style.display='none';m.classList.remove('open');">✕ Close</button>
+    <a class="jpeg-save" id="jpegSaveLink" download="LoggingProcedure.jpg">⬇ Save JPEG</a>
+    <span>or right-click image → Save image as</span>
+  </div>
+  <img class="jpeg-modal-img" id="jpegModalImg" src="" alt="Logging Procedure Chart" />
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+<script>
+// ── STATE ──────────────────────────────────────
+var units = 'emp'; // 'emp' = ft/min, 'si' = m/min
+var runs = [];     // [{id, name, color, segments:[...], result}]
+var activeRunIdx = -1;
+var rowCounter = 0;
+
+var RUN_COLORS = ['#e8a020','#3db87a','#3ba3d0','#e05555','#9b72e8','#b91c1c','#f472b6','#facc15'];
+
+function getRunCalloutOverrides(run) {
+  if (!run) return {};
+  if (!run.calloutOverrides) run.calloutOverrides = {};
+  return run.calloutOverrides;
+}
+var allRunsCalloutOverrides = {};
+function calloutKey(runId, segIdx, kind) {
+  return 'r' + (runId == null ? 'x' : runId) + '_s' + segIdx + '_' + kind;
+}
+function redrawCurrentChart() {
+  if (activeRunIdx === -99) { showAllRuns(); return; }
+  var run = getActiveRun();
+  if (run && run.result) drawChart(run);
+}
+
+var CONDITIONS = [
+  'Shut-in','Flowing','Transient','Refilling','Injection',
+  'A-ann Bleed-off','B-ann Bleed-off','C-ann Bleed-off',
+  'D-ann Bleed-off','E-ann Bleed-off','Pumping','Circulation'
+];
+
+/* Chart axis (time along bottom); segment labels scaled +30% vs original 9.5px base */
+var CHART_PAD_B = 62;
+var CHART_SEG_LABEL_PX = 12;
+var CHART_SEG_LABEL_GAP = 14;
+/** Perpendicular offset so rotated stair labels sit clear of dashed hold segments */
+var CHART_STAIR_LABEL_GAP_MULT = 2.65;
+var CHART_X_TICK_FONT = '14px "Share Tech Mono", monospace';
+var CHART_X_TITLE_FONT = '13px "Share Tech Mono", monospace';
+var CHART_X_TICK_DY = 21;
+
+/** ±1 perpendicular push so labels sit beside the chord, away from dashed holds. */
+function chartLabelPerpFlip(isDown, angleRad) {
+  var hem = Math.cos(angleRad) < 0 ? 1 : -1;
+  return (isDown ? 1 : -1) * hem;
+}
+
+/**
+ * Stair polyline: canvas X monotone along lt. Horizontal center by time → canvas Xmid,
+ * Y on polyline + perpendicular offset on the opposite side (“under” chord vs holds).
+ */
+function stationStairCanvasCenterBelowHolds(ptArr, ltToCanvasX, tyDepth, gapPx, eps) {
+  eps = eps == null ? 0.65 : eps;
+  if (!ptArr || ptArr.length < 2) return null;
+  var x0 = ltToCanvasX(ptArr[0].lt), xLast = ltToCanvasX(ptArr[ptArr.length - 1].lt);
+  var cx = (x0 + xLast) / 2;
+  var chordY1 = tyDepth(ptArr[0].d), chordY2 = tyDepth(ptArr[ptArr.length - 1].d);
+  var chordAng = Math.atan2(chordY2 - chordY1, xLast - x0 || 1e-6);
+  var tAlong = Math.abs(xLast - x0) > 1e-6 ? (cx - x0) / (xLast - x0) : 0.5;
+  var onY = chordY1 + tAlong * (chordY2 - chordY1);
+  for (var ij = 1; ij < ptArr.length; ij++) {
+    var pa = ptArr[ij - 1], pb = ptArr[ij];
+    var xa = ltToCanvasX(pa.lt), ya = tyDepth(pa.d);
+    var xb = ltToCanvasX(pb.lt), yb = tyDepth(pb.d);
+    var lo = Math.min(xa, xb), hi = Math.max(xa, xb);
+    if (cx > hi + eps || cx < lo - eps) continue;
+    if (Math.abs(xb - xa) < 1e-4) {
+      onY = (ya + yb) / 2;
+    } else {
+      var tn = (cx - xa) / (xb - xa);
+      onY = ya + tn * (yb - ya);
+    }
+    break;
+  }
+  var plx = -Math.sin(chordAng), ply = Math.cos(chordAng);
+  var dyChord = chordY2 - chordY1;
+  var wantTowardDeep = dyChord > 1e-4 ? 1 : (dyChord < -1e-4 ? -1 : 1);
+  if (wantTowardDeep * ply < 0) {
+    plx = -plx;
+    ply = -ply;
+  }
+  return {
+    lx: cx - plx * gapPx,
+    ly: onY - ply * gapPx,
+    angle: chordAng
+  };
+}
+
+/**
+ * Continuous + station tilted labels: one rule — fit text to segment chord (start→end, px).
+ * Same font face/weight as station rows (no bold) so down-pass and up-pass match.
+ */
+function unifiedSegAngledFontPx(ctx, label, x1, y1, x2, y2, basePx, minPx) {
+  var ln = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)) || 1;
+  var k = 0.92;
+  ctx.font = basePx + 'px "Share Tech Mono", monospace';
+  var tw = ctx.measureText(label).width;
+  if (tw <= ln * k) return basePx;
+  return Math.max(minPx, Math.round(basePx * (ln * k / tw)));
+}
+
+/** Long-station stack (tool / LONG STATION / time): scale with horizontal span so it matches other segment labels. */
+function longStationLabelFontsLive(pxSpan) {
+  var w = Math.max(1, pxSpan);
+  return {
+    tool: Math.max(10, Math.min(18, Math.round(w * 0.056))),
+    mid: Math.max(13, Math.min(22, Math.round(w * 0.074))),
+    time: Math.max(10, Math.min(18, Math.round(w * 0.056)))
+  };
+}
+
+/** Leader-line callout for short segments where inline labels would overlap. */
+function chartLabelFitsInline(ctx, label, chordPx, basePx, minPx) {
+  ctx.font = basePx + 'px "Share Tech Mono", monospace';
+  var tw = ctx.measureText(label).width;
+  // Inline OK if shrunk font would still be readable (>= minPx + 2)
+  return tw <= chordPx * 0.92 * (basePx / (minPx + 2));
+}
+
+function queueCallout(list, ax, ay, lines, opts) {
+  list.push({ ax: ax, ay: ay, lines: lines, opts: opts || {} });
+}
+
+function drawCallouts(ctx, callouts, opts) {
+  // opts: { area, plotGeo, overrides, fontScale, font, skipHitStash }
+  if (!callouts || !callouts.length) return;
+  var area     = opts.area || opts;            // back-compat: opts may be plain area obj
+  var plotGeo  = opts.plotGeo || { padL: area.x0, padT: area.y0, plotW: area.x1 - area.x0, plotH: area.y1 - area.y0 };
+  var overrides = opts.overrides || {};
+  var fScale   = opts.fontScale || 1;
+  var baseFont = opts.font || '"Share Tech Mono", monospace';
+
+  var pad       = Math.round(4 * fScale);
+  var gap       = 2;
+  var leaderLen = Math.round(34 * fScale);
+
+  // Sort: pinned (overridden) first so auto-placed boxes avoid them
+  var sorted = callouts.slice().sort(function(a, b) {
+    var aPin = a.opts && a.opts.key && overrides[a.opts.key] ? 1 : 0;
+    var bPin = b.opts && b.opts.key && overrides[b.opts.key] ? 1 : 0;
+    if (bPin !== aPin) return bPin - aPin;
+    return a.ax - b.ax;
+  });
+
+  var placed = [];
+  var hits   = [];
+
+  sorted.forEach(function(c) {
+    // Measure text
+    var maxW = 0, totalH = 0;
+    c.lines.forEach(function(ln) {
+      var sz = Math.round((ln.size || 11) * fScale);
+      ctx.font = (ln.bold ? 'bold ' : '') + sz + 'px ' + baseFont;
+      maxW   = Math.max(maxW, ctx.measureText(ln.text).width);
+      totalH += sz + gap;
+    });
+    totalH -= gap;
+    var boxW = maxW + pad * 2;
+    var boxH = totalH + pad * 2;
+
+    var bx, by;
+    var key = c.opts && c.opts.key;
+    var ov  = key && overrides[key];
+
+    if (ov) {
+      // Pinned: restore from fractional coords
+      bx = plotGeo.padL + ov.bxR * plotGeo.plotW;
+      by = plotGeo.padT + ov.byR * plotGeo.plotH;
+    } else {
+      // Auto-place: above-right or above-left depending on anchor side
+      var nearRight = c.ax > (area.x0 + area.x1) / 2;
+      var dirX = nearRight ? -1 : 1;
+      bx = c.ax + dirX * leaderLen - (dirX > 0 ? 0 : boxW);
+      by = c.ay - leaderLen - boxH;
+
+      // Clamp
+      if (bx + boxW > area.x1 - 2) bx = area.x1 - boxW - 2;
+      if (bx < area.x0 + 2)        bx = area.x0 + 2;
+      if (by < area.y0 + 2)        by = area.y0 + 2;
+      if (by + boxH > area.y1 - 2) by = area.y1 - boxH - 2;
+
+      // Anti-collision
+      var tries = 0;
+      while (tries < 30) {
+        var hit = null;
+        for (var i = 0; i < placed.length; i++) {
+          var p = placed[i];
+          if (!(bx + boxW < p.bx - 3 || bx > p.bx + p.bw + 3 ||
+                by + boxH < p.by - 3 || by > p.by + p.bh + 3)) {
+            hit = p; break;
+          }
+        }
+        if (!hit) break;
+        by = hit.by + hit.bh + 4;
+        if (by + boxH > area.y1 - 2) {
+          by = area.y0 + 2;
+          bx += (dirX > 0 ? 1 : -1) * (boxW + 8);
+          if (bx + boxW > area.x1 - 2) bx = area.x1 - boxW - 2;
+          if (bx < area.x0 + 2)        bx = area.x0 + 2;
+        }
+        tries++;
+      }
+    }
+    placed.push({ bx: bx, by: by, bw: boxW, bh: boxH });
+    if (key) hits.push({ bx: bx, by: by, bw: boxW, bh: boxH, key: key, ax: c.ax, ay: c.ay });
+
+    // Leader endpoint: nearest point on box edge
+    var cx = bx + boxW / 2, cy = by + boxH / 2;
+    var ex, ey;
+    if (c.ax < bx)          { ex = bx;        ey = Math.max(by + 4, Math.min(by + boxH - 4, c.ay)); }
+    else if (c.ax > bx+boxW){ ex = bx + boxW; ey = Math.max(by + 4, Math.min(by + boxH - 4, c.ay)); }
+    else { ex = Math.max(bx+4, Math.min(bx+boxW-4, c.ax)); ey = (c.ay < cy) ? by : by + boxH; }
+
+    var lineColor   = c.opts.lineColor   || 'rgba(80,80,80,0.75)';
+    var borderColor = c.opts.borderColor || 'rgba(80,80,80,0.55)';
+
+    ctx.save();
+    // Leader
+    ctx.strokeStyle = lineColor; ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(c.ax, c.ay); ctx.lineTo(ex, ey); ctx.stroke();
+    // Box
+    ctx.fillStyle = c.opts.bg || 'rgba(255,255,255,0.94)';
+    ctx.strokeStyle = borderColor; ctx.lineWidth = 1;
+    if (ctx.roundRect) {
+      ctx.beginPath(); ctx.roundRect(bx, by, boxW, boxH, 3); ctx.fill(); ctx.stroke();
+    } else {
+      ctx.fillRect(bx, by, boxW, boxH); ctx.strokeRect(bx, by, boxW, boxH);
+    }
+    // Text lines
+    var yCursor = by + pad;
+    c.lines.forEach(function(ln) {
+      var sz = Math.round((ln.size || 11) * fScale);
+      ctx.font = (ln.bold ? 'bold ' : '') + sz + 'px ' + baseFont;
+      ctx.fillStyle = ln.color || '#222';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(ln.text, bx + pad, yCursor);
+      yCursor += sz + gap;
+    });
+    ctx.restore();
+  });
+
+  if (!opts.skipHitStash) {
+    ctx.canvas._calloutHits    = hits;
+    ctx.canvas._calloutPlotGeo = plotGeo;
+  }
+}
+
+/** Cumulative minutes at each segment boundary (+ end); skips mids when labels would overlap */
+function drawPassBoundaryTimeMarks(ctx, marks, y, font, fillStyle, minGapPx) {
+  if (!marks || !marks.length) return;
+  marks = marks.slice().sort(function(a, b) { return a.x - b.x; });
+  // Drop crowded penultimate(s) before the final tick (short last segment → e.g. 248 and 252 on top of each other)
+  while (marks.length >= 2) {
+    var ia = marks.length - 2;
+    if (marks[ia].t <= 0) break;
+    if (marks[marks.length - 1].x - marks[ia].x >= minGapPx) break;
+    marks.splice(ia, 1);
+  }
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = fillStyle;
+  ctx.font = font;
+  var lastX = -1e9;
+  for (var i = 0; i < marks.length; i++) {
+    var m = marks[i];
+    if (i > 0 && i < marks.length - 1 && m.x - lastX < minGapPx) continue;
+    ctx.fillText(String(m.t), m.x, y);
+    lastX = m.x;
+  }
+  ctx.restore();
+}
+
+// ── UNITS ──────────────────────────────────────
+function setUnits(u) {
+  units = u;
+  document.getElementById('btnEmp').classList.toggle('active', u === 'emp');
+  document.getElementById('btnSI').classList.toggle('active',  u === 'si');
+  var dLabel = u === 'emp' ? 'ft' : 'm';
+  var sLabel = u === 'emp' ? 'ft/min' : 'm/min';
+  document.querySelectorAll('.u-depth').forEach(function(el){ el.textContent = dLabel; });
+  document.querySelectorAll('.u-speed').forEach(function(el){ el.textContent = sLabel; });
+}
+
+// ── RUN MANAGEMENT ────────────────────────────
+function addRun() {
+  var name = document.getElementById('newRunName').value.trim() || ('RUN-' + (runs.length + 1));
+  var color = RUN_COLORS[runs.length % RUN_COLORS.length];
+  runs.push({ id: Date.now(), name: name, color: color, rows: [], result: null });
+  activeRunIdx = runs.length - 1;
+  document.getElementById('newRunName').value = '';
+  renderTabs();
+  renderTable();
+  clearChart();
+}
+
+/** After delete: RUN-2 → RUN-1 for names matching RUN-<digits> (custom names unchanged). */
+function renumberAutoRunNames() {
+  runs.forEach(function(r, i) {
+    var n = String(r.name || '').trim();
+    if (/^RUN-0*\d+$/i.test(n)) r.name = 'RUN-' + (i + 1);
+  });
+}
+
+function deleteRun() {
+  if (activeRunIdx < 0 || runs.length === 0) return;
+  runs.splice(activeRunIdx, 1);
+  renumberAutoRunNames();
+  activeRunIdx = runs.length > 0 ? Math.min(activeRunIdx, runs.length - 1) : -1;
+  renderTabs();
+  renderTable();
+  if (activeRunIdx >= 0 && runs[activeRunIdx].result) {
+    drawChart(runs[activeRunIdx]);
+  } else {
+    clearChart();
+  }
+}
+
+function switchRun(idx) {
+  activeRunIdx = idx;
+  renderTabs();
+  renderTable();
+  var r = runs[idx];
+  if (r && r.result) { drawChart(r); updateStats(r); }
+  else clearChart();
+}
+
+function renderTabs() {
+  var el = document.getElementById('runTabs');
+  if (runs.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = runs.map(function(r, i) {
+    var act = i === activeRunIdx ? ' active' : '';
+    return '<div class="rtab' + act + '" onclick="switchRun(' + i + ')">' +
+      '<span class="rdot" style="background:' + r.color + '"></span>' +
+      r.name +
+    '</div>';
+  }).join('') + (runs.length > 1
+    ? '<div class="rtab' + (activeRunIdx === -99 ? ' active' : '') + '" onclick="showAllRuns()" style="border-color:var(--border2);color:var(--text2)">⊞ All Runs</div>'
+    : '');
+  var info = activeRunIdx === -99 ? 'All Runs' : (activeRunIdx >= 0 ? runs[activeRunIdx].name : '');
+  document.getElementById('runInfo').textContent = info;
+}
+
+// ── SEGMENT TABLE ─────────────────────────────
+function getActiveRun() {
+  return activeRunIdx >= 0 && activeRunIdx < runs.length ? runs[activeRunIdx] : null;
+}
+
+function addRow() {
+  var run = getActiveRun();
+  if (!run) { alert('Create a Run first'); return; }
+
+  var prevBottom = 0;
+  var prevTop = 0;
+  var prevCondition = CONDITIONS[0];
+
+  if (run.rows.length > 0) {
+    var prev = run.rows[run.rows.length - 1];
+    prevCondition = prev.condition || CONDITIONS[0];
+    // For bottom of new row's top: skip longst rows to find real depth
+    if (prev.direction === 'longst') {
+      prevBottom = parseFloat(prev.top) || 0;
+      prevTop    = prevBottom; // longst: top=bottom
+    } else {
+      var pb = parseFloat(prev.bottom);
+      prevBottom = isNaN(pb) ? (parseFloat(prev.top) || 0) : pb;
+      prevTop    = parseFloat(prev.top) || 0;
+    }
+  }
+
+  // Default stDuration: if direction will be longst use lstime*60, else use sttime
+  // We default direction to 'down', so use sttime. User switches to longst later.
+  var defStDuration = getDefVal('def-sttime', 45);
+
+  rowCounter++;
+  run.rows.push({
+    _id: rowCounter,
+    condition: prevCondition,
+    direction: 'down',
+    top: prevBottom,  // Will be overridden if user picks RIH
+    bottom: getDefVal('def-bottom', ''),
+    mode: 'cont',
+    contSpeed: getDefVal('def-contspeed', 30),
+    stInterval: getDefVal('def-stlen', 30),
+    stDuration: defStDuration,
+    stSpeed: getDefVal('def-stspeed', 20),
+    mainTool: 'HPT',
+    _prevTop: prevTop   // store for UP direction logic
+  });
+  renderTable();
+}
+
+function deleteRow(id) {
+  var run = getActiveRun();
+  if (!run) return;
+  run.rows = run.rows.filter(function(r){ return r._id !== id; });
+  renderTable();
+}
+
+function insertRowAfter(id) {
+  var run = getActiveRun();
+  if (!run) return;
+  var idx = run.rows.findIndex(function(r){ return r._id === id; });
+  if (idx < 0) return;
+  var refRow = run.rows[idx];
+  // New row starts where refRow ends
+  var newTop = refRow.direction === 'longst'
+    ? (parseFloat(refRow.top) || 0)
+    : (parseFloat(refRow.bottom) || 0);
+
+  rowCounter++;
+  var newRow = {
+    _id:        rowCounter,
+    condition:  refRow.condition,
+    direction:  'down',
+    top:        newTop,
+    bottom:     getDefVal('def-bottom', ''),
+    mode:       'cont',
+    contSpeed:  getDefVal('def-contspeed', 30),
+    stInterval: getDefVal('def-stlen', 30),
+    stDuration: getDefVal('def-sttime', 45),
+    stSpeed:    getDefVal('def-stspeed', 20),
+    mainTool:   refRow.mainTool || 'HPT'
+  };
+  run.rows.splice(idx + 1, 0, newRow);
+  renderTable();
+}
+
+// ── COPY / PASTE RUN ──────────────────────────────
+var _copiedRunRows = null;
+
+function copyRunToClipboard() {
+  var run = getActiveRun();
+  if (!run || run.rows.length === 0) { alert('No segments to copy.'); return; }
+  _copiedRunRows = run.rows.map(function(r) { return Object.assign({}, r); });
+  alert('Run "' + run.name + '" copied (' + _copiedRunRows.length + ' segments). Switch to another run and click Paste Run.');
+}
+
+function pasteRunFromClipboard() {
+  if (!_copiedRunRows || _copiedRunRows.length === 0) {
+    alert('Nothing copied yet. Use Copy Run first.'); return;
+  }
+  var run = getActiveRun();
+  if (!run) { alert('Select a run first.'); return; }
+  if (run.rows.length > 0 && !confirm('Replace all segments in "' + run.name + '" with the copied run?')) return;
+  // Deep copy with new IDs
+  run.rows = _copiedRunRows.map(function(r) {
+    return Object.assign({}, r, { _id: ++rowCounter, _segTime: undefined });
+  });
+  run.result = null;
+  renderTable();
+  alert('Pasted ' + run.rows.length + ' segments into "' + run.name + '".');
+}
+
+function renderTable() {
+  var tbody = document.getElementById('segBody');
+
+  // In All Runs mode: show all runs concatenated with run headers
+  if (activeRunIdx === -99) {
+    if (runs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:20px;color:var(--text2);font-family:var(--mono);">No runs yet</td></tr>';
+      return;
+    }
+    var html = '';
+    runs.forEach(function(run) {
+      // Run header row
+      html += '<tr><td colspan="14" style="background:rgba(185,28,28,0.12);color:#991b1b;font-family:var(--mono);font-size:0.75rem;font-weight:700;padding:6px 12px;letter-spacing:2px;border-top:1px solid var(--border2);">▸ ' + run.name + '</td></tr>';
+      if (!run.rows.length) {
+        html += '<tr><td colspan="14" style="text-align:center;padding:8px;color:var(--text2);font-family:var(--mono);font-size:0.72rem;">No segments</td></tr>';
+      } else {
+        run.rows.forEach(function(row, i) {
+          html += buildRowHtml(row, i);
+        });
+      }
+    });
+    tbody.innerHTML = html;
+    return;
+  }
+
+  var run = getActiveRun();
+  if (!run || run.rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:20px;color:var(--text2);font-family:var(--mono);font-size:0.75rem;letter-spacing:1px;">' +
+      (run ? 'No segments yet — click &quot;+ Add Segment&quot;' : 'Select or create a Run above') + '</td></tr>';
+    return;
+  }
+
+  var dUnit = units === 'emp' ? 'ft' : 'm';
+  var sUnit = units === 'emp' ? 'ft/min' : 'm/min';
+
+  tbody.innerHTML = run.rows.map(function(row, i) { return buildRowHtml(row, i); }).join('');
+}  // end renderTable
+
+function buildRowHtml(row, i) {
+  var dUnit = units === 'emp' ? 'ft' : 'm';
+  var sUnit = units === 'emp' ? 'ft/min' : 'm/min';
+  var isStat = row.mode === 'stat';
+    var condOpts = CONDITIONS.map(function(c){
+      return '<option value="' + c + '"' + (row.condition === c ? ' selected' : '') + '>' + c + '</option>';
+      }).join('\r\n');
+    var dirMap = {'down':'↓ Down','up':'↑ Up','longst':'⏸ Long Station','rih':'⬇ RIH','pooh':'⬆ POOH'};
+    var dirOpts = Object.keys(dirMap).map(function(d){
+      return '<option value="' + d + '"' + (row.direction === d ? ' selected' : '') + '>' + dirMap[d] + '</option>';
+    }).join('');
+    var modOpts = ['cont','stat'].map(function(m){
+      return '<option value="' + m + '"' + (row.mode === m ? ' selected' : '') + '>' + (m === 'cont' ? 'Continuous' : 'Stations') + '</option>';
+    }).join('');
+
+    var segTime = row._segTime !== undefined ? row._segTime.toFixed(1) : '—';
+    var segHrs  = row._segTime !== undefined ? (row._segTime / 60).toFixed(1) : '—';
+    var isLongSt = row.direction === 'longst';
+    var disAll  = isLongSt ? 'cell-disabled' : '';
+    var disCont = isStat && !isLongSt;
+    var disStat = !isStat && !isLongSt;
+    // For long station the "duration" input is stDuration (repurposed as total hold time in sec)
+    // We show a special duration input for longst
+    var dash = '<td class="td-dash">—</td>';
+    var longStDur = isLongSt
+      ? '<td colspan="4"><input type="number" value="' + row.stDuration + '" placeholder="Hold (sec) — default uses min×60" style="width:100%;text-align:center;color:#f59e0b" onchange="updateRow(' + row._id + ',\'stDuration\',this.value)" /></td>'
+      : (disCont ? dash : '<td><input type="number" value="' + row.contSpeed + '" placeholder="spd" onchange="updateRow(' + row._id + ',\'contSpeed\',this.value)" /></td>') +
+        (disStat ? dash : '<td><input type="number" value="' + row.stInterval + '" placeholder="int" onchange="updateRow(' + row._id + ',\'stInterval\',this.value)" /></td>') +
+        (disStat ? dash : '<td><input type="number" value="' + row.stDuration + '" placeholder="sec" onchange="updateRow(' + row._id + ',\'stDuration\',this.value)" /></td>') +
+        (disStat ? dash : '<td><input type="number" value="' + row.stSpeed + '" placeholder="spd" onchange="updateRow(' + row._id + ',\'stSpeed\',this.value)" /></td>');
+
+    // Top always editable; Bottom editable except longst
+    var topCell = '<input type="number" value="' + row.top + '" placeholder="top" style="color:var(--accent);font-weight:700" onchange="updateRow(' + row._id + ',\'top\',this.value)" />';
+    var bottomCell = isLongSt
+      ? '<span style="color:var(--accent);padding:6px 8px;display:block;text-align:center;font-weight:700">' + row.top + '</span>'
+      : '<input type="number" value="' + row.bottom + '" placeholder="depth (' + dUnit + ')" style="color:var(--accent);font-weight:700" onchange="updateRow(' + row._id + ',\'bottom\',this.value)" />';
+
+    return '<tr>' +
+      '<td class="td-num">' + (i+1) + '</td>' +
+      '<td><select onchange="updateRow(' + row._id + ',\'condition\',this.value)">' + condOpts + '</select></td>' +
+      '<td><select onchange="updateRow(' + row._id + ',\'direction\',this.value)">' + dirOpts + '</select></td>' +
+      '<td>' + topCell + '</td>' +
+      '<td>' + bottomCell + '</td>' +
+      '<td class="' + disAll + '"><select onchange="updateRow(' + row._id + ',\'mode\',this.value)">' + modOpts + '</select></td>' +
+      longStDur +
+      '<td><select style="color:#5ab0d8;font-weight:700" onchange="updateRow(' + row._id + ',\'mainTool\',this.value)">' +
+        ['HPT','NOISE','EM','PLT','PNL','CEM','DAS-DTS'].map(function(t){
+          return '<option value="' + t + '"' + (row.mainTool===t?' selected':'') + '>' + t + '</option>';
+        }).join('') +
+      '</select></td>' +
+      '<td class="td-result">' + segTime + '</td>' +
+      '<td class="td-result" style="color:#94a3b8">' + segHrs + '</td>' +
+      '<td style="white-space:nowrap">' +
+        '<button class="btn-insert-row" onclick="insertRowAfter(' + row._id + ')" title="Insert row below">＋</button>' +
+        '<button class="btn-del-row" onclick="deleteRow(' + row._id + ')">✕</button>' +
+      '</td>' +
+    '</tr>'
+}
+
+function updateRow(id, field, value) {
+  var run = getActiveRun();
+  if (!run) return;
+  var row = run.rows.find(function(r){ return r._id === id; });
+  if (!row) return;
+
+  // Save old direction BEFORE updating, so we can detect longst→other transitions
+  var oldDirection = row.direction;
+
+  if (['bottom','contSpeed','stInterval','stDuration','stSpeed'].indexOf(field) >= 0) {
+    row[field] = parseFloat(value) || 0;
+  } else if (field === 'top') {
+    row[field] = parseFloat(value) || 0;
+    if (row.direction === 'longst') row.bottom = row.top;
+  } else {
+    row[field] = value;
+  }
+
+  // Direction change side-effects
+  if (field === 'direction') {
+    if (value === 'longst') {
+      row.bottom = row.top;
+      var lstEl = document.getElementById('def-lstime');
+      var lstMin = lstEl ? (parseFloat(lstEl.value) || 60) : 60;
+      row.stDuration = Math.round(lstMin * 60);
+    } else if (oldDirection === 'longst') {
+      // Switching AWAY from longst — restore normal station time
+      var stTimeEl = document.getElementById('def-sttime');
+      row.stDuration = stTimeEl ? (parseFloat(stTimeEl.value) || 45) : 45;
+    }
+    if (value === 'up') {
+      // UP is a logging pass — use cont speed, not RIH speed
+      var rowIdxUp = run.rows.indexOf(row);
+      for (var pi = rowIdxUp - 1; pi >= 0; pi--) {
+        if (run.rows[pi].direction !== 'longst') {
+          row.bottom = parseFloat(run.rows[pi].top) || 0;
+          break;
+        }
+      }
+      var contElUp = document.getElementById('def-contspeed');
+      var stSpdElUp = document.getElementById('def-stspeed');
+      row.contSpeed = contElUp ? (parseFloat(contElUp.value) || 30) : 30;
+      row.stSpeed   = stSpdElUp ? (parseFloat(stSpdElUp.value) || 20) : 20;
+    } else if (value === 'pooh') {
+      // POOH always goes to surface (0)
+      row.bottom = 0;
+      var rihElPh = document.getElementById('def-rihspeed');
+      var stSpdElPh = document.getElementById('def-stspeed');
+      row.contSpeed = rihElPh ? (parseFloat(rihElPh.value) || 50) : 50;
+      row.stSpeed   = stSpdElPh ? (parseFloat(stSpdElPh.value) || 20) : 20;
+    } else if (value === 'rih') {
+      // RIH always starts from surface
+      var rowIdxRih = run.rows.indexOf(row);
+      if (rowIdxRih === 0) {
+        row.top = 0;
+      }
+      var rihEl2 = document.getElementById('def-rihspeed');
+      var rihSpd2 = rihEl2 ? (parseFloat(rihEl2.value) || 50) : 50;
+      row.contSpeed = rihSpd2;
+      row.stSpeed   = rihSpd2;
+    }
+  }
+
+  // Cascade: update tops of subsequent rows
+  if (field === 'bottom' || field === 'top' || field === 'direction') {
+    var idx = run.rows.indexOf(row);
+    for (var i = idx + 1; i < run.rows.length; i++) {
+      var prevRow = run.rows[i - 1];
+      run.rows[i].top = prevRow.direction === 'longst'
+        ? (parseFloat(prevRow.top) || 0)
+        : (parseFloat(prevRow.bottom) || 0);
+      if (run.rows[i].direction === 'longst') run.rows[i].bottom = run.rows[i].top;
+    }
+  }
+  renderTable();
+}
+
+// ── HELPERS ───────────────────────────────────
+function formatLSTime(mins) {
+  if (mins >= 60) {
+    var hrs = mins / 60;
+    return Number.isInteger(hrs) ? hrs + ' hr' : hrs.toFixed(1) + ' hr';
+  }
+  return mins.toFixed(1) + ' min';
+}
+
+function recheckCompress() {
+  // Redraw active chart with new compress setting
+  if (activeRunIdx === -99) {
+    showAllRuns();
+  } else {
+    var run = getActiveRun();
+    if (run && run.result) drawChart(run);
+  }
+}
+
+function getCompressY() {
+  var el = document.getElementById('chkCompressY');
+  return el ? el.checked : true;
+}
+
+function getDefVal(id, fallback) {
+  var el = document.getElementById(id);
+  if (!el) return fallback;
+  var v = parseFloat(el.value);
+  return isNaN(v) ? fallback : v;
+}
+
+function applyDefaults() {
+  var run = getActiveRun();
+  if (!run || run.rows.length === 0) { alert('Add segments first, then apply defaults'); return; }
+  var contSpd = getDefVal('def-contspeed', 30);
+  var stLen   = getDefVal('def-stlen', 30);
+  var stTime  = getDefVal('def-sttime', 45);
+  var stSpd   = getDefVal('def-stspeed', 20);
+  var rihSpd  = getDefVal('def-rihspeed', 50);
+  var lstMin  = getDefVal('def-lstime', 60);
+  var defBot  = null, defTop = null;
+  var defBotEl = document.getElementById('def-bottom');
+  var defTopEl = document.getElementById('def-top');
+  if (defBotEl && defBotEl.value !== '') defBot = parseFloat(defBotEl.value);
+  if (defTopEl && defTopEl.value !== '') defTop = parseFloat(defTopEl.value);
+
+  // Step 1: Apply speeds, station params, and long-station time to each row
+  run.rows.forEach(function(row) {
+    if (row.direction === 'longst') {
+      row.stDuration = lstMin * 60;
+      return;
+    }
+    var isRih  = (row.direction === 'rih');
+    var isPooh = (row.direction === 'pooh');
+    var isUp   = (row.direction === 'up');
+    row.contSpeed  = (isRih || isPooh) ? rihSpd : contSpd;
+    row.stSpeed    = (isRih || isPooh) ? rihSpd : stSpd;
+    row.stInterval = stLen;
+    row.stDuration = stTime;
+  });
+
+  // Step 2: Rebuild depth chain. RIH always starts from surface (top=0).
+  // First row top: if RIH → 0, else defTop or keep existing.
+  if (run.rows[0].direction === 'rih') {
+    run.rows[0].top = 0;
+  } else if (defTop !== null && !isNaN(defTop)) {
+    run.rows[0].top = defTop;
+  }
+
+  // For each row, set bottom based on its direction:
+  //   Down / RIH  → bottom = defBot (tool goes deeper)
+  //   Up          → bottom = previous top (tool goes back up from where it was)
+  //   POOH        → bottom = 0 if previous was Up with non-zero bottom, else top
+  //   Long Station → bottom = top (no movement)
+  run.rows.forEach(function(row, i) {
+    var dir = row.direction;
+    if (dir === 'longst') {
+      row.bottom = row.top;
+      return;
+    }
+    if (dir === 'down' || dir === 'rih') {
+      // Going down — bottom is the target depth
+      if (defBot !== null && !isNaN(defBot)) row.bottom = defBot;
+      // else keep existing bottom
+    } else if (dir === 'up') {
+      // Going up — bottom = top of nearest previous non-longst row (where we came from)
+      for (var pi = i - 1; pi >= 0; pi--) {
+        if (run.rows[pi].direction !== 'longst') {
+          row.bottom = parseFloat(run.rows[pi].top) || 0;
+          break;
+        }
+      }
+    } else if (dir === 'pooh') {
+      // POOH — go to surface (0) if previous UP row had non-zero bottom
+      var prevUp = null;
+      for (var pi2 = i - 1; pi2 >= 0; pi2--) {
+        if (run.rows[pi2].direction !== 'longst') { prevUp = run.rows[pi2]; break; }
+      }
+      if (prevUp && prevUp.direction === 'up' && parseFloat(prevUp.bottom) !== 0) {
+        row.bottom = 0;
+      } else {
+        row.bottom = prevUp ? (parseFloat(prevUp.top) || 0) : 0;
+      }
+    }
+  });
+
+  // Step 3: Cascade tops — each row's top = previous row's bottom (respecting longst)
+  for (var ci = 1; ci < run.rows.length; ci++) {
+    var prevR = run.rows[ci - 1];
+    run.rows[ci].top = prevR.direction === 'longst'
+      ? (parseFloat(prevR.top) || 0)
+      : (parseFloat(prevR.bottom) || 0);
+    if (run.rows[ci].direction === 'longst') run.rows[ci].bottom = run.rows[ci].top;
+  }
+
+  renderTable();
+}
+
+// ── CALCULATION ───────────────────────────────
+function calcAndDraw() {
+  // If "All Runs" tab is active, calculate every run and show combined view
+  if (activeRunIdx === -99) {
+    var anyCalced = false;
+    runs.forEach(function(run) {
+      if (!run.rows.length) return;
+      calcRun(run);
+      anyCalced = true;
+    });
+    if (!anyCalced) { alert('No runs with segments'); return; }
+    renderTable();
+    showAllRuns();
+    // Update stats with combined total
+    var combinedTime = 0, combinedSt = 0;
+    runs.forEach(function(r){ if(r.result){ combinedTime+=r.result.totalTime; combinedSt+=r.result.totalStations; } });
+    document.getElementById('statsRow').style.display = 'flex';
+    document.getElementById('s-depth').innerHTML = '—';
+    document.getElementById('s-segs').innerHTML  = runs.reduce(function(a,r){ return a+(r.result?r.result.segments.length:0); },0);
+    document.getElementById('s-time').innerHTML  = combinedTime.toFixed(1) + '<span class="sunit"> min</span>';
+    document.getElementById('s-hrs').innerHTML   = (combinedTime/60).toFixed(2) + '<span class="sunit"> hr</span>';
+    document.getElementById('s-dhm').textContent = minToDHM(combinedTime);
+    document.getElementById('s-st').innerHTML    = combinedSt;
+    document.getElementById('tableMsg').textContent = '✓ All runs calculated at ' + new Date().toLocaleTimeString();
+    return;
+  }
+
+  var run = getActiveRun();
+  if (!run || run.rows.length === 0) { alert('Add segments first'); return; }
+  calcRun(run);
+  renderTable();
+  updateStats(run);
+  drawChart(run);
+  document.getElementById('tableMsg').textContent = '✓ Calculated at ' + new Date().toLocaleTimeString();
+}
+
+function calcRun(run) {
+  var segments = [];
+  var totalTime = 0;
+  var totalStations = 0;
+
+  run.rows.forEach(function(row) {
+    var isLongSt = row.direction === 'longst';
+
+    // Long Station: tool holds at one depth
+    if (isLongSt) {
+      var topVal = parseFloat(row.top);
+      if (isNaN(topVal)) return;
+      row.bottom = topVal;
+      var holdSec = parseFloat(row.stDuration) || 45;
+      var segTime = holdSec / 60;
+      row._segTime = segTime;
+      totalTime += segTime;
+      segments.push({
+        row: row,
+        top: topVal,
+        bottom: topVal,
+        interval: 0,
+        segTime: segTime,
+        numSt: 0,
+        isDown: false,
+        isLongSt: true,
+        holdDepth: topVal
+      });
+      return;
+    }
+
+    // Allow 0 as a valid depth value — only skip truly empty entries
+    var topStr    = String(row.top);
+    var bottomStr = String(row.bottom);
+    if (topStr === '' || topStr === 'undefined' || bottomStr === '' || bottomStr === 'undefined') return;
+
+    var top    = parseFloat(topStr);
+    var bottom = parseFloat(bottomStr);
+    if (isNaN(top) || isNaN(bottom)) return;
+    if (top === bottom) return; // no movement
+
+    var interval = Math.abs(bottom - top);
+    var isDown = (row.direction === 'down' || row.direction === 'rih');
+    var segTime = 0;
+    var numSt = 0;
+
+    if (row.mode === 'cont') {
+      var spd = parseFloat(row.contSpeed) || 20;
+      if (spd <= 0) spd = 20;
+      segTime = interval / spd;
+    } else {
+      var stInt = parseFloat(row.stInterval) || 30;
+      var stDur = parseFloat(row.stDuration) || 45;
+      var stSpd = parseFloat(row.stSpeed)    || 20;
+      if (stInt <= 0) stInt = 30;
+      if (stDur <= 0) stDur = 45;
+      if (stSpd <= 0) stSpd = 20;
+      numSt = Math.floor(interval / stInt);
+      if (numSt < 1) numSt = 1;
+      var stTotalTime   = numSt * (stDur / 60);
+      var moveTotalTime = interval / stSpd;
+      segTime = stTotalTime + moveTotalTime;
+      totalStations += numSt;
+    }
+
+    row._segTime = segTime;
+    totalTime += segTime;
+
+    segments.push({
+      row: row,
+      top: top,
+      bottom: bottom,
+      interval: interval,
+      segTime: segTime,
+      numSt: numSt,
+      isDown: isDown
+    });
+  });
+
+  run.result = {
+    segments: segments,
+    totalTime: totalTime,
+    totalStations: totalStations
+  };
+}
+
+function minToDHM(mins) {
+  var totalMin = Math.round(mins);
+  var d = Math.floor(totalMin / 1440);
+  var h = Math.floor((totalMin % 1440) / 60);
+  var m = totalMin % 60;
+  return (d > 0 ? d + 'd ' : '') + h + 'h ' + m + 'm';
+}
+
+function updateStats(run) {
+  if (!run || !run.result) return;
+  var r = run.result;
+  var dUnit = units === 'emp' ? 'ft' : 'm';
+  var totalDepth = 0;
+  r.segments.forEach(function(s){ totalDepth = Math.max(totalDepth, s.bottom, s.top); });
+  document.getElementById('statsRow').style.display = 'flex';
+  document.getElementById('s-depth').innerHTML = totalDepth + '<span class="sunit"> ' + dUnit + '</span>';
+  document.getElementById('s-segs').innerHTML  = r.segments.length;
+  document.getElementById('s-time').innerHTML  = r.totalTime.toFixed(1) + '<span class="sunit"> min</span>';
+  document.getElementById('s-hrs').innerHTML   = (r.totalTime / 60).toFixed(2) + '<span class="sunit"> hr</span>';
+  document.getElementById('s-dhm').textContent = minToDHM(r.totalTime);
+  document.getElementById('s-st').innerHTML    = r.totalStations;
+}
+
+// ── SHARED CHART HELPERS ──────────────────────
+// Build compressed Y-axis mapping for a set of segments
+// Returns: { COMPRESS, ty, logZoneMin, logZoneMax, transitSpan, depStep }
+function buildYAxis(segs, minDepth, maxDepth, PH, PAD_T) {
+  var surface = Math.min(minDepth, 0);
+  var totalDepthSpan = maxDepth - surface || 1;
+
+  // Collect all non-RIH/POOH depth ranges — these are zones of interest
+  var logSegs = segs.filter(function(s) {
+    var dir = s.row ? s.row.direction : '';
+    return dir !== 'rih' && dir !== 'pooh';
+  });
+
+  // Build list of depth intervals: each unique contiguous range
+  var logDepths = [];
+  logSegs.forEach(function(s){ logDepths.push(s.top, s.bottom); });
+  var logZoneMin = logDepths.length > 0 ? Math.min.apply(null, logDepths) : maxDepth;
+  var logZoneMax = logDepths.length > 0 ? Math.max.apply(null, logDepths) : maxDepth;
+
+  // Detect "gap zones": ranges between zones of interest that are large
+  // A gap is a depth range where no logging segment exists (only RIH/POOH pass through)
+  // Find sorted unique breakpoints from logging segs
+  var breaks = [surface];
+  logSegs.forEach(function(s){
+    var lo = Math.min(s.top, s.bottom);
+    var hi = Math.max(s.top, s.bottom);
+    breaks.push(lo, hi);
+  });
+  breaks.push(maxDepth);
+  breaks.sort(function(a,b){ return a-b; });
+  // Remove duplicates
+  breaks = breaks.filter(function(v,i,arr){ return i===0||v!==arr[i-1]; });
+
+  // Identify gap zones: intervals in breaks that have NO logging segs
+  var COMPRESS_THRESH = 0.20; // compress if gap > 20% of total
+  var zones = []; // [{from, to, type:'transit'|'log'|'gap', frac?}]
+  for (var bi = 0; bi < breaks.length - 1; bi++) {
+    var zFrom = breaks[bi], zTo = breaks[bi+1];
+    var zSpan = zTo - zFrom;
+    if (zSpan <= 0) continue;
+    // Check if any logging seg covers this range
+    var hasLog = logSegs.some(function(s){
+      var lo = Math.min(s.top,s.bottom), hi = Math.max(s.top,s.bottom);
+      return lo <= zFrom && hi >= zTo;
+    });
+    var isGap = !hasLog && (zSpan / totalDepthSpan) > COMPRESS_THRESH;
+    zones.push({ from: zFrom, to: zTo, span: zSpan, gap: isGap });
+  }
+
+  // Assign pixel fractions: gap zones get COMPRESS_FRAC
+  // Use weaker compression when there is only one logging zone (single ZOI)
+  var numGaps = zones.filter(function(z){return z.gap;}).length;
+  var numLogZones = zones.filter(function(z){return !z.gap;}).length;
+  var COMPRESS_FRAC = numLogZones <= 1 ? 0.25 : 0.15; // weaker for single ZOI, stronger for multi
+  var totalGapSpan = 0, totalLogSpan = 0;
+  zones.forEach(function(z){ if(z.gap) totalGapSpan+=z.span; else totalLogSpan+=z.span; });
+  var totalGapPH  = numGaps * COMPRESS_FRAC * PH;
+  var totalLogPH  = PH - totalGapPH;
+  var gapPPD  = totalGapSpan  > 0 ? totalGapPH  / totalGapSpan  : 0;
+  var logPPD  = totalLogSpan  > 0 ? totalLogPH  / totalLogSpan  : PH / (totalDepthSpan || 1);
+
+  // Respect user's checkbox preference
+  var MULTI_COMPRESS = zones.some(function(z){ return z.gap; }) && getCompressY();
+
+  // Build cumulative pixel offset for each zone
+  var zonePixStart = [];
+  var cumPx = 0;
+  zones.forEach(function(z){
+    zonePixStart.push(cumPx);
+    cumPx += z.span * (z.gap ? gapPPD : logPPD);
+  });
+
+  function ty(d) {
+    if (!MULTI_COMPRESS) return PAD_T + ((d - surface) / totalDepthSpan) * PH;
+    // Find which zone d falls in
+    for (var zi = 0; zi < zones.length; zi++) {
+      var z = zones[zi];
+      if (d <= z.to || zi === zones.length - 1) {
+        var localFrac = (d - z.from) / (z.span || 1);
+        var pxInZone = localFrac * z.span * (z.gap ? gapPPD : logPPD);
+        return PAD_T + zonePixStart[zi] + pxInZone;
+      }
+    }
+    return PAD_T + PH;
+  }
+
+  var depRange = maxDepth - surface;
+  var depStep = depRange <= 300 ? 50 : depRange <= 1000 ? 100 : depRange <= 3000 ? 200 : 500;
+  var transitSpan = logZoneMin - surface;
+  var transitDepStep = Math.max(depStep * 5, Math.ceil(transitSpan / 3 / 1000) * 1000);
+  if (transitDepStep < 500) transitDepStep = 500;
+
+  return { COMPRESS: MULTI_COMPRESS, ty: ty, surface: surface,
+           logZoneMin: logZoneMin, logZoneMax: logZoneMax, zones: zones,
+           transitSpan: transitSpan, depStep: depStep, transitDepStep: transitDepStep,
+           totalDepthSpan: totalDepthSpan, gapPPD: gapPPD, logPPD: logPPD };
+}
+
+// Draw Y-axis grid lines using compressed mapping
+function drawYGrid(ctx, yAxis, minDepth, maxDepth, PAD_L, W_right, PAD_T, H_bottom) {
+  var depStep = yAxis.depStep;
+  var surface = yAxis.surface !== undefined ? yAxis.surface : minDepth;
+  ctx.strokeStyle = '#cfd8e6'; ctx.lineWidth = 1;
+
+  if (yAxis.COMPRESS && yAxis.zones) {
+    // Draw grid for each zone with appropriate step density
+    var gapStep = yAxis.transitDepStep || 2000;
+    yAxis.zones.forEach(function(z) {
+      var step = z.gap ? Math.max(gapStep, Math.ceil(z.span/2/1000)*1000) : depStep;
+      for (var d=Math.ceil(z.from/step)*step; d<=z.to; d+=step) {
+        ctx.beginPath(); ctx.moveTo(PAD_L, yAxis.ty(d)); ctx.lineTo(W_right, yAxis.ty(d)); ctx.stroke();
+      }
+    });
+    // Draw separator lines at gap zone boundaries
+    ctx.save(); ctx.strokeStyle='rgba(245,158,11,0.4)'; ctx.lineWidth=1; ctx.setLineDash([6,4]);
+    yAxis.zones.forEach(function(z) {
+      if (z.gap) {
+        ctx.beginPath(); ctx.moveTo(PAD_L, yAxis.ty(z.from)); ctx.lineTo(W_right, yAxis.ty(z.from)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(PAD_L, yAxis.ty(z.to));   ctx.lineTo(W_right, yAxis.ty(z.to));   ctx.stroke();
+      }
+    });
+    ctx.setLineDash([]); ctx.restore();
+  } else {
+    for (var d=Math.ceil(surface/depStep)*depStep; d<=maxDepth; d+=depStep) {
+      ctx.beginPath(); ctx.moveTo(PAD_L, yAxis.ty(d)); ctx.lineTo(W_right, yAxis.ty(d)); ctx.stroke();
+    }
+  }
+}
+
+// Draw Y-axis labels using compressed mapping
+function drawYLabels(ctx, yAxis, minDepth, maxDepth, PAD_L) {
+  var depStep = yAxis.depStep;
+  var surface = yAxis.surface !== undefined ? yAxis.surface : minDepth;
+  ctx.font = '10.5px "Share Tech Mono", monospace'; ctx.textAlign = 'right';
+
+  if (yAxis.COMPRESS && yAxis.zones) {
+    var gapStep = yAxis.transitDepStep || 2000;
+    yAxis.zones.forEach(function(z) {
+      var step = z.gap ? Math.max(gapStep, Math.ceil(z.span/2/1000)*1000) : depStep;
+      var col = z.gap ? '#94a3b8' : '#b91c1c';
+      ctx.fillStyle = col;
+      for (var d=Math.ceil(z.from/step)*step; d<=z.to; d+=step) {
+        ctx.fillText(d, PAD_L-7, yAxis.ty(d)+4);
+      }
+    });
+    // Gap zone "~" markers
+    ctx.save(); ctx.fillStyle='rgba(245,158,11,0.7)'; ctx.font='9px "Share Tech Mono",monospace'; ctx.textAlign='left';
+    yAxis.zones.forEach(function(z) {
+      if (z.gap) {
+        ctx.fillText('~', PAD_L+2, yAxis.ty((z.from+z.to)/2));
+      }
+    });
+    ctx.restore();
+  } else {
+    ctx.fillStyle='#b91c1c';
+    for (var d=Math.ceil(surface/depStep)*depStep; d<=maxDepth; d+=depStep) {
+      ctx.fillText(d, PAD_L-7, yAxis.ty(d)+4);
+    }
+  }
+}
+
+// ── CHART ─────────────────────────────────────
+function clearChart() {
+  document.getElementById('emptyChart').style.display = 'flex';
+  document.getElementById('chartRunTitle').textContent = '—';
+  document.getElementById('statsRow').style.display = 'none';
+  var canvas = document.getElementById('chart');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawChart(run) {
+  if (!run || !run.result || run.result.segments.length === 0) { clearChart(); return; }
+  document.getElementById('emptyChart').style.display = 'none';
+  document.getElementById('chartRunTitle').textContent = run.name;
+
+  var wrap = document.getElementById('canvasWrap');
+  var canvas = document.getElementById('chart');
+  var W = wrap.clientWidth || 900;
+  var H = Math.max(420, Math.min(600, W * 0.55));
+  canvas.width  = W;
+  canvas.height = H;
+  canvas.style.height = H + 'px';
+
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, W, H);
+
+  var segs = run.result.segments;
+
+  // Depth extents — always include surface (0) for correct compression reference
+  var allDepths = [0];
+  segs.forEach(function(s){ allDepths.push(s.top, s.bottom); });
+  var minDepth = Math.min.apply(null, allDepths);
+  var maxDepth = Math.max.apply(null, allDepths);
+  var depthRange = maxDepth - minDepth || 1;
+
+  // Build timeline: accumulate time offsets
+  var totalTime = run.result.totalTime || 1;
+
+  var PAD_L = 76, PAD_R = 32, PAD_T = 72, PAD_B = CHART_PAD_B;
+  var PW = W - PAD_L - PAD_R;
+  var PH = H - PAD_T - PAD_B;
+
+  function tx(t) { return PAD_L + (t / totalTime) * PW; }
+
+  // Use shared compressed Y-axis helper
+  var yAxis = buildYAxis(segs, minDepth, maxDepth, PH, PAD_T);
+  function ty(d) { return yAxis.ty(d); }
+  var COMPRESS   = yAxis.COMPRESS;
+  var logZoneMin = yAxis.logZoneMin;
+  var logZoneMax = yAxis.logZoneMax;
+  var transitSpan = yAxis.transitSpan;
+  var depStep = yAxis.depStep;
+
+  // ── Grid ──
+  drawYGrid(ctx, yAxis, minDepth, maxDepth, PAD_L, W - PAD_R, PAD_T, H - PAD_B);
+  ctx.strokeStyle = '#cfd8e6'; ctx.lineWidth = 1;
+  var tStep = Math.ceil(totalTime / 9 / 5) * 5;
+  if (tStep < 1) tStep = 1;
+  for (var t = 0; t <= totalTime + tStep; t += tStep) {
+    ctx.beginPath(); ctx.moveTo(tx(t), PAD_T); ctx.lineTo(tx(t), H - PAD_B); ctx.stroke();
+  }
+
+  // ── Axis labels ──
+  drawYLabels(ctx, yAxis, minDepth, maxDepth, PAD_L);
+  ctx.fillStyle = '#475569';
+  ctx.font = CHART_X_TICK_FONT;
+  ctx.textAlign = 'center';
+  for (var t = 0; t <= totalTime; t += tStep) {
+    ctx.fillText(Math.round(t), tx(t), H - PAD_B + CHART_X_TICK_DY);
+  }
+  // Cumulative minutes at each pass (segment) boundary — second row
+  var passMarks = [];
+  var cmu = 0;
+  for (var pi = 0; pi < segs.length; pi++) {
+    passMarks.push({ x: tx(cmu), t: Math.round(cmu) });
+    cmu += segs[pi].segTime;
+  }
+  passMarks.push({ x: tx(cmu), t: Math.round(cmu) });
+  drawPassBoundaryTimeMarks(ctx, passMarks, H - PAD_B + CHART_X_TICK_DY + 15,
+    '10.5px "Share Tech Mono", monospace', '#64748b', 22);
+
+  // Axis titles
+  ctx.save();
+  ctx.translate(15, PAD_T + PH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#475569';
+  ctx.font = '10px "Share Tech Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('DEPTH (' + (units==='emp'?'ft':'m') + ')', 0, 0);
+  ctx.restore();
+  ctx.fillStyle = '#475569';
+  ctx.font = CHART_X_TITLE_FONT;
+  ctx.textAlign = 'center';
+  ctx.fillText('TIME (min)', PAD_L + PW / 2, H - 3);
+
+  // Axis border
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(PAD_L, PAD_T);
+  ctx.lineTo(PAD_L, H - PAD_B);
+  ctx.lineTo(W - PAD_R, H - PAD_B);
+  ctx.stroke();
+
+  // ── Draw segments ──
+  // Track actual current depth so segments connect properly
+  var tOffset = 0;
+  // Starting depth: Down starts at shallower end (min), Up starts at deeper end (max)
+  var currentDepth = segs.length > 0
+    ? (segs[0].isDown ? Math.min(segs[0].top, segs[0].bottom) : Math.max(segs[0].top, segs[0].bottom))
+    : 0;
+
+  var pendingCallouts = [];
+
+  // Helper: angled label (continuous pass — font sized vs chord, aligned with station labels)
+  function angledLabel(x1, y1, x2, y2, label, color, isDn, extraOpts) {
+    if (!label) return;
+    var chordPx = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+    if (chordPx < 55 || !chartLabelFitsInline(ctx, label, chordPx, CHART_SEG_LABEL_PX, 8)) {
+      queueCallout(pendingCallouts, (x1 + x2) / 2, (y1 + y2) / 2,
+        [{ text: label, color: color, size: 11, bold: false }],
+        Object.assign({ lineColor: color, borderColor: color }, extraOpts || {}));
+      return;
+    }
+    var angle = Math.atan2(y2 - y1, x2 - x1);
+    var fntPx = unifiedSegAngledFontPx(ctx, label, x1, y1, x2, y2, CHART_SEG_LABEL_PX, 8);
+    var mx = (x1 + x2) / 2;
+    var my = (y1 + y2) / 2;
+    var gap = CHART_SEG_LABEL_GAP * (isDn ? 0.5 : 0.84);
+    var pf = chartLabelPerpFlip(isDn, angle);
+    var lx = mx - Math.sin(angle) * gap * pf;
+    var ly = my + Math.cos(angle) * gap * pf;
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(angle);
+    ctx.font = fntPx + 'px "Share Tech Mono", monospace';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  }
+
+  var firstDrawDepth = currentDepth;
+
+  segs.forEach(function(seg, si) {
+    var row = seg.row;
+    var isDown = (row.direction === 'down' || row.direction === 'rih');
+    var isCont = row.mode === 'cont';
+    var _segKey = function(kind) { return calloutKey(run.id, si, kind); };
+
+    // startDepth is always where the tool currently is (continuity)
+    var startDepth = currentDepth;
+    // endDepth: Down goes to deeper value, Up goes to shallower value
+    var endDepth = isDown ? Math.max(seg.top, seg.bottom) : Math.min(seg.top, seg.bottom);
+
+    var tStart = tOffset;
+    var tEnd   = tOffset + seg.segTime;
+
+    // Long Station: draw horizontal dashed line at current depth
+    if (seg.isLongSt) {
+      var x1 = tx(tStart), y1 = ty(startDepth);
+      var x2 = tx(tEnd),   y2 = ty(startDepth);
+      // Vertical dashed lines at start and end
+      ctx.save();
+      ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+      ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(x1, PAD_T); ctx.lineTo(x1, H - PAD_B); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2, PAD_T); ctx.lineTo(x2, H - PAD_B); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore();
+      // Horizontal line
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 4]);
+      ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 6;
+      ctx.stroke(); ctx.shadowBlur = 0; ctx.setLineDash([]);
+      // Labels: tool above, LONG STATION middle, time below
+      var mx = (x1+x2)/2, my = (y1+y2)/2;
+      var pxSpan = Math.abs(x2 - x1);
+      if (pxSpan < 70) {
+        // Too narrow inline — use leader callout
+        queueCallout(pendingCallouts, mx, my, [
+          { text: '[' + (seg.row.mainTool||'TOOL') + ']', color: '#c2410c', size: 11, bold: true },
+          { text: 'LONG STATION', color: '#92400e', size: 12, bold: true },
+          { text: formatLSTime(seg.segTime), color: '#c2410c', size: 11, bold: true }
+        ], { lineColor: '#f59e0b', borderColor: '#f59e0b', bg: 'rgba(255,251,235,0.96)', key: _segKey('lst') });
+      } else {
+        var lsf = longStationLabelFontsLive(pxSpan);
+        ctx.save(); ctx.translate(mx, my);
+        ctx.textAlign = 'center';
+        ctx.font = 'bold ' + lsf.tool + 'px "Share Tech Mono",monospace';
+        ctx.fillStyle = '#fb923c';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('[' + (seg.row.mainTool||'TOOL') + ']', 0, Math.round(-lsf.mid * 1.18) - 2);
+        ctx.font = 'bold ' + lsf.mid + 'px "Share Tech Mono",monospace';
+        ctx.fillStyle = '#fcd34d';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('LONG STATION', 0, -2);
+        ctx.font = 'bold ' + lsf.time + 'px "Share Tech Mono",monospace';
+        ctx.textBaseline = 'top';
+        ctx.fillText(formatLSTime(seg.segTime), 0, Math.round(lsf.mid * 0.38) + 2);
+        ctx.restore();
+      }
+      currentDepth = startDepth;
+      tOffset += seg.segTime;
+      return;
+    }
+
+    if (isCont) {
+      var color = isDown ? '#e05555' : '#3db87a';
+      var x1 = tx(tStart), y1 = ty(startDepth);
+      var x2 = tx(tEnd),   y2 = ty(endDepth);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([]);
+      ctx.shadowColor = color; ctx.shadowBlur = 5;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      var toolTag = row.mainTool ? ' [' + row.mainTool + ']' : '';
+      var lbl = row.contSpeed + ' ' + (units==='emp'?'ft':'m') + '/min' + (isDown ? ' ↓' : ' ↑') + toolTag;
+      angledLabel(x1, y1, x2, y2, lbl, isDown ? '#fca5a5' : '#86efac', isDown, { key: _segKey('cont') });
+    } else {
+      // Stations mode — rebuild schematic points using actual startDepth and endDepth
+      var interval = Math.abs(endDepth - startDepth);
+      var STEPS = 10;
+      var stDurMin = (parseFloat(row.stDuration) || 45) / 60;
+      var numSt    = seg.numSt || Math.floor(interval / (parseFloat(row.stInterval) || 30));
+      var stSpd    = parseFloat(row.stSpeed) || 20;
+      var stTotalTime  = numSt * stDurMin;
+      var moveTotalTime = interval / stSpd;
+      var totalSegTime  = seg.segTime;
+
+      var eachStepDur  = stTotalTime / STEPS;
+      var eachMoveDur  = moveTotalTime / STEPS;
+      var eachDepthStep = interval / STEPS;
+      var depthDir = isDown ? 1 : -1;
+
+      // Build points: local time 0..totalSegTime, depth startDepth..endDepth
+      var pts = [{ lt: 0, d: startDepth }];
+      var lt = 0;
+      var d  = startDepth;
+      for (var s = 0; s < STEPS; s++) {
+        // station hold
+        pts.push({ lt: lt + eachStepDur, d: d });
+        lt += eachStepDur;
+        // move
+        d  += depthDir * eachDepthStep;
+        lt += eachMoveDur;
+        pts.push({ lt: lt, d: d });
+      }
+
+      var tScale = seg.segTime / (pts[pts.length - 1].lt || 1);
+
+      for (var i = 1; i < pts.length; i++) {
+        var pv = pts[i - 1];
+        var p  = pts[i];
+        var isHold = Math.abs(p.d - pv.d) < 0.01;
+
+        var px1 = tx(tStart + pv.lt * tScale);
+        var py1 = ty(pv.d);
+        var px2 = tx(tStart + p.lt  * tScale);
+        var py2 = ty(p.d);
+
+        ctx.beginPath();
+        ctx.moveTo(px1, py1);
+        ctx.lineTo(px2, py2);
+
+        if (isHold) {
+          ctx.strokeStyle = '#dc2626';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+          ctx.shadowColor = 'rgba(220,38,38,0.55)'; ctx.shadowBlur = 3;
+        } else {
+          ctx.strokeStyle = '#b91c1c';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([]);
+          ctx.shadowColor = 'rgba(185,28,28,0.45)'; ctx.shadowBlur = 4;
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.setLineDash([]);
+      }
+      var toolTag2 = row.mainTool ? ' [' + row.mainTool + ']' : '';
+      var stLbl = row.stInterval + (units==='emp'?'ft':'m') + '  ' + row.stDuration + 's st.' + toolTag2;
+      var lblGeo = stationStairCanvasCenterBelowHolds(pts,
+        function(lt) { return tx(tStart + lt * tScale); },
+        function(d) { return ty(d); },
+        CHART_SEG_LABEL_GAP * CHART_STAIR_LABEL_GAP_MULT);
+      if (lblGeo) {
+        var xc1 = tx(tStart), yc1 = ty(startDepth), xc2 = tx(tEnd), yc2 = ty(endDepth);
+        var chordPxSt = Math.sqrt((xc2-xc1)*(xc2-xc1)+(yc2-yc1)*(yc2-yc1));
+        if (chordPxSt < 55 || !chartLabelFitsInline(ctx, stLbl, chordPxSt, CHART_SEG_LABEL_PX, 8)) {
+          queueCallout(pendingCallouts, (xc1+xc2)/2, (yc1+yc2)/2,
+            [{ text: stLbl, color: '#991b1b', size: 11, bold: false }],
+            { lineColor: '#991b1b', borderColor: '#991b1b', key: _segKey('st') });
+        } else {
+          var stF = unifiedSegAngledFontPx(ctx, stLbl, xc1, yc1, xc2, yc2, CHART_SEG_LABEL_PX, 8);
+          ctx.save();
+          ctx.translate(lblGeo.lx, lblGeo.ly);
+          ctx.rotate(lblGeo.angle);
+          ctx.font = stF + 'px "Share Tech Mono", monospace';
+          ctx.fillStyle = '#991b1b';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(stLbl, 0, 0);
+          ctx.restore();
+        }
+      }
+    }
+
+    // Track for condition grouping (store tStart, startDepth, endDepth per seg)
+    seg._drawTStart = tStart;
+    seg._drawTEnd   = tOffset + seg.segTime;
+    seg._drawStartD = startDepth;
+    seg._drawEndD   = endDepth;
+
+    // Advance current position
+    currentDepth = endDepth;
+    tOffset += seg.segTime;
+  });
+
+  // ── Condition labels at depth=0 (top axis), centered per group; Run name above ──
+  var condGroups = [];
+  segs.forEach(function(seg) {
+    var cond = seg.row.condition;
+    if (condGroups.length === 0 || condGroups[condGroups.length-1].cond !== cond) {
+      condGroups.push({ cond: cond, segs: [seg] });
+    } else {
+      condGroups[condGroups.length-1].segs.push(seg);
+    }
+  });
+  // (drawChart is single-run, so no cross-run merging issue here)
+
+  // Run name at top — above depth=0 line (in the extra padding zone)
+  ctx.save();
+  ctx.font = 'bold 15px "Rajdhani", sans-serif';
+  ctx.fillStyle = run.color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(run.name, tx(totalTime / 2), PAD_T - 50);
+  ctx.restore();
+
+  // Horizontal divider line between run name and depth-0
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(PAD_L, PAD_T - 28);
+  ctx.lineTo(W - PAD_R, PAD_T - 28);
+  ctx.strokeStyle = 'rgba(185,28,28,0.35)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4,4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Condition badges: centered between pixel positions of first and last seg
+  condGroups.forEach(function(grp) {
+    var first = grp.segs[0];
+    var last  = grp.segs[grp.segs.length - 1];
+    // Use pixel coords directly
+    var xStart = tx(first._drawTStart);
+    var xEnd   = tx(last._drawTEnd);
+    var xMid   = (xStart + xEnd) / 2;
+    var lbl    = grp.cond;
+    ctx.save();
+    ctx.font = 'bold 11px "Rajdhani", sans-serif';
+    var tw = ctx.measureText(lbl).width;
+    ctx.fillStyle = 'rgba(142,26,41,0.88)';
+    ctx.fillRect(xMid - tw/2 - 6, PAD_T - 24, tw + 12, 18);
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(lbl, xMid, PAD_T - 22);
+    ctx.restore();
+  });
+
+  // Small dots at start and end (no text labels)
+  function dot(t, d, color) {
+    var x = tx(t), y = ty(d);
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 8;
+    ctx.fill(); ctx.shadowBlur = 0;
+  }
+  dot(0, firstDrawDepth, '#334155');
+  dot(totalTime, currentDepth, run.color);
+
+  // Leader-line callouts for too-narrow segment labels
+  drawCallouts(ctx, pendingCallouts, {
+    area: { x0: PAD_L, y0: PAD_T, x1: W - PAD_R, y1: H - PAD_B },
+    plotGeo: { padL: PAD_L, padT: PAD_T, plotW: W - PAD_L - PAD_R, plotH: H - PAD_T - PAD_B },
+    overrides: getRunCalloutOverrides(run)
+  });
+  canvas._calloutCtx = { mode: 'single', run: run };
+
+  // Run watermark
+  ctx.save();
+  ctx.font = 'bold 12px "Rajdhani", sans-serif';
+  ctx.fillStyle = 'rgba(232,160,32,0.18)';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  ctx.fillText(run.name, W - PAD_R - 4, PAD_T + 2);
+  ctx.restore();
+}
+
+function showAllRuns() {
+  activeRunIdx = -99;
+  renderTabs();
+  renderTable();
+  // Auto-calculate all runs that haven't been calculated yet
+  runs.forEach(function(run) {
+    if (!run.result && run.rows.length > 0) calcRun(run);
+  });
+  // Draw all runs combined on same chart with separators
+  var allSegs = [];
+  var runBoundaries = []; // {tStart, tEnd, run}
+  var tCumulative = 0;
+  runs.forEach(function(run) {
+    if (!run.result || !run.result.segments.length) return;
+    var tRunStart = tCumulative;
+    // rebuild segments with offset tStart
+    run.result.segments.forEach(function(seg, segIdx) {
+      var s2 = Object.assign({}, seg);
+      s2._runColor = run.color;
+      s2._runName  = run.name;
+      s2._runId    = run.id;
+      s2._segIdx   = segIdx;
+      s2._tOffset  = tCumulative;
+      allSegs.push(s2);
+      tCumulative += seg.segTime;
+    });
+    runBoundaries.push({ tStart: tRunStart, tEnd: tCumulative, run: run });
+  });
+
+  if (allSegs.length === 0) { clearChart(); return; }
+
+  document.getElementById('emptyChart').style.display = 'none';
+  document.getElementById('chartRunTitle').textContent = 'ALL RUNS COMBINED';
+
+  var wrap = document.getElementById('canvasWrap');
+  var canvas = document.getElementById('chart');
+  var W = wrap.clientWidth || 900;
+  var H = Math.max(420, Math.min(600, W * 0.55));
+  canvas.width  = W;
+  canvas.height = H;
+  canvas.style.height = H + 'px';
+
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0, 0, W, H);
+
+  // Always include surface (0) for correct compression reference
+  var allDepths = [0];
+  allSegs.forEach(function(s){ allDepths.push(s.top, s.bottom); });
+  var minDepth = Math.min.apply(null, allDepths);
+  var maxDepth = Math.max.apply(null, allDepths);
+  var depthRange = maxDepth - minDepth || 1;
+  var totalTime  = tCumulative || 1;
+
+  var PAD_L = 76, PAD_R = 32, PAD_T = 72, PAD_B = CHART_PAD_B;
+  var PW = W - PAD_L - PAD_R;
+  var PH = H - PAD_T - PAD_B;
+
+  function tx(t) { return PAD_L + (t / totalTime) * PW; }
+
+  // Shared compressed Y-axis (works across all runs combined)
+  var yAxisAll = buildYAxis(allSegs, minDepth, maxDepth, PH, PAD_T);
+  function ty(d) { return yAxisAll.ty(d); }
+  var depStep = yAxisAll.depStep;
+
+  // Grid
+  drawYGrid(ctx, yAxisAll, minDepth, maxDepth, PAD_L, W-PAD_R, PAD_T, H-PAD_B);
+  ctx.strokeStyle = '#cfd8e6'; ctx.lineWidth = 1;
+  var tStep = Math.ceil(totalTime/9/5)*5; if (tStep<1) tStep=1;
+  for (var t = 0; t <= totalTime+tStep; t += tStep) {
+    ctx.beginPath(); ctx.moveTo(tx(t), PAD_T); ctx.lineTo(tx(t), H-PAD_B); ctx.stroke();
+  }
+
+  // Axis labels
+  drawYLabels(ctx, yAxisAll, minDepth, maxDepth, PAD_L);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#475569';
+  ctx.font = CHART_X_TICK_FONT;
+  for (var t = 0; t <= totalTime; t += tStep) {
+    ctx.fillText(Math.round(t), tx(t), H-PAD_B+CHART_X_TICK_DY);
+  }
+  var passMarksAr = [];
+  allSegs.forEach(function(sg) {
+    passMarksAr.push({ x: tx(sg._tOffset), t: Math.round(sg._tOffset) });
+  });
+  passMarksAr.push({ x: tx(totalTime), t: Math.round(totalTime) });
+  drawPassBoundaryTimeMarks(ctx, passMarksAr, H - PAD_B + CHART_X_TICK_DY + 15,
+    '10.5px "Share Tech Mono", monospace', '#64748b', 22);
+  ctx.save(); ctx.translate(15,PAD_T+PH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#475569'; ctx.font='10px "Share Tech Mono",monospace'; ctx.textAlign='center';
+  ctx.fillText('DEPTH ('+(units==='emp'?'ft':'m')+')',0,0); ctx.restore();
+  ctx.fillStyle='#475569'; ctx.font=CHART_X_TITLE_FONT; ctx.textAlign='center';
+  ctx.fillText('TIME (min)',PAD_L+PW/2,H-3);
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(PAD_L,PAD_T); ctx.lineTo(PAD_L,H-PAD_B); ctx.lineTo(W-PAD_R,H-PAD_B); ctx.stroke();
+
+  // Draw run separator vertical dashed lines FIRST (behind segments)
+  runBoundaries.forEach(function(rb, ri) {
+    if (ri === 0) return; // no line before first run
+    var x = tx(rb.tStart);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, PAD_T);
+    ctx.lineTo(x, H - PAD_B);
+    ctx.strokeStyle = 'rgba(180,180,180,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  });
+  var pendingCallouts = [];
+
+  // Helper angled label
+  function angledLabel(x1,y1,x2,y2,label,color,isDn,extraOpts){
+    if (!label) return;
+    var chordPx = Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+    if (chordPx < 55 || !chartLabelFitsInline(ctx, label, chordPx, CHART_SEG_LABEL_PX, 8)) {
+      queueCallout(pendingCallouts, (x1+x2)/2, (y1+y2)/2,
+        [{ text: label, color: color, size: 11, bold: false }],
+        Object.assign({ lineColor: color, borderColor: color }, extraOpts || {}));
+      return;
+    }
+    var angle=Math.atan2(y2-y1,x2-x1);
+    var fntPx=unifiedSegAngledFontPx(ctx,label,x1,y1,x2,y2,CHART_SEG_LABEL_PX,8);
+    var mx=(x1+x2)/2, my=(y1+y2)/2;
+    var gap = CHART_SEG_LABEL_GAP * (isDn ? 0.5 : 0.84);
+    var pf = chartLabelPerpFlip(isDn, angle);
+    var lx = mx - Math.sin(angle) * gap * pf;
+    var ly = my + Math.cos(angle) * gap * pf;
+    ctx.save(); ctx.translate(lx,ly); ctx.rotate(angle);
+    ctx.font=fntPx+'px "Share Tech Mono",monospace'; ctx.fillStyle=color;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label,0,0); ctx.restore();
+  }
+
+  // Draw all segments
+  var currentDepth = allSegs.length > 0
+    ? (allSegs[0].isDown ? Math.min(allSegs[0].top,allSegs[0].bottom) : Math.max(allSegs[0].top,allSegs[0].bottom))
+    : 0;
+  var firstDepth = currentDepth;
+  var condGroups = [];
+
+  allSegs.forEach(function(seg) {
+    var row = seg.row;
+    var isDown = (row.direction==='down' || row.direction==='rih');
+    var isCont = row.mode==='cont';
+    var tStart = seg._tOffset;
+    var _segKey = function(kind) { return calloutKey(seg._runId, seg._segIdx, kind); };
+    var startDepth = currentDepth;
+    var endDepth = seg.isLongSt ? startDepth : (isDown ? Math.max(seg.top,seg.bottom) : Math.min(seg.top,seg.bottom));
+
+    seg._drawTStart = tStart;
+    seg._drawTEnd   = tStart + seg.segTime;
+    seg._drawStartD = startDepth;
+    seg._drawEndD   = endDepth;
+
+    if (seg.isLongSt) {
+      var x1=tx(tStart),y1=ty(startDepth),x2=tx(tStart+seg.segTime),y2=ty(startDepth);
+      // Vertical dashed lines
+      ctx.save();
+      ctx.strokeStyle='rgba(245,158,11,0.45)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(x1,PAD_T); ctx.lineTo(x1,H-PAD_B); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2,PAD_T); ctx.lineTo(x2,H-PAD_B); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore();
+      // Horizontal line
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2.5; ctx.setLineDash([6,4]);
+      ctx.shadowColor='#f59e0b'; ctx.shadowBlur=6; ctx.stroke();
+      ctx.shadowBlur=0; ctx.setLineDash([]);
+      // Labels: tool / LONG STATION / time
+      var lsMx=(x1+x2)/2,lsMy=(y1+y2)/2;
+      var pxSpan2=Math.abs(x2-x1);
+      if (pxSpan2 < 70) {
+        queueCallout(pendingCallouts, lsMx, lsMy, [
+          { text: '[' + (row.mainTool||'TOOL') + ']', color: '#c2410c', size: 11, bold: true },
+          { text: 'LONG STATION', color: '#92400e', size: 12, bold: true },
+          { text: formatLSTime(seg.segTime), color: '#c2410c', size: 11, bold: true }
+        ], { lineColor: '#f59e0b', borderColor: '#f59e0b', bg: 'rgba(255,251,235,0.96)', key: _segKey('lst') });
+      } else {
+        var lsf2=longStationLabelFontsLive(pxSpan2);
+        ctx.save(); ctx.translate(lsMx,lsMy);
+        ctx.textAlign='center';
+        ctx.font='bold '+lsf2.tool+'px "Share Tech Mono",monospace';
+        ctx.fillStyle='#fb923c';
+        ctx.textBaseline='bottom';
+        ctx.fillText('[' + (row.mainTool||'TOOL') + ']', 0, Math.round(-lsf2.mid*1.18)-2);
+        ctx.font='bold '+lsf2.mid+'px "Share Tech Mono",monospace';
+        ctx.fillStyle='#fcd34d';
+        ctx.textBaseline='bottom';
+        ctx.fillText('LONG STATION',0,-2);
+        ctx.font='bold '+lsf2.time+'px "Share Tech Mono",monospace';
+        ctx.textBaseline='top';
+        ctx.fillText(formatLSTime(seg.segTime),0,Math.round(lsf2.mid*0.38)+2);
+        ctx.restore();
+      }
+    } else if (isCont) {
+      var color=isDown?'#e05555':'#3db87a';
+      var x1=tx(tStart),y1=ty(startDepth),x2=tx(tStart+seg.segTime),y2=ty(endDepth);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.setLineDash([]);
+      ctx.shadowColor=color; ctx.shadowBlur=5; ctx.stroke(); ctx.shadowBlur=0;
+      var atool = row.mainTool ? ' ['+row.mainTool+']' : '';
+      angledLabel(x1,y1,x2,y2,row.contSpeed+' '+(units==='emp'?'ft':'m')+'/min'+(isDown?' ↓':' ↑')+atool,isDown?'#fca5a5':'#86efac',isDown,{ key: _segKey('cont') });
+    } else {
+      var interval=Math.abs(endDepth-startDepth);
+      var STEPS=10;
+      var stDurMin=(parseFloat(row.stDuration)||45)/60;
+      var numSt=seg.numSt||Math.floor(interval/(parseFloat(row.stInterval)||30));
+      var stSpd=parseFloat(row.stSpeed)||20;
+      var stTotalTime=numSt*stDurMin;
+      var moveTotalTime=interval/stSpd;
+      var eachStepDur=stTotalTime/STEPS;
+      var eachMoveDur=moveTotalTime/STEPS;
+      var eachDepthStep=interval/STEPS;
+      var depthDir=isDown?1:-1;
+      var pts=[{lt:0,d:startDepth}];
+      var lt=0,dd=startDepth;
+      for (var s=0;s<STEPS;s++){pts.push({lt:lt+eachStepDur,d:dd});lt+=eachStepDur;dd+=depthDir*eachDepthStep;lt+=eachMoveDur;pts.push({lt:lt,d:dd});}
+      var tScale=seg.segTime/(pts[pts.length-1].lt||1);
+      for (var i=1;i<pts.length;i++){
+        var pv=pts[i-1],p=pts[i];
+        var isHold=Math.abs(p.d-pv.d)<0.01;
+        var px1=tx(tStart+pv.lt*tScale),py1=ty(pv.d),px2=tx(tStart+p.lt*tScale),py2=ty(p.d);
+        ctx.beginPath(); ctx.moveTo(px1,py1); ctx.lineTo(px2,py2);
+        if(isHold){ctx.strokeStyle='#dc2626';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.shadowColor='rgba(220,38,38,0.55)';ctx.shadowBlur=3;}
+        else{ctx.strokeStyle='#b91c1c';ctx.lineWidth=2;ctx.setLineDash([]);ctx.shadowColor='rgba(185,28,28,0.45)';ctx.shadowBlur=4;}
+        ctx.stroke(); ctx.shadowBlur=0; ctx.setLineDash([]);
+      }
+      var stLbl = row.stInterval+(units==='emp'?'ft':'m')+'  '+row.stDuration+'s st.'+ (row.mainTool ? ' ['+row.mainTool+']' : '');
+      var lblG2 = stationStairCanvasCenterBelowHolds(pts,
+        function(lt){ return tx(tStart+lt*tScale); },
+        function(d){ return ty(d); },
+        CHART_SEG_LABEL_GAP * CHART_STAIR_LABEL_GAP_MULT);
+      if (lblG2) {
+        var xc1b = tx(tStart), yc1b = ty(startDepth), xc2b = tx(tStart + seg.segTime), yc2b = ty(endDepth);
+        var chordPxSt2 = Math.sqrt((xc2b-xc1b)*(xc2b-xc1b)+(yc2b-yc1b)*(yc2b-yc1b));
+        if (chordPxSt2 < 55 || !chartLabelFitsInline(ctx, stLbl, chordPxSt2, CHART_SEG_LABEL_PX, 8)) {
+          queueCallout(pendingCallouts, (xc1b+xc2b)/2, (yc1b+yc2b)/2,
+            [{ text: stLbl, color: '#991b1b', size: 11, bold: false }],
+            { lineColor: '#991b1b', borderColor: '#991b1b', key: _segKey('st') });
+        } else {
+          var stF2 = unifiedSegAngledFontPx(ctx, stLbl, xc1b, yc1b, xc2b, yc2b, CHART_SEG_LABEL_PX, 8);
+          ctx.save(); ctx.translate(lblG2.lx,lblG2.ly); ctx.rotate(lblG2.angle);
+          ctx.font=stF2+'px "Share Tech Mono",monospace'; ctx.fillStyle='#991b1b';
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText(stLbl,0,0); ctx.restore();
+        }
+      }
+    }
+
+    // Condition grouping — break at run boundaries too
+    var cond = row.condition;
+    var runName = seg._runName || '';
+    var lastGrp = condGroups.length > 0 ? condGroups[condGroups.length-1] : null;
+    if (!lastGrp || lastGrp.cond !== cond || lastGrp.runName !== runName) {
+      condGroups.push({cond:cond, runName:runName, segs:[seg]});
+    } else {
+      lastGrp.segs.push(seg);
+    }
+
+    currentDepth = endDepth;
+  });
+
+  // Run names centered over each run's time span (not at plot corners / separators)
+  runBoundaries.forEach(function(rb) {
+    var tMid = (rb.tStart + rb.tEnd) / 2;
+    ctx.save();
+    ctx.font = 'bold 14px "Rajdhani", sans-serif';
+    ctx.fillStyle = rb.run.color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(rb.run.name, tx(tMid), PAD_T - 50);
+    ctx.restore();
+  });
+
+  // Divider line
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(PAD_L, PAD_T - 28);
+  ctx.lineTo(W - PAD_R, PAD_T - 28);
+  ctx.strokeStyle = 'rgba(185,28,28,0.35)';
+  ctx.lineWidth = 1; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.restore();
+
+  // Condition badges in label row
+  condGroups.forEach(function(grp){
+    var first=grp.segs[0], last=grp.segs[grp.segs.length-1];
+    var tMid=(first._drawTStart+last._drawTEnd)/2;
+    var lbl=grp.cond;
+    ctx.save();
+    ctx.font='bold 11px "Rajdhani",sans-serif';
+    var tw=ctx.measureText(lbl).width;
+    ctx.fillStyle='rgba(142,26,41,0.88)';
+    ctx.fillRect(tx(tMid)-tw/2-6, PAD_T-24, tw+12, 18);
+    ctx.fillStyle='#ffffff';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(lbl, tx(tMid), PAD_T-22);
+    ctx.restore();
+  });
+
+  // Start/end dots
+  // dot helper (no label)
+  // Small dots only
+  function dotA(t,d,color){var x=tx(t),y=ty(d);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;}
+  dotA(0,firstDepth,'#334155');
+  dotA(totalTime,currentDepth,runs.length>0?runs[runs.length-1].color:'#334155');
+
+  // Leader-line callouts for too-narrow segment labels
+  var mergedOverrides = {};
+  runs.forEach(function(rr) {
+    if (rr.calloutOverrides) Object.assign(mergedOverrides, rr.calloutOverrides);
+  });
+  Object.assign(mergedOverrides, allRunsCalloutOverrides);
+  drawCallouts(ctx, pendingCallouts, {
+    area: { x0: PAD_L, y0: PAD_T, x1: W - PAD_R, y1: H - PAD_B },
+    plotGeo: { padL: PAD_L, padT: PAD_T, plotW: W - PAD_L - PAD_R, plotH: H - PAD_T - PAD_B },
+    overrides: mergedOverrides
+  });
+  canvas._calloutCtx = { mode: 'all' };
+}
+
+function exportExcel() {
+  var dUnit = units === 'emp' ? 'ft' : 'm';
+  var sUnit = units === 'emp' ? 'ft/min' : 'm/min';
+  var rows = [];
+  rows.push(['LOGGING PROGRAM CALCULATOR','','','','','','','','','','','','']);
+  rows.push(['Generated:', new Date().toLocaleString(),'','','','','','','','','','','']);
+  rows.push([]);
+  var wellName = (document.getElementById('def-wellname')||{}).value || '';
+  if (wellName) rows.push(['Well Name:', wellName,'','','','','','','','','','','','']);
+  rows.push(['Run','#','Condition','Direction','Main Tool','Top ('+dUnit+')','Bottom ('+dUnit+')','Mode',
+    'Cont Speed ('+sUnit+')','St Interval ('+dUnit+')','St Duration (sec)','Speed btw St ('+sUnit+')','Seg Time (min)','Seg Time (hr)']);
+  var dirMap2 = {'down':'Down','up':'Up','longst':'Long Station','rih':'RIH','pooh':'POOH'};
+  runs.forEach(function(run) {
+    run.rows.forEach(function(row, i) {
+      rows.push([run.name, i+1, row.condition, dirMap2[row.direction]||row.direction,
+        row.mainTool||'',
+        row.top, row.bottom, row.mode==='cont'?'Continuous':'Stations',
+        row.contSpeed, row.stInterval, row.stDuration, row.stSpeed,
+        row._segTime!==undefined?row._segTime.toFixed(2):'',
+        row._segTime!==undefined?(row._segTime/60).toFixed(4):''
+      ]);
+    });
+    if (run.result) rows.push(['','','','','','','','','','','','Total (min):',run.result.totalTime.toFixed(2)]);
+    rows.push([]);
+  });
+  var csv = rows.map(function(r){
+    return r.map(function(cell){
+      var s = String(cell===undefined||cell===null?'':cell);
+      if(s.indexOf(',')>=0||s.indexOf('"')>=0) s='"'+s.replace(/"/g,'""')+'"';
+      return s;
+    }).join(',');
+  }).join('\r\n');
+  var blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); 
+  a.download = 'LoggingProgram_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+function saveChartJPEG() {
+  // Collect segments from active run or all runs
+  var segs = [];
+  var runsList = [];
+
+  if (activeRunIdx === -99) {
+    runs.forEach(function(r) {
+      if (r.result && r.result.segments.length) {
+        runsList.push(r);
+        r.result.segments.forEach(function(s){
+          // Tag with run name so condGroups can break at run boundaries
+          s._runName = r.name;
+          segs.push(s);
+        });
+      }
+    });
+  } else {
+    var ar = getActiveRun();
+    if (ar && ar.result && ar.result.segments.length) {
+      runsList = [ar];
+      ar.result.segments.forEach(function(s){ s._runName = ar.name; });
+      segs = ar.result.segments;
+    }
+  }
+
+  if (!segs.length) {
+    alert('Please click Calculate & Visualize first.');
+    return;
+  }
+
+  var wellName = '';
+  var wnEl = document.getElementById('def-wellname');
+  if (wnEl) wellName = wnEl.value || '';
+  var uLabel = units === 'emp' ? 'ft' : 'm';
+
+  function fj(nn) {
+    return Math.max(5, Math.round(nn * 0.7));
+  }
+
+  // Canvas — plot strokes all black on export (grid stays light gray).
+  var HDR_H = 90, W = 1200;
+  var JLINE = '#111';
+  var JGRID = '#b8b8b8';
+  var H = Math.round(W * 0.50) + HDR_H;
+  var PAD_L = 95, PAD_R = 30, PAD_T = 100, PAD_B = 104;
+  var PW = W - PAD_L - PAD_R;
+  var PH = H - HDR_H - PAD_T - PAD_B;
+
+  var off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  var o = off.getContext('2d');
+
+  // White background
+  o.fillStyle = '#ffffff';
+  o.fillRect(0, 0, W, H);
+
+  // Header (fonts −30% for JPEG export)
+  o.fillStyle = '#991b1b';
+  o.fillRect(0, 0, W, HDR_H);
+  o.font = 'bold '+fj(32)+'px Arial,sans-serif';
+  o.fillStyle = '#ffffff';
+  o.textAlign = 'center';
+  o.textBaseline = 'middle';
+  o.fillText('HALLIBURTON', W/2, HDR_H * 0.33);
+  var totalMin = 0;
+  segs.forEach(function(s){ totalMin += s.segTime; });
+  o.font = 'bold '+fj(15)+'px Arial,sans-serif';
+  o.fillStyle = '#fecaca';
+  o.fillText('LOGGING PROCEDURE' + (wellName ? ' FOR ' + wellName.toUpperCase() : '') +
+    '   |   ' + Math.round(totalMin) + ' min   |   ' + minToDHM(totalMin), W/2, HDR_H * 0.72);
+
+  // Depth extents (include surface 0)
+  var allD = [0];
+  segs.forEach(function(s){ allD.push(s.top, s.bottom); });
+  var minD = Math.min.apply(null, allD);
+  var maxD = Math.max.apply(null, allD);
+
+  // Y axis (compressed)
+  // For JPEG always use the same setting as the checkbox
+  var yAxis = buildYAxis(segs, minD, maxD, PH, HDR_H + PAD_T);
+  function ey(d) { return yAxis.ty(d); }
+
+  // X axis — longst compressed
+  var totalFastTime = 0, totalLogTime = 0;
+  segs.forEach(function(s){
+    if (s.isLongSt) totalFastTime += s.segTime;
+    else totalLogTime += s.segTime;
+  });
+  var nFast = segs.filter(function(s){ return s.isLongSt; }).length;
+  var fastPPM = nFast > 0 ? (PW * 0.05 * nFast) / (totalFastTime || 1) : 0;
+  var logPPM  = totalLogTime > 0 ? (PW - totalFastTime * fastPPM) / totalLogTime : PW;
+  var segPxStart = [];
+  var cumPx = 0;
+  segs.forEach(function(s){
+    segPxStart.push(cumPx);
+    cumPx += s.segTime * (s.isLongSt ? fastPPM : logPPM);
+  });
+  var tTotalPx = cumPx;
+  function exEnd(si){ return PAD_L + segPxStart[si] + segs[si].segTime*(segs[si].isLongSt?fastPPM:logPPM); }
+
+  // Grid + Depth labels — use zone-aware spacing to avoid label overlap in compressed zones
+  var dStep = (maxD-minD)<=1000?100:(maxD-minD)<=3000?200:500;
+  o.strokeStyle = JGRID; o.lineWidth = 1;
+  o.fillStyle='#444'; o.font=fj(16)+'px "Courier New",monospace'; o.textAlign='right'; o.textBaseline='middle';
+
+  var MIN_PX_BETWEEN_LABELS = 22; // minimum pixels between depth labels
+  var lastLabelPx = -999;
+
+  if (yAxis.COMPRESS && yAxis.zones) {
+    // Draw grid and labels per zone with appropriate density
+    yAxis.zones.forEach(function(z) {
+      var zSpan = z.to - z.from;
+      // How many pixels does this zone occupy?
+      var zPxH = z.gap
+        ? zSpan * (yAxis.gapPPD || 0.01)
+        : zSpan * (yAxis.logPPD || (PH / (maxD - minD + 1)));
+      // Pick step so labels don't overlap: at least MIN_PX_BETWEEN_LABELS per label
+      var maxLabels = Math.max(1, Math.floor(zPxH / MIN_PX_BETWEEN_LABELS));
+      var zStep = Math.ceil(zSpan / maxLabels / dStep) * dStep;
+      if (zStep < dStep) zStep = dStep;
+
+      for (var d2=Math.ceil(z.from/zStep)*zStep; d2<=z.to; d2+=zStep) {
+        var py = ey(d2);
+        // Grid line
+        o.strokeStyle=JGRID; o.lineWidth=1;
+        o.beginPath(); o.moveTo(PAD_L,py); o.lineTo(PAD_L+tTotalPx,py); o.stroke();
+        // Label — only if far enough from previous
+        if (py - lastLabelPx >= MIN_PX_BETWEEN_LABELS) {
+          o.fillStyle = z.gap ? '#999' : '#444';
+          o.fillText(d2, PAD_L-6, py);
+          lastLabelPx = py;
+        }
+      }
+    });
+    // Separator lines at gap boundaries
+    o.save(); o.strokeStyle=JLINE; o.lineWidth=1.5; o.setLineDash([6,4]);
+    yAxis.zones.forEach(function(z){
+      if (z.gap) {
+        o.beginPath(); o.moveTo(PAD_L,ey(z.from)); o.lineTo(PAD_L+tTotalPx,ey(z.from)); o.stroke();
+        o.beginPath(); o.moveTo(PAD_L,ey(z.to));   o.lineTo(PAD_L+tTotalPx,ey(z.to));   o.stroke();
+        // "~" marker
+        o.fillStyle='#333'; o.font='bold '+fj(14)+'px Arial,sans-serif';
+        o.textAlign='left'; o.textBaseline='middle';
+        o.fillText('~', PAD_L+4, ey((z.from+z.to)/2));
+      }
+    });
+    o.setLineDash([]); o.restore();
+  } else {
+    // No compression — uniform grid and labels
+    for (var dg=Math.ceil(minD/dStep)*dStep; dg<=maxD; dg+=dStep){
+      var py2 = ey(dg);
+      o.strokeStyle=JGRID; o.lineWidth=1;
+      o.beginPath(); o.moveTo(PAD_L,py2); o.lineTo(PAD_L+tTotalPx,py2); o.stroke();
+      if (py2 - lastLabelPx >= MIN_PX_BETWEEN_LABELS) {
+        o.fillStyle='#444'; o.fillText(dg, PAD_L-6, py2);
+        lastLabelPx = py2;
+      }
+    }
+  }
+
+  // Vertical segment boundary lines
+  segs.forEach(function(s,si){
+    o.strokeStyle=JGRID; o.lineWidth=0.65;
+    o.beginPath(); o.moveTo(PAD_L+segPxStart[si],HDR_H+PAD_T); o.lineTo(PAD_L+segPxStart[si],H-PAD_B); o.stroke();
+  });
+  // Time axis: cumulative minutes at each segment (pass) boundary + end
+  var passMarksJ = [];
+  var cjj = 0;
+  for (var ji = 0; ji < segs.length; ji++) {
+    passMarksJ.push({ x: PAD_L + segPxStart[ji], t: Math.round(cjj) });
+    cjj += segs[ji].segTime;
+  }
+  passMarksJ.push({ x: PAD_L + tTotalPx, t: Math.round(cjj) });
+  drawPassBoundaryTimeMarks(o, passMarksJ, H - PAD_B + fj(26), fj(16) + 'px "Courier New",monospace', '#444', fj(22));
+
+  // Axis titles
+  o.save(); o.translate(18,HDR_H+PAD_T+PH/2); o.rotate(-Math.PI/2);
+  o.fillStyle='#666'; o.font=fj(21)+'px "Courier New",monospace'; o.textAlign='center'; o.textBaseline='middle';
+  o.fillText('DEPTH ('+uLabel+')',0,0); o.restore();
+  o.fillStyle='#666'; o.font=fj(21)+'px "Courier New",monospace'; o.textAlign='center'; o.textBaseline='bottom';
+  o.fillText('TIME (min)', PAD_L+tTotalPx/2, H - PAD_B + fj(58));
+
+  // Axis border
+  o.strokeStyle=JLINE; o.lineWidth=1.5;
+  o.beginPath(); o.moveTo(PAD_L,HDR_H+PAD_T); o.lineTo(PAD_L,H-PAD_B); o.lineTo(PAD_L+tTotalPx,H-PAD_B); o.stroke();
+
+  // Segment colors
+  var DARK='#111', DARK2='#222';
+  var COND_COLORS_J = {
+    'Shut-in':[200,30,50],'Flowing':[30,80,200],'Transient':[30,160,60],
+    'Refilling':[160,140,30],'Injection':[100,100,100],'Pumping':[0,180,200],
+    'Circulation':[200,120,20],'A-ann Bleed-off':[130,40,180],
+    'B-ann Bleed-off':[130,40,180],'C-ann Bleed-off':[130,40,180],
+    'D-ann Bleed-off':[130,40,180],'E-ann Bleed-off':[130,40,180]
+  };
+
+  // Build cond groups for background
+  // Build condGroups breaking at run boundaries so same condition in diff runs gets separate labels
+  var condGroups=[];
+  segs.forEach(function(s,si){
+    var xs=PAD_L+segPxStart[si], xe=exEnd(si);
+    var cond=s.row.condition;
+    // Use _runName to detect run boundary
+    var runName = s._runName || s.row._runName || '';
+    var lastG = condGroups.length > 0 ? condGroups[condGroups.length-1] : null;
+    if(!lastG || lastG.cond !== cond || lastG.runName !== runName)
+      condGroups.push({cond:cond, runName:runName, xs:xs, xe:xe});
+    else condGroups[condGroups.length-1].xe=xe;
+  });
+  condGroups.forEach(function(g){
+    var rgb=COND_COLORS_J[g.cond]||[120,120,120];
+    o.fillStyle='rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',0.22)';
+    o.fillRect(g.xs,HDR_H+PAD_T,g.xe-g.xs,PH);
+  });
+
+  // Draw segments
+  var curD2 = segs.length>0?(segs[0].isDown?Math.min(segs[0].top,segs[0].bottom):Math.max(segs[0].top,segs[0].bottom)):0;
+  var firstD2=curD2;
+
+  // Per-segment label font from that segment's pixel width (avoid one short segment shrinking all exports)
+  function segLabelGF(pxWidth) {
+    var wPx = Math.max(1, pxWidth);
+    return Math.max(fj(11), Math.min(fj(18), wPx * 0.063));
+  }
+
+  // One JPEG font size for all continuous + station profile labels (max of per-segment caps).
+  // Otherwise narrow down-pass segments get tiny segGF vs wide up-pass → unequal labels.
+  var jpegProfFontBase = fj(11);
+  segs.forEach(function(s, si2) {
+    if (s.isLongSt) return;
+    var pxA = PAD_L + segPxStart[si2], pxB = exEnd(si2);
+    jpegProfFontBase = Math.max(jpegProfFontBase, segLabelGF(Math.max(1, pxB - pxA)));
+  });
+
+  function angledLbl(x1,y1,x2,y2,lbl,col,isDn){
+    var fPx=Math.round(jpegProfFontBase);
+    var angle=Math.atan2(y2-y1,x2-x1);
+    var pf=chartLabelPerpFlip(isDn,angle);
+    var gap=fj(Math.round(CHART_SEG_LABEL_GAP*(isDn?0.55:0.92)));
+    var mx=(x1+x2)/2-Math.sin(angle)*gap*pf;
+    var my=(y1+y2)/2+Math.cos(angle)*gap*pf;
+    o.save(); o.translate(mx,my); o.rotate(angle);
+    o.font='bold '+fPx+'px "Courier New",monospace';
+    o.textAlign='center'; o.fillStyle=col||DARK;
+    o.textBaseline='middle';
+    o.fillText(lbl,0,0);
+    o.restore();
+  }
+
+  segs.forEach(function(s,si){
+    var row=s.row;
+    var isDown=(row.direction==='down'||row.direction==='rih');
+    var px1=PAD_L+segPxStart[si], px2=exEnd(si);
+    var sD=curD2;
+    var eD=s.isLongSt?sD:(isDown?Math.max(s.top,s.bottom):Math.min(s.top,s.bottom));
+    s._px1=px1; s._px2=px2;
+
+    if(s.isLongSt){
+      // Vertical dashed lines at start and end
+      o.save();
+      o.strokeStyle=JLINE; o.lineWidth=1.5; o.setLineDash([6,5]);
+      o.beginPath(); o.moveTo(px1,HDR_H+PAD_T); o.lineTo(px1,H-PAD_B); o.stroke();
+      o.beginPath(); o.moveTo(px2,HDR_H+PAD_T); o.lineTo(px2,H-PAD_B); o.stroke();
+      o.setLineDash([]); o.restore();
+      // Horizontal line
+      o.beginPath();o.moveTo(px1,ey(sD));o.lineTo(px2,ey(sD));
+      o.strokeStyle=JLINE;o.lineWidth=2;o.setLineDash([6,4]);o.stroke();o.setLineDash([]);
+      // Labels: tool / LONG STATION / time (JPEG: was capped ~fj(16)→~11px; scale with plateau width)
+      var lsLenPx = Math.max(1, Math.abs(px2 - px1));
+      var lsMid = Math.max(fj(12), Math.min(fj(28), Math.round(lsLenPx * 0.09)));
+      lsMid = Math.max(lsMid, Math.round(jpegProfFontBase * 0.98));
+      lsMid = Math.min(lsMid, fj(28));
+      var lsSide = Math.max(fj(10), Math.min(fj(22), Math.round(lsMid * 0.92)));
+      var lsMx2=(px1+px2)/2,lsMy2=ey(sD);
+      o.save(); o.translate(lsMx2,lsMy2);
+      o.textAlign='center';
+      o.fillStyle=DARK;
+      o.font='bold '+lsSide+'px Arial,sans-serif';
+      o.textBaseline='bottom';
+      o.fillText('['+(row.mainTool||'TOOL')+']',0,Math.round(-lsMid*1.18)-2);
+      o.font='bold '+lsMid+'px Arial,sans-serif';
+      o.textBaseline='bottom';
+      o.fillText('LONG STATION',0,-2);
+      o.font='bold '+lsSide+'px Arial,sans-serif';
+      o.textBaseline='top';
+      o.fillText(formatLSTime(s.segTime),0,Math.round(lsMid*0.38)+2);
+      o.restore();
+    } else if(row.mode==='cont'){
+      o.beginPath();o.moveTo(px1,ey(sD));o.lineTo(px2,ey(eD));
+      o.strokeStyle=DARK;o.lineWidth=2;o.setLineDash([]);o.stroke();
+      var lbl=row.contSpeed+' '+uLabel+'/min'+(row.mainTool?' ['+row.mainTool+']':'');
+      angledLbl(px1,ey(sD),px2,ey(eD),lbl,DARK,isDown);
+    } else {
+      var interval=Math.abs(eD-sD),STEPS=10;
+      var stDm=(parseFloat(row.stDuration)||45)/60;
+      var numSt=s.numSt||Math.floor(interval/(parseFloat(row.stInterval)||30));
+      var stSpd=parseFloat(row.stSpeed)||20;
+      var stT=numSt*stDm,mvT=interval/stSpd;
+      var eDur=stT/STEPS,eMv=mvT/STEPS,eDp=interval/STEPS,dDir=isDown?1:-1;
+      var pts=[{lt:0,d:sD}],lt=0,dd=sD;
+      for(var ss=0;ss<STEPS;ss++){pts.push({lt:lt+eDur,d:dd});lt+=eDur;dd+=dDir*eDp;lt+=eMv;pts.push({lt:lt,d:dd});}
+      var pxW=px2-px1,tSc=pxW/(pts[pts.length-1].lt||1);
+      for(var pi=1;pi<pts.length;pi++){
+        var pv=pts[pi-1],pp=pts[pi],isH=Math.abs(pp.d-pv.d)<0.01;
+        o.beginPath();o.moveTo(px1+pv.lt*tSc,ey(pv.d));o.lineTo(px1+pp.lt*tSc,ey(pp.d));
+        o.strokeStyle=JLINE;o.lineWidth=isH?1.5:2;
+        o.setLineDash(isH?[4,4]:[]);o.stroke();o.setLineDash([]);
+      }
+      var stLbl=row.stInterval+uLabel+' '+row.stDuration+'s'+(row.mainTool?' ['+row.mainTool+']':'');
+      var gpixJ=fj(Math.round(CHART_SEG_LABEL_GAP * CHART_STAIR_LABEL_GAP_MULT));
+      var geoJ=stationStairCanvasCenterBelowHolds(pts,function(lt){return px1+lt*tSc;},function(d){return ey(d);},gpixJ);
+      if(geoJ){
+        var fSt=Math.round(jpegProfFontBase);
+        o.save(); o.translate(geoJ.lx,geoJ.ly); o.rotate(geoJ.angle);
+        o.font='bold '+fSt+'px "Courier New",monospace';
+        o.textAlign='center'; o.textBaseline='middle'; o.fillStyle=JLINE;
+        o.fillText(stLbl,0,0); o.restore();
+      }
+    }
+    curD2=eD;
+  });
+
+  // Condition labels
+  var COND_ABBR={'Shut-in':'SI','Flowing':'FL','Transient':'TR','Refilling':'REF',
+    'Injection':'INJ','Pumping':'PUMP','Circulation':'CIRC',
+    'A-ann Bleed-off':'BO-A','B-ann Bleed-off':'BO-B','C-ann Bleed-off':'BO-C',
+    'D-ann Bleed-off':'BO-D','E-ann Bleed-off':'BO-E'};
+  condGroups.forEach(function(g){
+    var xMid=(g.xs+g.xe)/2,gW=g.xe-g.xs;
+    var full=g.cond, abbr=COND_ABBR[g.cond]||g.cond;
+    o.font='bold '+fj(18)+'px Arial,sans-serif';
+    var lbl=o.measureText(full).width+14<=gW?full:abbr;
+    var tw=o.measureText(lbl).width;
+    o.fillStyle='rgba(0,0,0,0.07)'; o.fillRect(xMid-tw/2-5,HDR_H+PAD_T+2,tw+10,24);
+    o.fillStyle='#111'; o.textAlign='center'; o.textBaseline='top';
+    o.fillText(lbl,xMid,HDR_H+PAD_T+4);
+  });
+
+  // Run separators + centered run name above each run (no labels on left edge / at separator ticks)
+  if(runsList.length>1){
+    runsList.forEach(function(rr,ri){
+      var fs=rr.result.segments[0], ls=rr.result.segments[rr.result.segments.length-1];
+      var rxS=fs._px1||PAD_L, rxE=ls._px2||PAD_L+tTotalPx;
+      if(ri>0){
+        o.save();o.beginPath();o.moveTo(rxS,HDR_H+PAD_T);o.lineTo(rxS,H-PAD_B);
+        o.strokeStyle=JLINE;o.lineWidth=2;o.setLineDash([8,6]);o.stroke();
+        o.setLineDash([]);o.restore();
+      }
+      o.font='bold '+fj(22)+'px Arial,sans-serif';o.fillStyle='#111';
+      o.textAlign='center';o.textBaseline='bottom';
+      o.fillText(rr.name,(rxS+rxE)/2,HDR_H+PAD_T-4);
+    });
+  } else if(runsList.length===1){
+    o.font='bold '+fj(22)+'px Arial,sans-serif';o.fillStyle='#111';
+    o.textAlign='center';o.textBaseline='bottom';
+    o.fillText(runsList[0].name,PAD_L+tTotalPx/2,HDR_H+PAD_T-4);
+  }
+
+  // Dots
+  var dr=fj(5);
+  o.beginPath();o.arc(PAD_L+segPxStart[0],ey(firstD2),dr,0,Math.PI*2);o.fillStyle=JLINE;o.fill();
+  o.beginPath();o.arc(PAD_L+tTotalPx,ey(curD2),Math.max(dr,4),0,Math.PI*2);o.fillStyle=JLINE;o.fill();
+
+  // Show in modal
+  var rname2=(activeRunIdx>=0&&runs[activeRunIdx])?'_'+runs[activeRunIdx].name:'';
+  var fname='LoggingProcedure'+rname2+'_'+new Date().toISOString().slice(0,10)+'.jpg';
+  var dataUrl=off.toDataURL('image/jpeg',0.92);
+  var modal=document.getElementById('jpegModal');
+  var imgEl=document.getElementById('jpegModalImg');
+  var linkEl=document.getElementById('jpegSaveLink');
+  if(modal && imgEl && linkEl){
+    imgEl.src=dataUrl; linkEl.href=dataUrl; linkEl.download=fname;
+    modal.style.display='flex';
+    modal.classList.add('open');
+  } else {
+    // Fallback: open in new window
+    var w=window.open('','_blank');
+    if(w){ w.document.write('<img src="'+dataUrl+'" style="max-width:100%">'); w.document.close(); }
+  }
+}
+
+function sanitizeFilename(s) {
+  var t = String(s || 'RUN')
+    .replace(/[\\/:*?"<>|\s]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 80);
+  return t || 'RUN';
+}
+
+/** JPEG текущей вкладки: таблица + статистика (без строки кнопок на снимке). */
+function saveSeqOfEventsJPEG() {
+  if (typeof html2canvas !== 'function') {
+    alert('Не загрузился html2canvas. Нужно интернет‑подключение для CDN.');
+    return;
+  }
+  var tabMode = activeRunIdx;
+  var titleLine = 'SEQ of EVENTS';
+  var fileSlug = 'SEQ';
+
+  if (tabMode !== -99) {
+    var run = getActiveRun();
+    if (!run) {
+      alert('Выберите run.');
+      return;
+    }
+    if (!run.rows.length) {
+      alert('В этом run нет сегментов.');
+      return;
+    }
+    calcRun(run);
+    renderTable();
+    updateStats(run);
+    titleLine = (run.name || 'RUN') + ' — SEQ of EVENTS';
+    fileSlug = sanitizeFilename(run.name);
+  } else {
+    var anyRows = runs.some(function(r) { return r.rows.length > 0; });
+    if (!anyRows) {
+      alert('Нет сегментов для объединённого вида.');
+      return;
+    }
+    runs.forEach(function(r) { if (r.rows.length) calcRun(r); });
+    renderTable();
+    var combinedTime = 0;
+    var combinedSt = 0;
+    runs.forEach(function(r) {
+      if (r.result) {
+        combinedTime += r.result.totalTime;
+        combinedSt += r.result.totalStations;
+      }
+    });
+    document.getElementById('statsRow').style.display = 'flex';
+    document.getElementById('s-depth').innerHTML = '—';
+    document.getElementById('s-segs').innerHTML = String(runs.reduce(function(acc, rr) {
+      return acc + (rr.result ? rr.result.segments.length : 0);
+    }, 0));
+    document.getElementById('s-time').innerHTML = combinedTime.toFixed(1) + '<span class="sunit"> min</span>';
+    document.getElementById('s-hrs').innerHTML = (combinedTime / 60).toFixed(2) + '<span class="sunit"> hr</span>';
+    document.getElementById('s-dhm').textContent = minToDHM(combinedTime);
+    document.getElementById('s-st').innerHTML = String(combinedSt);
+    titleLine = 'ALL RUNS — SEQ of EVENTS';
+    fileSlug = 'ALL-RUNS';
+  }
+
+  var cap = document.getElementById('allRunsCaptureBlock');
+  if (!cap) return;
+
+  cap.classList.add('seq-capture-shot');
+  cap.scrollIntoView({ block: 'start' });
+
+  var wellNameSnap = '';
+  var wne = document.getElementById('def-wellname');
+  if (wne) wellNameSnap = (wne.value || '').trim();
+
+  requestAnimationFrame(function() {
+    setTimeout(function() {
+      html2canvas(cap, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true,
+        width: cap.scrollWidth,
+        height: cap.scrollHeight,
+        windowWidth: cap.scrollWidth,
+        windowHeight: cap.scrollHeight,
+        scrollX: 0,
+        scrollY: window.scrollY,
+        onclone: function(clonedDoc) {
+          var row = clonedDoc.getElementById('tableActionsRow');
+          if (row) row.style.display = 'none';
+          var capEl = clonedDoc.getElementById('allRunsCaptureBlock');
+          if (!capEl) return;
+          capEl.classList.add('seq-capture-shot');
+          var meta = clonedDoc.createElement('div');
+          meta.style.background = '#ffffff';
+          meta.style.padding = '10px 24px 8px';
+          meta.style.borderBottom = '1px solid #cbd5e1';
+          var t1 = clonedDoc.createElement('div');
+          t1.textContent = titleLine;
+          t1.style.fontFamily = '\'Rajdhani\', sans-serif';
+          t1.style.fontWeight = '700';
+          t1.style.fontSize = '16px';
+          t1.style.letterSpacing = '2px';
+          t1.style.color = '#991b1b';
+          t1.style.textTransform = 'uppercase';
+          meta.appendChild(t1);
+          if (wellNameSnap) {
+            var t2 = clonedDoc.createElement('div');
+            t2.textContent = 'Well: ' + wellNameSnap;
+            t2.style.marginTop = '4px';
+            t2.style.fontFamily = '\'Share Tech Mono\', monospace';
+            t2.style.fontSize = '12px';
+            t2.style.color = '#475569';
+            meta.appendChild(t2);
+          }
+          var t3 = clonedDoc.createElement('div');
+          t3.textContent = 'Generated: ' + new Date().toLocaleString();
+          t3.style.marginTop = '2px';
+          t3.style.fontFamily = '\'Share Tech Mono\', monospace';
+          t3.style.fontSize = '10px';
+          t3.style.color = '#64748b';
+          meta.appendChild(t3);
+          capEl.insertBefore(meta, capEl.firstChild);
+        }
+      }).then(function(canvasShot) {
+        cap.classList.remove('seq-capture-shot');
+        var dataUrl = canvasShot.toDataURL('image/jpeg', 0.92);
+        var fname = 'SeqEvents_' + fileSlug + '_' + new Date().toISOString().slice(0, 10) + '.jpg';
+        var modal = document.getElementById('jpegModal');
+        var imgEl = document.getElementById('jpegModalImg');
+        var linkEl = document.getElementById('jpegSaveLink');
+        if (modal && imgEl && linkEl) {
+          imgEl.src = dataUrl;
+          linkEl.href = dataUrl;
+          linkEl.download = fname;
+          modal.style.display = 'flex';
+          modal.classList.add('open');
+        } else {
+          var a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = fname;
+          a.click();
+        }
+      }).catch(function(err) {
+        cap.classList.remove('seq-capture-shot');
+        alert('Не удалось снять таблицу: ' + (err && err.message ? err.message : String(err)));
+      });
+    }, 80);
+  });
+}
+
+function closeJpegModal(event) {
+  if (event.target === document.getElementById('jpegModal')) {
+    var m = document.getElementById('jpegModal');
+    m.style.display = 'none';
+    m.classList.remove('open');
+  }
+}
+
+// ── SAVE / LOAD PROJECT ──────────────────────────────
+function getDefaultsSnapshot() {
+  var ids = ['def-wellname','def-top','def-bottom','def-contspeed',
+             'def-stlen','def-sttime','def-lstime','def-stspeed','def-rihspeed'];
+  var snap = {};
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) snap[id] = el.value;
+  });
+  return snap;
+}
+
+function applyDefaultsSnapshot(snap) {
+  if (!snap) return;
+  Object.keys(snap).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = snap[id];
+  });
+}
+
+function saveProject() {
+  var project = {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    units: units,
+    defaults: getDefaultsSnapshot(),
+    runs: runs.map(function(run) {
+      return {
+        name: run.name,
+        color: run.color,
+        calloutOverrides: run.calloutOverrides || {},
+        rows: run.rows.map(function(row) {
+          return {
+            condition:  row.condition,
+            direction:  row.direction,
+            top:        row.top,
+            bottom:     row.bottom,
+            mode:       row.mode,
+            contSpeed:  row.contSpeed,
+            stInterval: row.stInterval,
+            stDuration: row.stDuration,
+            stSpeed:    row.stSpeed,
+            mainTool:   row.mainTool
+          };
+        })
+      };
+    }),
+    allRunsCalloutOverrides: allRunsCalloutOverrides
+  };
+  var json = JSON.stringify(project, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var a = document.createElement('a');
+  var wellName = (document.getElementById('def-wellname') || {}).value || 'project';
+  a.href = URL.createObjectURL(blob);
+  a.download = 'LoggingProcedure_' + wellName.replace(/\s+/g,'_') + '_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function loadProject(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var project = JSON.parse(e.target.result);
+      if (!project.version || !project.runs) { alert('Invalid project file'); return; }
+      if (project.units) setUnits(project.units);
+      if (project.defaults) applyDefaultsSnapshot(project.defaults);
+      runs = []; activeRunIdx = -1; rowCounter = 0;
+      project.runs.forEach(function(savedRun, ri) {
+        var restoredRows = savedRun.rows.map(function(row) {
+          return {
+            _id:        ++rowCounter,
+            condition:  row.condition  || 'Shut-in',
+            direction:  row.direction  || 'down',
+            top:        row.top        !== undefined ? row.top : 0,
+            bottom:     row.bottom     !== undefined ? row.bottom : '',
+            mode:       row.mode       || 'cont',
+            contSpeed:  row.contSpeed  || 30,
+            stInterval: row.stInterval || 30,
+            stDuration: row.stDuration || 45,
+            stSpeed:    row.stSpeed    || 20,
+            mainTool:   row.mainTool   || 'HPT'
+          };
+        });
+        var restoredRun = { id: Date.now()+ri, name: savedRun.name||('RUN-'+(ri+1)),
+                    color: savedRun.color||RUN_COLORS[ri%RUN_COLORS.length],
+                    rows: restoredRows, result: null };
+        restoredRun.calloutOverrides = savedRun.calloutOverrides || {};
+        runs.push(restoredRun);
+      });
+      allRunsCalloutOverrides = project.allRunsCalloutOverrides || {};
+      activeRunIdx = runs.length > 0 ? 0 : -1;
+      renderTabs(); renderTable(); clearChart();
+      document.getElementById('statsRow').style.display = 'none';
+      event.target.value = '';
+      alert('Project loaded: ' + project.runs.length + ' run(s). Click Calculate to visualize.');
+    } catch(err) { alert('Error loading project: ' + err.message); }
+  };
+  reader.readAsText(file);
+}
+
+window.addEventListener('resize', function() {
+  if (activeRunIdx === -99) { showAllRuns(); return; }
+  var run = getActiveRun();
+  if (run && run.result) drawChart(run);
+});
+
+function resetAllCallouts() {
+  if (activeRunIdx === -99) {
+    runs.forEach(function(rr) { rr.calloutOverrides = {}; });
+    allRunsCalloutOverrides = {};
+  } else {
+    var run = getActiveRun();
+    if (run) run.calloutOverrides = {};
+  }
+  redrawCurrentChart();
+}
+
+// ── Callout drag ────────────────────────────────────────────────────────────
+function installCalloutDrag() {
+  var canvas = document.getElementById('chart');
+  if (!canvas) return;
+  var dragging = null; // { key, plotGeo, dxFromBox, dyFromBox }
+
+  function getHits() { return canvas._calloutHits || []; }
+
+  function hitTest(cx, cy) {
+    var hits = getHits();
+    for (var i = hits.length - 1; i >= 0; i--) {
+      var h = hits[i];
+      if (cx >= h.bx && cx <= h.bx + h.bw && cy >= h.by && cy <= h.by + h.bh) return h;
+    }
+    return null;
+  }
+
+  function getOverrides() {
+    if (!canvas._calloutCtx) return null;
+    var ctx = canvas._calloutCtx;
+    if (ctx.mode === 'all') return allRunsCalloutOverrides;
+    return ctx.run ? getRunCalloutOverrides(ctx.run) : null;
+  }
+
+  function clearOverrideForKey(key) {
+    if (!canvas._calloutCtx) return;
+    var ctx = canvas._calloutCtx;
+    if (ctx.mode === 'all') {
+      delete allRunsCalloutOverrides[key];
+    } else if (ctx.run) {
+      var ov = getRunCalloutOverrides(ctx.run);
+      delete ov[key];
+    }
+  }
+
+  canvas.addEventListener('mousedown', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var cx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    var cy = (e.clientY - rect.top)  * (canvas.height / rect.height);
+    var h = hitTest(cx, cy);
+    if (!h) return;
+    e.preventDefault();
+    dragging = { key: h.key, plotGeo: canvas._calloutPlotGeo, dxFromBox: cx - h.bx, dyFromBox: cy - h.by };
+    canvas.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', function(e) {
+    if (!dragging) {
+      var rect = canvas.getBoundingClientRect();
+      var cx = (e.clientX - rect.left) * (canvas.width / rect.width);
+      var cy = (e.clientY - rect.top)  * (canvas.height / rect.height);
+      canvas.style.cursor = hitTest(cx, cy) ? 'move' : '';
+      return;
+    }
+    var rect = canvas.getBoundingClientRect();
+    var cx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    var cy = (e.clientY - rect.top)  * (canvas.height / rect.height);
+    var pg = dragging.plotGeo;
+    var newBx = cx - dragging.dxFromBox;
+    var newBy = cy - dragging.dyFromBox;
+    var ov = getOverrides();
+    if (ov) {
+      ov[dragging.key] = {
+        bxR: (newBx - pg.padL) / pg.plotW,
+        byR: (newBy - pg.padT) / pg.plotH
+      };
+    }
+    redrawCurrentChart();
+  });
+
+  window.addEventListener('mouseup', function() {
+    if (dragging) { dragging = null; canvas.style.cursor = ''; }
+  });
+
+  canvas.addEventListener('dblclick', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var cx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    var cy = (e.clientY - rect.top)  * (canvas.height / rect.height);
+    var h = hitTest(cx, cy);
+    if (!h) return;
+    clearOverrideForKey(h.key);
+    redrawCurrentChart();
+  });
+}
+installCalloutDrag();
+
+// Init: add a default run
+addRun();
+</script>
+</body>
+</html>
