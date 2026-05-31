@@ -250,7 +250,33 @@ input[type=file]{display:none;}
 #pane-ch #tt { background:rgba(20,25,35,.96); color:#dde6f0; }
 #pane-ch #mdl { background:#fff; border-color:#dde1e6; }
 
+/* CH pane – larger fonts */
+#pane-ch .logo { font-size: 20px; }
+#pane-ch .logo-sub { font-size: 9px; letter-spacing:.14em; }
+#pane-ch .pill { font-size: 10.5px; padding: 3px 9px; }
+#pane-ch .tbtn { font-size: 10px; padding: 4px 11px; }
+#pane-ch .sbt { font-size: 11px; }
+#pane-ch .sl2 { font-size: 9px; letter-spacing:.12em; }
+#pane-ch .sv2 { font-size: 18px; }
+#pane-ch .su  { font-size: 9px; }
+#pane-ch .si  { font-size: 9.5px; }
+#pane-ch .mst { font-size: 9.5px; }
+#pane-ch .dz  { font-size: 10px; }
+#pane-ch .dz-name { font-size: 9px; }
+#pane-ch .sl-lbl { font-size: 9px; }
+#pane-ch .shift-hdr { font-size: 9px; }
+#pane-ch .shift-val { font-size: 10px; width: 44px; }
+#pane-ch .shift-reset { font-size: 10.5px; }
+#pane-ch .fix-item { font-size: 9.5px; }
+#pane-ch .fix-empty { font-size: 10px; }
+#pane-ch .cut-hint { font-size: 9.5px; }
+#pane-ch .cut-range-row { font-size: 10px; }
+#pane-ch .off-lbl { font-size: 10px; width: 32px; }
+#pane-ch .off-num { font-size: 10.5px; }
+#pane-ch .off-sub { font-size: 8.5px; }
+#pane-ch .sb-foot-txt { font-size: 8.5px; }
 
+/* ══════════════════════════════════════════════════════════
    NOISE-FILTERS CSS (scoped to .nf-root)
 ══════════════════════════════════════════════════════════ */
 
@@ -420,9 +446,9 @@ input[type=file]{display:none;}
 .pt{font-size:10px;font-weight:700;color:var(--g6);font-family:'IBM Plex Mono',monospace;letter-spacing:1.5px}
 .fl-row{display:flex;justify-content:space-between;font-size:8px;color:var(--mu);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
 .spec-row{display:flex;gap:0;flex:1;min-height:0;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.1)}
-.ruler-wrap{width:58px;flex-shrink:0;background:var(--g8);position:relative;overflow:hidden}
+.ruler-wrap{width:58px;flex-shrink:0;background:#ECEFF0;position:relative;overflow:hidden;border-right:1px solid var(--g2)}
 #rulerCanvas{position:absolute;inset:0;width:100%;height:100%}
-.spec-wrap{flex:1;min-height:0;position:relative;background:var(--g8)}
+.spec-wrap{flex:1;min-height:0;position:relative;background:#ECEFF0}
 #specCanvas{position:absolute;inset:0;width:100%;height:100%}
 .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--g5);gap:8px;pointer-events:none}
 .ei{font-size:32px;opacity:.3}.et{font-size:11px;text-align:center;line-height:1.8;color:var(--g5)}
@@ -433,8 +459,8 @@ input[type=file]{display:none;}
   flex-shrink:0;padding:10px 14px;
 }
 .pl-row1{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.pl-depth-block{background:var(--g8);border-radius:5px;padding:6px 12px;text-align:center;min-width:90px;flex-shrink:0}
-.pl-depth-num{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;color:var(--white);line-height:1}
+.pl-depth-block{background:var(--g1);border:1px solid var(--g2);border-radius:5px;padding:6px 12px;text-align:center;min-width:90px;flex-shrink:0}
+.pl-depth-num{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;color:var(--g8);line-height:1}
 .pl-depth-u{font-size:8px;color:var(--g5);margin-top:2px;font-family:'IBM Plex Mono',monospace}
 .pl-cards{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .pl-card{background:var(--g1);border:1px solid var(--g2);border-radius:4px;padding:5px 8px}
@@ -442,8 +468,8 @@ input[type=file]{display:none;}
 .pl-card-val{font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--g8)}
 .pl-card-bar{height:2px;background:var(--g2);border-radius:1px;margin-top:3px}
 .pl-card-fill{height:2px;border-radius:1px;width:0%;transition:width .3s}
-#waveCanvas{width:100%;height:46px;border-radius:4px;background:var(--g8);display:block}
-.tw{height:22px;background:var(--g8);border-radius:3px;cursor:pointer;margin-top:6px;overflow:hidden;position:relative}
+#waveCanvas{width:100%;height:46px;border-radius:4px;background:#fff;border:1px solid var(--g2);display:block}
+.tw{height:22px;background:#ECEFF0;border:1px solid var(--g2);border-radius:3px;cursor:pointer;margin-top:6px;overflow:hidden;position:relative}
 #tlCanvas{position:absolute;inset:0;width:100%;height:100%}
 .ctrl{display:flex;align-items:center;gap:6px;margin-top:7px}
 .cb{
@@ -500,6 +526,8 @@ input[type=file]{display:none;}
     <button class="studio-tab-btn active" onclick="studioTab('ch',this)">CH-DATA-CUT</button>
     <button class="studio-tab-btn" onclick="studioTab('nf',this)">AUDIO-FILE</button>
     <button class="studio-tab-btn" onclick="studioTab('af',this)">NOISE-FILTERS</button>
+    <button class="studio-tab-btn" onclick="studioTab('wa',this)">WAVEFORM ANALYSES (BETA)</button>
+    <button class="studio-tab-btn" onclick="studioTab('dg',this)">DEPTH GENERATOR</button>
   </div>
 </div>
 
@@ -928,6 +956,7 @@ input[type=file]{display:none;}
   <button class="gb" id="genBtn" onclick="generate()" disabled style="margin-bottom:8px">
     <div class="gpf" id="gpf"></div><span id="gl">Load a CSV file first</span>
   </button>
+  <button class="btn-outline off" id="dlCsv" onclick="nfDownloadCsv()" style="margin-bottom:8px">📊 Download CSV</button>
   <div style="display:flex;flex-direction:column;gap:5px">
     <button class="btn-outline off" id="dlWav" onclick="downloadWav()">🎵 WAV stereo file</button>
     <div>
@@ -1135,7 +1164,7 @@ input[type=file]{display:none;}
     </div>
 
     <!-- RIGHT: spectrogram (flex:1) + AFC panel (130px) -->
-    <div style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative">
+    <div style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative;background:#ECEFF0">
       <!-- drop hint (absolute, only shown before data loads) -->
       <div id="nf2-empty" style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;z-index:2">
         <div style="font-size:56px;opacity:0.12">📊</div>
@@ -1143,7 +1172,7 @@ input[type=file]{display:none;}
         <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#d0d4d8;margin-top:4px">columns: DEPTH, INTSC_LFP1…LFP82, ENERGY, CENTROID</div>
       </div>
       <!-- spectrogram canvas + cursor overlay -->
-      <div id="nf2-wrap" style="flex:1;position:relative;min-height:0;overflow:hidden">
+      <div id="nf2-wrap" style="flex:1;position:relative;min-height:0;overflow:hidden;background:#ECEFF0">
         <canvas id="nf2-canvas" style="display:block"></canvas>
         <canvas id="nf2-cur-canvas" style="display:block;position:absolute;top:0;left:0;pointer-events:none"></canvas>
         <div id="nf2-tt" style="display:none;position:fixed;background:rgba(30,35,45,0.92);color:#e8edf2;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 10px;border-radius:3px;pointer-events:none;z-index:200;white-space:nowrap"></div>
@@ -1153,6 +1182,97 @@ input[type=file]{display:none;}
         <canvas id="nf2-afc-canvas" style="display:block"></canvas>
         <div id="nf2-afc-hint" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'IBM Plex Mono',monospace;font-size:9px;color:#ccc;pointer-events:none">move cursor over spectrogram to show AFC</div>
       </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DEPTH GENERATOR PANE -->
+<div id="pane-dg" class="studio-pane" style="display:none;flex-direction:column;overflow:hidden;">
+  <iframe src="PRESSURE_DEPTH_SIMPLE.html" style="flex:1;border:none;width:100%;height:100%;display:block;" allowfullscreen></iframe>
+</div>
+
+<!-- WAVEFORM ANALYSES PANE -->
+<div id="pane-wa" class="studio-pane" style="display:none;flex-direction:column;background:#ECEFF0;position:relative;">
+
+  <!-- header bar -->
+  <div id="wa-hdr" style="display:flex;align-items:center;gap:10px;padding:6px 14px;background:#fff;border-bottom:2px solid #1a4fc4;flex-shrink:0;flex-wrap:wrap;min-height:44px">
+    <svg width="22" height="22" viewBox="0 0 22 22" style="flex-shrink:0"><rect width="22" height="22" rx="3" fill="#1a4fc4"/><text x="11" y="15" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" font-weight="700" fill="white">WA</text></svg>
+    <div style="flex-shrink:0">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#2a2f30;letter-spacing:.08em">WAVEFORM ANALYSES</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:#7f878d">ALFA / MCS · SAF FORMAT · ADC WAVEFORM + SPECTROGRAM</div>
+    </div>
+    <div style="width:1px;height:28px;background:#e0e4e8;flex-shrink:0"></div>
+    <div id="wa-info" style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7f878d;flex-shrink:0">drop .dmp file to load</div>
+    <div style="flex:1;min-width:0"></div>
+    <!-- Navigation -->
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button onclick="waNudge(-10)" style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 7px;border:1px solid #ccd0d4;color:#43494e;background:#fff;cursor:pointer;border-radius:2px">◀◀10</button>
+      <button onclick="waNudge(-1)"  style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 7px;border:1px solid #ccd0d4;color:#43494e;background:#fff;cursor:pointer;border-radius:2px">◀ 1</button>
+      <span id="wa-cur-time" style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#2a2f30;min-width:56px;text-align:center">—</span>
+      <button onclick="waNudge(+1)"  style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 7px;border:1px solid #ccd0d4;color:#43494e;background:#fff;cursor:pointer;border-radius:2px">1 ▶</button>
+      <button onclick="waNudge(+10)" style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 7px;border:1px solid #ccd0d4;color:#43494e;background:#fff;cursor:pointer;border-radius:2px">10▶▶</button>
+    </div>
+    <div style="width:1px;height:28px;background:#e0e4e8;flex-shrink:0"></div>
+    <!-- Band: one hydrophone, two electronics blocks decoded from one .dmp -->
+    <label style="display:flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#43494e;white-space:nowrap" title="One hydrophone, two electronics blocks decoded from the same 24-bit stream. HFP = full rate (120 kHz) → 0–60 kHz, 512 ch. LFP = ÷15 decimated (8 kHz) → 0–4 kHz, 512 ch. Rate is automatic — no Fs to pick.">
+      Band <select id="wa-band" onchange="waSetBand()" style="font-family:'IBM Plex Mono',monospace;font-size:9px;border:1px solid #ccd0d4;padding:2px 4px;border-radius:2px;background:#fff;color:#43494e">
+        <option value="hfp" selected>HFP · 0–60 kHz</option>
+        <option value="lfp">LFP · 0–4 kHz</option>
+      </select>
+    </label>
+    <select id="wa-cmap" onchange="waRedraw()" style="font-family:'IBM Plex Mono',monospace;font-size:9px;border:1px solid #ccd0d4;padding:2px 4px;border-radius:2px;background:#fff;color:#43494e">
+      <option value="acoustic">Acoustic</option>
+      <option value="viridis">Viridis</option>
+      <option value="seismic">Seismic</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#43494e;white-space:nowrap" title="Whiten: subtract per-bin mean spectrum (removes static harmonic lines)">
+      <input type="checkbox" id="wa-whiten" checked onchange="waWhitenToggle()" style="accent-color:#1a4fc4;cursor:pointer">
+      <span>Whiten</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#43494e;white-space:nowrap" title="Temporal smoothing: average over ±N frames (reduces pulse-stripe artefacts)">
+      Smooth±<input id="wa-smooth" type="number" min="0" max="50" value="0" step="1" oninput="waRedraw()" style="width:36px;font-family:'IBM Plex Mono',monospace;font-size:9px;border:1px solid #ccd0d4;padding:1px 3px;border-radius:2px;text-align:center">
+    </label>
+    <label style="display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#43494e;white-space:nowrap" title="Spectrogram colour range: floor and ceiling in dB (relative when Whiten ON)">
+      dB
+      <input id="wa-db-lo" type="range" min="-80" max="40" value="-40" step="1" oninput="waDbInput()" style="width:78px;accent-color:#1a4fc4;vertical-align:middle">
+      <span id="wa-db-lo-v" style="width:30px;text-align:right;color:#1a4fc4;font-weight:700">-40</span>
+      <input id="wa-db-hi" type="range" min="-80" max="40" value="15" step="1" oninput="waDbInput()" style="width:78px;accent-color:#1a4fc4;vertical-align:middle">
+      <span id="wa-db-hi-v" style="width:26px;text-align:right;color:#1a4fc4;font-weight:700">15</span>
+    </label>
+    <div style="width:1px;height:28px;background:#e0e4e8;flex-shrink:0"></div>
+    <!-- Zoom -->
+    <span id="wa-zoom-info" style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7f878d;min-width:54px;text-align:center" title="Spectrogram zoom factor (time × freq)">1:1</span>
+    <button onclick="waResetZoom()" title="Reset spectrogram zoom (or double-click the plot)" style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 8px;border:1px solid #ccd0d4;color:#43494e;background:#fff;cursor:pointer;border-radius:2px">⤢ Reset zoom</button>
+  </div>
+
+  <!-- drop zone overlay -->
+  <div id="wa-drop-overlay" style="position:absolute;inset:44px 0 0 0;background:rgba(236,239,240,0.96);z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+    <div style="font-size:56px;opacity:0.18">🌊</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#7f878d;margin-top:12px">Drop .dmp file (ALFA / MCS · SAF format)</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#a8afb5;margin-top:5px">or click anywhere to browse</div>
+    <input type="file" id="wa-fi" accept=".dmp,.DMP" style="display:none">
+  </div>
+
+  <!-- progress bar -->
+  <div id="wa-progress" style="display:none;position:absolute;inset:44px 0 0 0;background:rgba(236,239,240,0.97);z-index:11;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#2a2f30" id="wa-prog-txt">Parsing…</div>
+    <div style="width:300px;height:6px;background:#dde1e6;border-radius:3px;overflow:hidden">
+      <div id="wa-prog-bar" style="height:100%;background:#1a4fc4;border-radius:3px;transition:width .1s;width:0%"></div>
+    </div>
+  </div>
+
+  <!-- main body: spectrogram top + waveform bottom -->
+  <div style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;background:#ECEFF0">
+    <!-- SPECTROGRAM panel -->
+    <div id="wa-spec-wrap" style="flex:3;position:relative;min-height:0;overflow:hidden;background:#ECEFF0;border-bottom:2px solid #dde1e6">
+      <canvas id="wa-spec-canvas" style="display:block"></canvas>
+      <canvas id="wa-cursor-canvas" style="display:block;position:absolute;top:0;left:0;pointer-events:none"></canvas>
+      <div id="wa-spec-tt" style="display:none;position:fixed;background:rgba(20,25,35,0.92);color:#e8edf2;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 10px;border-radius:3px;pointer-events:none;z-index:200;white-space:nowrap"></div>
+    </div>
+    <!-- WAVEFORM panel -->
+    <div id="wa-wave-wrap" style="flex:2;position:relative;min-height:0;overflow:hidden;background:#ECEFF0">
+      <canvas id="wa-wave-canvas" style="display:block"></canvas>
     </div>
   </div>
 
@@ -1468,7 +1588,7 @@ function updateCutSidebar(){
 // ════════════════════════ DRAW ════════════════════════════
 const canvas=document.getElementById('chart');
 const ctx=canvas.getContext('2d');
-const PAD={top:18,right:120,bot:42,left:76};
+const PAD={top:18,right:130,bot:42,left:90};
 let _c={};
 
 function draw(){
@@ -1525,43 +1645,43 @@ function draw(){
 
   // ── LEFT axis: Pressure ──
   if(S.ch.p){
-    ctx.fillStyle='rgba(0,229,180,.85)'; ctx.font='9px JetBrains Mono,monospace'; ctx.textAlign='right';
+    ctx.fillStyle='rgba(0,229,180,.85)'; ctx.font='11px JetBrains Mono,monospace'; ctx.textAlign='right';
     for(let i=0;i<=6;i++){const v=pE[0]+i/6*(pE[1]-pE[0]);ctx.fillText(Math.round(v).toLocaleString(),L-4,T+(1-i/6)*PH+3.5);}
     ctx.save();ctx.translate(12,T+PH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';
-    ctx.fillStyle='rgba(0,229,180,.35)';ctx.font='8px JetBrains Mono,monospace';ctx.fillText('PRESSURE · PSI',0,0);ctx.restore();
+    ctx.fillStyle='rgba(0,229,180,.35)';ctx.font='10px JetBrains Mono,monospace';ctx.fillText('PRESSURE · PSI',0,0);ctx.restore();
   }
   // ── RIGHT axis 1: Temperature (col +4) ──
   if(S.ch.t){
-    ctx.fillStyle='rgba(255,107,74,.85)'; ctx.font='9px JetBrains Mono,monospace'; ctx.textAlign='left';
+    ctx.fillStyle='rgba(255,107,74,.85)'; ctx.font='11px JetBrains Mono,monospace'; ctx.textAlign='left';
     for(let i=0;i<=6;i++){const v=tE[0]+i/6*(tE[1]-tE[0]);ctx.fillText(v.toFixed(1)+'°',L+PW+4,T+(1-i/6)*PH+3.5);}
     ctx.save();ctx.translate(L+PW+20,T+PH/2);ctx.rotate(Math.PI/2);ctx.textAlign='center';
-    ctx.fillStyle='rgba(255,107,74,.3)';ctx.font='8px JetBrains Mono,monospace';ctx.fillText('TEMP °C',0,0);ctx.restore();
+    ctx.fillStyle='rgba(255,107,74,.3)';ctx.font='10px JetBrains Mono,monospace';ctx.fillText('TEMP °C',0,0);ctx.restore();
   }
   // ── RIGHT axis 2: Depth (col +42) ──
   if(S.ch.d&&S.dep?.data?.length>1){
-    ctx.fillStyle='rgba(251,191,36,.8)'; ctx.font='8px JetBrains Mono,monospace'; ctx.textAlign='left';
+    ctx.fillStyle='rgba(251,191,36,.8)'; ctx.font='10px JetBrains Mono,monospace'; ctx.textAlign='left';
     for(let i=0;i<=4;i++){const v=dE[0]+i/4*(dE[1]-dE[0]);ctx.fillText(v.toFixed(0)+"'",L+PW+42,T+(1-i/4)*PH+3.5);}
     ctx.save();ctx.translate(L+PW+57,T+PH/2);ctx.rotate(Math.PI/2);ctx.textAlign='center';
-    ctx.fillStyle='rgba(251,191,36,.25)';ctx.font='8px JetBrains Mono,monospace';ctx.fillText('DEPTH ft',0,0);ctx.restore();
+    ctx.fillStyle='rgba(251,191,36,.25)';ctx.font='10px JetBrains Mono,monospace';ctx.fillText('DEPTH ft',0,0);ctx.restore();
   }
   // ── LEFT axis 2: CCL (col -40) ──
   if(S.ch.ccl&&(S.bm?.ccl||[]).length>1){
-    ctx.fillStyle='rgba(96,165,250,.8)'; ctx.font='8px JetBrains Mono,monospace'; ctx.textAlign='right';
+    ctx.fillStyle='rgba(96,165,250,.8)'; ctx.font='10px JetBrains Mono,monospace'; ctx.textAlign='right';
     for(let i=0;i<=4;i++){const v=cE[0]+i/4*(cE[1]-cE[0]);ctx.fillText(v.toFixed(0),L-40,T+(1-i/4)*PH+3.5);}
     ctx.save();ctx.translate(30,T+PH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';
-    ctx.fillStyle='rgba(96,165,250,.25)';ctx.font='8px JetBrains Mono,monospace';ctx.fillText('CCL',0,0);ctx.restore();
+    ctx.fillStyle='rgba(96,165,250,.25)';ctx.font='10px JetBrains Mono,monospace';ctx.fillText('CCL',0,0);ctx.restore();
   }
   // ── RIGHT axis 3: SNL Noise Power dB (col +82) ──
   if((S.snl||S.snl2)&&isFinite(_snlMin)&&isFinite(_snlMax)){
     const sMin=isFinite(_snlMin)?_snlMin:-80, sMax=isFinite(_snlMax)?_snlMax:-20;
     const toYE = v => T + PH*0.9 - (v - sMin)/(sMax - sMin || 1) * PH*0.8;
-    ctx.fillStyle='rgba(167,139,250,.7)'; ctx.font='8px JetBrains Mono,monospace'; ctx.textAlign='left';
+    ctx.fillStyle='rgba(167,139,250,.7)'; ctx.font='10px JetBrains Mono,monospace'; ctx.textAlign='left';
     for(let i=0;i<=4;i++){
       const v=sMin+i/4*(sMax-sMin);
       ctx.fillText(v.toFixed(0)+'dB', L+PW+82, toYE(v)+3);
     }
     ctx.save();ctx.translate(L+PW+112,T+PH/2);ctx.rotate(Math.PI/2);ctx.textAlign='center';
-    ctx.fillStyle='rgba(167,139,250,.25)';ctx.font='8px JetBrains Mono,monospace';ctx.fillText('NOISE dB',0,0);ctx.restore();
+    ctx.fillStyle='rgba(167,139,250,.25)';ctx.font='10px JetBrains Mono,monospace';ctx.fillText('NOISE dB',0,0);ctx.restore();
   }
 
   // ── X axis ──
@@ -1572,7 +1692,7 @@ function draw(){
     const tickStep=STEPS.find(s=>spanSec/s<=12)||STEPS[STEPS.length-1];
     const tStartUnix=pctToUnix(x0), tEndUnix=pctToUnix(x1);
     const firstTick=Math.ceil(tStartUnix/tickStep)*tickStep;
-    ctx.fillStyle='rgba(30,40,55,.82)'; ctx.font='8.5px JetBrains Mono,monospace'; ctx.textAlign='center';
+    ctx.fillStyle='rgba(30,40,55,.82)'; ctx.font='10.5px JetBrains Mono,monospace'; ctx.textAlign='center';
     ctx.strokeStyle='rgba(100,120,140,.3)'; ctx.lineWidth=1;
     for(let u=firstTick;u<=tEndUnix;u+=tickStep){
       const px=toX((u-S.dep.t0)/S.dep.dur*100);
@@ -1582,7 +1702,7 @@ function draw(){
     }
     if(spanSec>3600*3){
       const dayStep=86400, firstDay=Math.ceil(tStartUnix/dayStep)*dayStep;
-      ctx.fillStyle='rgba(70,90,115,.5)'; ctx.font='7.5px JetBrains Mono,monospace';
+      ctx.fillStyle='rgba(70,90,115,.5)'; ctx.font='9.5px JetBrains Mono,monospace';
       for(let u=firstDay;u<=tEndUnix;u+=dayStep){
         const px=toX((u-S.dep.t0)/S.dep.dur*100);
         if(px<L||px>L+PW) continue;
@@ -1598,7 +1718,7 @@ function draw(){
     const tickStep = STEPS.find(s=>spanSec/s<=10) || STEPS[STEPS.length-1];
     const tStart = x0/100*effDur, tEnd = x1/100*effDur;
     const firstTick = Math.ceil(tStart/tickStep)*tickStep;
-    ctx.fillStyle='rgba(30,40,55,.82)'; ctx.font='8.5px JetBrains Mono,monospace'; ctx.textAlign='center';
+    ctx.fillStyle='rgba(30,40,55,.82)'; ctx.font='10.5px JetBrains Mono,monospace'; ctx.textAlign='center';
     ctx.strokeStyle='rgba(100,120,140,.3)'; ctx.lineWidth=1;
     const fmtRel = s => { const m=Math.floor(s/60), sec=Math.round(s%60); return m>0?m+'m'+String(sec).padStart(2,'0')+'s':sec+'s'; };
     for(let s=firstTick; s<=tEnd; s+=tickStep){
@@ -1607,11 +1727,11 @@ function draw(){
       ctx.beginPath();ctx.moveTo(px,T+PH);ctx.lineTo(px,T+PH+4);ctx.stroke();
       ctx.fillText(fmtRel(s), px, T+PH+14);
     }
-    ctx.fillStyle='rgba(80,100,125,.5)'; ctx.font='7.5px JetBrains Mono,monospace'; ctx.textAlign='left';
+    ctx.fillStyle='rgba(80,100,125,.5)'; ctx.font='9.5px JetBrains Mono,monospace'; ctx.textAlign='left';
     ctx.fillText('no depth file · relative time', L, T+PH+27);
   }
   if(S.zoomStack.length){
-    ctx.fillStyle='rgba(30,80,200,.55)'; ctx.font='8px JetBrains Mono,monospace'; ctx.textAlign='right';
+    ctx.fillStyle='rgba(30,80,200,.55)'; ctx.font='10px JetBrains Mono,monospace'; ctx.textAlign='right';
     ctx.fillText('×'+(S.zoomStack.length+1)+' ← drag left to unzoom',L+PW,T+PH+38);
   }
 
@@ -1749,7 +1869,7 @@ function draw(){
     ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,T+PH); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle='#f472b6';
     ctx.beginPath(); ctx.moveTo(x,T-1); ctx.lineTo(x+5,T+8); ctx.lineTo(x,T+17); ctx.lineTo(x-5,T+8); ctx.closePath(); ctx.fill();
-    ctx.fillStyle='rgba(244,114,182,.9)'; ctx.font='bold 8px JetBrains Mono,monospace'; ctx.textAlign='center';
+    ctx.fillStyle='rgba(244,114,182,.9)'; ctx.font='bold 10px JetBrains Mono,monospace'; ctx.textAlign='center';
     ctx.fillText('F'+(i+1),x,T+27);
   });
 
@@ -1760,7 +1880,7 @@ function draw(){
     ctx.strokeStyle=idx===0?'rgba(232,121,249,.9)':'rgba(232,121,249,.6)';
     ctx.lineWidth=2; ctx.setLineDash([5,4]);
     ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,T+PH); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle='rgba(232,121,249,.9)'; ctx.font='8px JetBrains Mono,monospace'; ctx.textAlign='center';
+    ctx.fillStyle='rgba(232,121,249,.9)'; ctx.font='10px JetBrains Mono,monospace'; ctx.textAlign='center';
     ctx.fillText(idx===0?'FROM':'TO',x,T-4);
   });
   if(S.cutA!==null&&S.cutB!==null){
@@ -3331,7 +3451,7 @@ function drawRuler(){
   const W=canvas.width||58,H=canvas.height;
   if(W<4||H<4)return;
   const ctx=canvas.getContext('2d');
-  ctx.fillStyle='#1e2426';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#ECEFF0';ctx.fillRect(0,0,W,H);
   const[vs,ve]=getVisibleRange();
   const dMin=depths[vs],dMax=depths[ve],dRange=dMax-dMin||1;
   const ivs=[0.5,1,2,5,10,20,50,100,200,500];
@@ -3340,7 +3460,7 @@ function drawRuler(){
     const y=~~((d-dMin)/dRange*(H-1));
     if(y<0||y>H)continue;
     ctx.fillStyle='rgba(204,0,0,0.5)';ctx.fillRect(W-7,y,7,1);
-    ctx.fillStyle='rgba(220,225,230,0.85)';
+    ctx.fillStyle='#43494e';
     ctx.font='bold 14px IBM Plex Mono,monospace';ctx.textAlign='right';
     ctx.fillText(d%1===0?String(~~d):d.toFixed(1),W-9,y+5);
   }
@@ -3348,10 +3468,10 @@ function drawRuler(){
     const y=~~((depths[cur]-dMin)/dRange*(H-1));
     ctx.fillStyle='#CC0000';ctx.fillRect(W-5,Math.max(0,y-2),5,5);
   }
-  ctx.fillStyle='rgba(150,155,160,0.6)';ctx.font='bold 10px IBM Plex Mono,monospace';ctx.textAlign='center';
+  ctx.fillStyle='rgba(70,80,90,0.55)';ctx.font='bold 10px IBM Plex Mono,monospace';ctx.textAlign='center';
   ctx.fillText('m',W/2,11);
   // Subtle grid lines aligned with spec
-  ctx.strokeStyle='rgba(74,240,160,0.08)';ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(0,0,0,0.05)';ctx.lineWidth=1;
   const gridStep=~~(H/8);
   for(let gy=gridStep;gy<H;gy+=gridStep){
     ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();
@@ -3391,8 +3511,8 @@ function drawWave(idx){
   canvas.height=46;
   const ctx=canvas.getContext('2d');
   const lv=levelArr?levelArr[idx]:0.5;
-  ctx.fillStyle='#2A2F30';ctx.fillRect(0,0,W,46);
-  ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=.5;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,46);
+  ctx.strokeStyle='rgba(0,0,0,0.05)';ctx.lineWidth=.5;
   for(let g=1;g<4;g++){ctx.beginPath();ctx.moveTo(0,~~(46*g/4));ctx.lineTo(W,~~(46*g/4));ctx.stroke();}
   if(!wfShort||!wfShort[idx])return;
   const mid=23,len=wfShort[idx].length,w=wfShort[idx];
@@ -3405,7 +3525,7 @@ function drawWave(idx){
   ctx.lineWidth=1.3;ctx.beginPath();
   for(let x=0;x<W;x++){const si=~~(x*len/W),y=mid-w[si]*mid*.85;if(x===0)ctx.moveTo(0,y);else ctx.lineTo(x,y);}
   ctx.stroke();
-  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=.5;
+  ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=.5;
   ctx.beginPath();ctx.moveTo(0,mid);ctx.lineTo(W,mid);ctx.stroke();
 }
 function drawTL(ci){
@@ -3415,7 +3535,7 @@ function drawTL(ci){
   canvas.height=22;
   if(!depths)return;
   const ctx=canvas.getContext('2d'),N=depths.length;
-  ctx.fillStyle='#2A2F30';ctx.fillRect(0,0,W,22);
+  ctx.fillStyle='#ECEFF0';ctx.fillRect(0,0,W,22);
   const sh=9,sy=7;
   for(let i=0;i<N;i++){
     const x0=~~(i*W/N),x1=~~((i+1)*W/N);
@@ -3434,7 +3554,7 @@ function drawTL(ci){
   ctx.fillStyle='#CC0000';ctx.fillRect(Math.max(0,xc-1),sy-4,2,sh+8);
   ctx.font='8px IBM Plex Mono,monospace';const st=Math.max(1,~~(N/7));
   for(let i=0;i<N;i+=st){
-    const x=~~(i*W/N);ctx.fillStyle='rgba(150,155,160,0.7)';ctx.textAlign='center';
+    const x=~~(i*W/N);ctx.fillStyle='rgba(70,80,90,0.75)';ctx.textAlign='center';
     ctx.fillText(depths[i].toFixed(0),Math.max(16,Math.min(W-16,x)),sy-2);
   }
 }
@@ -3826,6 +3946,43 @@ function setVS(msg,pct,time){
   const t=document.getElementById('videoTime');if(t&&time)t.textContent=time;
 }
 
+// ── NF Download CSV ───────────────────────────────────────
+function nfDownloadCsv() {
+  if(!NF2.rows || !NF2.rows.length) {
+    alert('No data loaded.'); return;
+  }
+  const rows = NF2.rows;
+  const nBins = NF2.nBins;
+  const depCol = NF2.depUnit === 'm' ? 'DEPTH_M' : 'DEPTH';
+
+  // Build header
+  const binHdr = NF2.binNames
+    ? NF2.binNames.join(',')
+    : Array.from({length: nBins}, (_, i) => 'INTSC_LFP' + (i+1)).join(',');
+  let hdr = depCol + ',' + binHdr;
+  if(NF2.hasEnergy)   hdr += ',ENERGY';
+  if(NF2.hasCentroid) hdr += ',CENTROID';
+
+  // Build rows
+  const lines = [hdr];
+  rows.forEach(r => {
+    let line = r.depth.toFixed(3);
+    for(let b = 0; b < nBins; b++) {
+      line += ',' + (r.lfp[b] !== undefined ? r.lfp[b].toFixed(4) : '');
+    }
+    if(NF2.hasEnergy)   line += ',' + (r.energy   !== undefined ? r.energy.toFixed(4)   : '');
+    if(NF2.hasCentroid) line += ',' + (r.centroid  !== undefined ? r.centroid.toFixed(4) : '');
+    lines.push(line);
+  });
+
+  const blob = new Blob([lines.join('\r\n')], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const base = NF2.filename ? NF2.filename.replace(/\.[^.]+$/, '') : 'spectrogram';
+  a.href = url; a.download = base + '_export.csv';
+  a.click(); URL.revokeObjectURL(url);
+}
+
 // ══════════════════════════════════════════════════════════
 // NOISE-FILTERS · SPECTROGRAM VIEWER (pane-af)
 // vertical: depth on Y (top=shallow), freq bins on X
@@ -3983,6 +4140,8 @@ function parseNF2CSV(text, fname) {
   document.getElementById('nf2-draw-btn').style.color = '#1060cc';
   document.getElementById('nf2-draw-btn').textContent = '✏ DRAW';
   document.getElementById('nf2-afc-hint').style.display = 'block';
+  const dlCsvBtn = document.getElementById('dlCsv');
+  if(dlCsvBtn) dlCsvBtn.classList.remove('off');
 
   if(document.getElementById('nf2-auto').checked) nf2AutoScale(false);
   nf2Draw();
@@ -5113,6 +5272,792 @@ document.getElementById('nf2-auto').addEventListener('change', function(){
 });
 
 window.addEventListener('resize', () => { if(NF2.rows) nf2Draw(); });
+
+// ══════════════════════════════════════════════════════════
+// WAVEFORM ANALYSES ENGINE  (ALFA / MCS · SAF .dmp format)
+// ══════════════════════════════════════════════════════════
+const WA = {
+  // ALFA ALF32J-B SAF .dmp = ONE 256-byte header + a continuous 24-bit
+  // signed-LE MONO sample stream from a single hydrophone. (NOT int16 —
+  // the int16 reading is what produced the full-scale "dense" waveform.)
+  // Two electronics blocks share that one stream:
+  //   • HFP = full-rate analysis  (120 kHz → 0..60 kHz, 512 channels)
+  //   • LFP = ÷15-decimated analysis ( 8 kHz → 0.. 4 kHz, 512 channels)
+  // Both spectrograms are pre-computed at load; the Band switch is instant.
+  bandData: null,     // { hfp:{...}, lfp:{...} } pre-built per-band views
+  records: [],        // active band's frames [{ spec: Float32Array(512) }]
+  sig: null,          // active band's time-domain signal (Float32, raw counts)
+  cursor: 0,          // current frame index (within active band)
+  sampleRate: 120000, // active band ADC rate (Hz)
+  fftSize: 1024,      // active band STFT length
+  hop: 1024,          // samples between frames (active band)
+  nBins: 512,         // spectrum bins kept (1..512, DC skipped) = 512 channels
+  fullScale: 8388608, // 2^23 (24-bit)
+  headerBytes: 256,
+  filename: '',
+  toolName: '',
+  bits: 24,           // detected sample depth (24 or 16)
+  band: 'hfp',        // 'hfp' | 'lfp'
+  specCache: null,
+  binMean: null,      // Float32Array(512) per-bin mean dB (for whitening); null = not available
+  nValid: 0,          // number of non-blanked STFT frames
+  view: null,         // {t0,t1,f0,f1} spectrogram zoom window; null = full band
+  _sel: null,         // live rubber-band rect in CSS px during drag
+};
+
+// ── Frequency of a spectrum bin (DC skipped → +1 offset) ────
+function waHz(bin) { return (bin + 1) * WA.sampleRate / WA.fftSize; }
+
+// ── Bin range of the active band (each band is its own full spectrum) ─
+function waBandRange() { return { lo: 0, hi: WA.nBins - 1 }; }
+
+// ── dB range sliders → live readout + redraw ────────────────
+function waDbInput() {
+  const lo = parseFloat(document.getElementById('wa-db-lo').value);
+  const hi = parseFloat(document.getElementById('wa-db-hi').value);
+  document.getElementById('wa-db-lo-v').textContent = Math.min(lo, hi);
+  document.getElementById('wa-db-hi-v').textContent = Math.max(lo, hi);
+  waRedraw();
+}
+
+// ── Whitening toggle: adapt slider range & defaults ──────────
+function waWhitenToggle() {
+  const on = document.getElementById('wa-whiten').checked;
+  const lo = document.getElementById('wa-db-lo');
+  const hi = document.getElementById('wa-db-hi');
+  if(on) {
+    // whitened: relative dB centred on 0
+    lo.min = -80; lo.max = 40; lo.value = -40;
+    hi.min = -80; hi.max = 40; hi.value =  15;
+  } else {
+    // raw absolute dBFS
+    lo.min = -160; lo.max = 0; lo.value = -100;
+    hi.min = -160; hi.max = 0; hi.value =  -20;
+  }
+  document.getElementById('wa-db-lo-v').textContent = lo.value;
+  document.getElementById('wa-db-hi-v').textContent = hi.value;
+  waRedraw();
+}
+
+// ── Point the active-band WA fields at a pre-built band view ─
+function waActivateBand(name) {
+  if(!WA.bandData || !WA.bandData[name]) return;
+  const b = WA.bandData[name];
+  WA.band       = name;
+  WA.records    = b.records;
+  WA.sig        = b.sig;
+  WA.sampleRate = b.sampleRate;
+  WA.fftSize    = b.fftSize;
+  WA.hop        = b.hop;
+  WA.nBins      = b.nBins;
+  WA.fullScale  = b.fullScale;
+  WA.binMean    = b.binMean || null;
+  WA.nValid     = b.nValid  || 0;
+  WA.cursor     = Math.max(0, Math.min(b.records.length - 1, WA.cursor));
+  WA.view       = null;
+}
+
+// ── LFP / HFP band switch ───────────────────────────────────
+function waSetBand() {
+  const el = document.getElementById('wa-band');
+  waActivateBand(el ? el.value : 'hfp');
+  if(WA.records.length) { waDrawSpec(); waDrawWave(); waUpdateHeader(); }
+}
+
+// ── Current spectrogram view window (clamped to the band) ───
+function waView() {
+  const nRec  = WA.records.length;
+  const { lo, hi } = waBandRange();
+  const v = WA.view || {};
+  let t0 = v.t0 != null ? v.t0 : 0;
+  let t1 = v.t1 != null ? v.t1 : nRec - 1;
+  let f0 = v.f0 != null ? v.f0 : lo;
+  let f1 = v.f1 != null ? v.f1 : hi;
+  t0 = Math.max(0, Math.min(nRec - 1, t0));
+  t1 = Math.max(t0 + 0.001, Math.min(nRec - 1, t1));
+  f0 = Math.max(lo, Math.min(hi, f0));
+  f1 = Math.max(f0 + 0.001, Math.min(hi, f1));
+  return { t0, t1, f0, f1 };
+}
+
+function waResetZoom() {
+  WA.view = null; WA._sel = null;
+  if(WA.records.length) { waDrawSpec(); }
+  const z = document.getElementById('wa-zoom-info');
+  if(z) z.textContent = '1:1';
+}
+
+function waZoomInfo() {
+  const z = document.getElementById('wa-zoom-info');
+  if(!z) return;
+  if(!WA.view) { z.textContent = '1:1'; return; }
+  const { t0, t1, f0, f1 } = waView();
+  const { lo, hi } = waBandRange();
+  const nRec = WA.records.length;
+  const tz = (nRec - 1)   / Math.max(0.001, t1 - t0);
+  const fz = (hi - lo)    / Math.max(0.001, f1 - f0);
+  z.textContent = 't×' + tz.toFixed(1) + ' f×' + fz.toFixed(1);
+}
+
+// ── Tab activation / deactivation ──────────────────────────
+(function() {
+  // Wire up drop zone
+  const overlay = document.getElementById('wa-drop-overlay');
+  const fi = document.getElementById('wa-fi');
+  const pane = document.getElementById('pane-wa');
+  if(!pane) return;
+
+  overlay.style.pointerEvents = 'auto';
+  overlay.style.cursor = 'pointer';
+  overlay.addEventListener('click', () => fi.click());
+  fi.addEventListener('change', e => { if(e.target.files[0]) waLoadFile(e.target.files[0]); });
+
+  pane.addEventListener('dragover', e => { e.preventDefault(); overlay.style.background='rgba(220,230,255,0.97)'; });
+  pane.addEventListener('dragleave', () => { overlay.style.background='rgba(236,239,240,0.96)'; });
+  pane.addEventListener('drop', e => {
+    e.preventDefault(); overlay.style.background='rgba(236,239,240,0.96)';
+    const f = e.dataTransfer.files[0];
+    if(f) waLoadFile(f);
+  });
+
+  // Keyboard navigation (arrow keys)
+  document.addEventListener('keydown', e => {
+    const waPane = document.getElementById('pane-wa');
+    if(!waPane || waPane.style.display === 'none') return;
+    if(e.key === 'ArrowRight') { e.preventDefault(); waNudge(1); }
+    if(e.key === 'ArrowLeft')  { e.preventDefault(); waNudge(-1); }
+    if(e.key === 'ArrowUp')    { e.preventDefault(); waNudge(10); }
+    if(e.key === 'ArrowDown')  { e.preventDefault(); waNudge(-10); }
+  });
+
+  // Canvas mouse interactions — pan-free zoom (drag-box / wheel / dbl-click)
+  const specCanvas = document.getElementById('wa-spec-canvas');
+  const SPAD = {left:60, right:20, top:22, bot:32};   // must match draw PADs
+
+  // Map a mouse event to plot geometry + data coords inside the view window.
+  function waSpecGeom(e) {
+    const rect = specCanvas.getBoundingClientRect();
+    const PW = rect.width  - SPAD.left - SPAD.right;
+    const PH = rect.height - SPAD.top  - SPAD.bot;
+    const px = e.clientX - rect.left - SPAD.left;   // px within plot
+    const py = e.clientY - rect.top  - SPAD.top;
+    const fx = Math.max(0, Math.min(1, px / (PW||1))); // 0..1 left→right
+    const fy = Math.max(0, Math.min(1, py / (PH||1))); // 0..1 top→bottom
+    const { t0, t1, f0, f1 } = waView();
+    return {
+      rect, PW, PH, px, py, fx, fy, t0, t1, f0, f1,
+      inside: px >= 0 && px <= PW && py >= 0 && py <= PH,
+      tAt: t0 + fx * (t1 - t0),            // record index at mouse
+      fAt: f0 + (1 - fy) * (f1 - f0),      // freq bin at mouse (top = high)
+    };
+  }
+
+  let drag = null;   // {x0,y0} CSS px relative to canvas, while dragging
+
+  specCanvas.addEventListener('mousedown', e => {
+    if(!WA.records.length || e.button !== 0) return;
+    const rect = specCanvas.getBoundingClientRect();
+    drag = { x0: e.clientX - rect.left, y0: e.clientY - rect.top, moved: false };
+  });
+
+  window.addEventListener('mouseup', e => {
+    if(!drag) return;
+    const d = drag; drag = null;
+    WA._sel = null;
+    if(!d.moved) {                         // simple click → select second
+      const g = waSpecGeom(e);
+      if(g.inside) {
+        WA.cursor = Math.max(0, Math.min(WA.records.length-1, Math.round(g.tAt)));
+        waDrawWave(); waDrawCursor(); waUpdateHeader();
+      } else { waDrawCursor(); }
+      return;
+    }
+    // Drag box → zoom into selected time × frequency rectangle
+    const rect = specCanvas.getBoundingClientRect();
+    const PW = rect.width  - SPAD.left - SPAD.right;
+    const PH = rect.height - SPAD.top  - SPAD.bot;
+    const { t0, t1, f0, f1 } = waView();
+    const clampF = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+    const ax = clampF((d.x0 - SPAD.left)/(PW||1),0,1);
+    const bx = clampF((e.clientX - rect.left - SPAD.left)/(PW||1),0,1);
+    const ay = clampF((d.y0 - SPAD.top)/(PH||1),0,1);
+    const by = clampF((e.clientY - rect.top  - SPAD.top)/(PH||1),0,1);
+    const nt0 = t0 + Math.min(ax,bx)*(t1-t0), nt1 = t0 + Math.max(ax,bx)*(t1-t0);
+    const nf1 = f0 + (1-Math.min(ay,by))*(f1-f0), nf0 = f0 + (1-Math.max(ay,by))*(f1-f0);
+    if(nt1 - nt0 >= 0.5 && nf1 - nf0 >= 0.5) {
+      WA.view = { t0: nt0, t1: nt1, f0: nf0, f1: nf1 };
+      waDrawSpec();
+    } else { waDrawCursor(); }
+  });
+
+  specCanvas.addEventListener('mousemove', e => {
+    if(!WA.records.length) return;
+    const g = waSpecGeom(e);
+    const tt = document.getElementById('wa-spec-tt');
+
+    if(drag) {                             // update rubber-band rectangle
+      const rect = specCanvas.getBoundingClientRect();
+      const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+      if(Math.abs(cx - drag.x0) > 3 || Math.abs(cy - drag.y0) > 3) drag.moved = true;
+      WA._sel = { x: Math.min(drag.x0,cx), y: Math.min(drag.y0,cy),
+                  w: Math.abs(cx-drag.x0), h: Math.abs(cy-drag.y0) };
+      waDrawCursor();
+      tt.style.display = 'none';
+      return;
+    }
+    if(!g.inside) { tt.style.display='none'; return; }
+    const hz = waHz(g.fAt).toFixed(0);
+    const tsStr = waTsFmt(Math.round(g.tAt));
+    tt.style.display = 'block';
+    tt.style.left = (e.clientX + 14) + 'px';
+    tt.style.top  = (e.clientY - 10) + 'px';
+    tt.textContent = tsStr + '  ~' + hz + ' Hz';
+  });
+
+  // Wheel zoom: time axis (Shift = frequency axis), centered at the cursor
+  specCanvas.addEventListener('wheel', e => {
+    if(!WA.records.length) return;
+    e.preventDefault();
+    const g = waSpecGeom(e);
+    const factor = e.deltaY < 0 ? 0.8 : 1.25;   // in / out
+    const { lo, hi } = waBandRange(), nRec = WA.records.length;
+    let { t0, t1, f0, f1 } = waView();
+    if(e.shiftKey) {                            // zoom frequency around fAt
+      const c = g.fAt, half = (f1 - f0) * factor / 2;
+      f0 = c - half; f1 = c + half;
+      f0 = Math.max(lo, f0); f1 = Math.min(hi, f1);
+      if(f1 - f0 < 1) return;
+    } else {                                    // zoom time around tAt
+      const c = g.tAt, half = (t1 - t0) * factor / 2;
+      t0 = c - half; t1 = c + half;
+      t0 = Math.max(0, t0); t1 = Math.min(nRec-1, t1);
+      if(t1 - t0 < 0.5) return;
+    }
+    // Collapse to "no zoom" if we've expanded back to (nearly) the full band
+    if(t0 <= 0.5 && t1 >= nRec-1.5 && f0 <= lo+0.5 && f1 >= hi-0.5) WA.view = null;
+    else WA.view = { t0, t1, f0, f1 };
+    waDrawSpec();
+  }, { passive: false });
+
+  specCanvas.addEventListener('dblclick', e => {
+    e.preventDefault();
+    waResetZoom();
+  });
+
+  specCanvas.addEventListener('mouseleave', () => {
+    document.getElementById('wa-spec-tt').style.display = 'none';
+  });
+})();
+
+// ── File loading ────────────────────────────────────────────
+function waLoadFile(file) {
+  WA.filename = file.name;
+  const prog = document.getElementById('wa-progress');
+  const progTxt = document.getElementById('wa-prog-txt');
+  const progBar = document.getElementById('wa-prog-bar');
+  prog.style.display = 'flex';
+  progTxt.textContent = 'Reading file…';
+  progBar.style.width = '5%';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    progTxt.textContent = 'Parsing records…';
+    progBar.style.width = '20%';
+    setTimeout(() => {
+      try {
+        const buf = e.target.result;
+        waParseSAF(buf, (pct, msg) => {
+          progBar.style.width = Math.round(20 + pct*75) + '%';
+          if(msg) progTxt.textContent = msg;
+        });
+        progBar.style.width = '100%';
+        setTimeout(() => {
+          prog.style.display = 'none';
+          document.getElementById('wa-drop-overlay').style.display = 'none';
+          waDrawSpec();
+          waDrawWave();
+          waUpdateHeader();
+        }, 200);
+      } catch(err) {
+        prog.style.display = 'none';
+        alert('Parse error: ' + err.message);
+      }
+    }, 50);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── SAF binary parser — ALF32J-B = 24-bit mono hydrophone stream ─
+// The .dmp is ONE 256-byte header + a continuous signed-LE sample
+// stream from a single hydrophone. The "32" in ALF32J means 24-bit
+// samples (verified: reading as 24-bit gives a clean waveform, roughness
+// 0.33; reading as int16 gives full-scale noise, roughness 1.26 — that
+// was the "dense" waveform). Two electronics blocks share the one stream:
+//   • HFP — full rate (120 kHz) → 0..60 kHz, 512 channels
+//   • LFP — ÷15 decimated (8 kHz) → 0..4 kHz, 512 channels
+// Both spectrograms are pre-computed so the Band switch is instant.
+function waParseSAF(buffer, onProgress) {
+  const bytes = new Uint8Array(buffer);
+  const dec   = new TextDecoder('ascii');
+
+  // Tool name from the SAF ASCII header (e.g. "ALF32J-B")
+  const headerText = dec.decode(bytes.slice(0, 64));
+  const tm = headerText.match(/SAF\s+v\d+\s+MEMORY\s+DUMP\s+(\S+)/);
+  WA.toolName = tm ? tm[1] : 'ALF';
+
+  const HEADER = (buffer.byteLength > 256 + 1024) ? 256 : 0;
+  WA.headerBytes = HEADER;
+  const payLen = buffer.byteLength - HEADER;
+
+  // ── Auto-detect sample depth (24-bit vs int16) by smoothness ──
+  onProgress(0.04, 'Detecting sample format…');
+  WA.bits = waDetectBits(bytes, HEADER, payLen);
+
+  // ── Decode the mono stream to Float32 raw counts ──────────────
+  onProgress(0.07, 'Decoding ' + WA.bits + '-bit stream…');
+  let sig, fullScale, fsHFP;
+  if(WA.bits === 24) {
+    const n = Math.floor(payLen / 3);
+    sig = new Float32Array(n);
+    for(let i = 0, p = HEADER; i < n; i++, p += 3) {
+      let v = bytes[p] | (bytes[p+1] << 8) | (bytes[p+2] << 16);
+      if(v & 0x800000) v -= 0x1000000;
+      sig[i] = v;
+    }
+    fullScale = 8388608;   // 2^23
+    fsHFP     = 120000;    // HFP native rate → 0..60 kHz
+  } else {
+    const n = payLen >> 1;
+    const i16 = new Int16Array(buffer, HEADER, n);
+    sig = new Float32Array(n);
+    for(let i = 0; i < n; i++) sig[i] = i16[i];
+    fullScale = 32768;
+    fsHFP     = 7200;      // int16 ALF fallback (TP/BT-ALFA) → 0..3.6 kHz
+  }
+
+  // ── Build HFP (full rate) and LFP (÷15 decimated) bands ───────
+  const DEC = 15;
+  onProgress(0.1, 'Computing HFP spectrogram…');
+  const hfp = waBuildBand(sig, fsHFP, 1024, fullScale,
+    (p,f,n) => onProgress(0.10 + 0.55*p, 'HFP spectrogram ' + f + ' / ' + n + '…'));
+
+  onProgress(0.66, 'Decimating for LFP…');
+  const M = Math.floor(sig.length / DEC);
+  const lfpSig = new Float32Array(M);            // boxcar ÷15 low-pass + decimate
+  for(let i = 0; i < M; i++) {
+    let s = 0; const base = i * DEC;
+    for(let j = 0; j < DEC; j++) s += sig[base + j];
+    lfpSig[i] = s / DEC;
+  }
+  onProgress(0.68, 'Computing LFP spectrogram…');
+  const lfp = waBuildBand(lfpSig, fsHFP / DEC, 1024, fullScale,
+    (p,f,n) => onProgress(0.68 + 0.30*p, 'LFP spectrogram ' + f + ' / ' + n + '…'));
+
+  WA.bandData  = { hfp, lfp };
+  WA.cursor    = 0;
+  WA._sel      = null;
+  WA.specCache = null;
+  waActivateBand(document.getElementById('wa-band') ?
+    document.getElementById('wa-band').value : 'hfp');
+  onProgress(1, 'Done · ' + WA.bits + '-bit · ' +
+    (hfp.records.length) + ' HFP / ' + (lfp.records.length) + ' LFP frames');
+}
+
+// ── Detect 24-bit vs 16-bit by which reading is smoother ─────
+function waDetectBits(bytes, header, payLen) {
+  const rough = (vals) => {
+    let sum = 0, sumSq = 0, sumDiff = 0; const n = vals.length;
+    for(let i = 0; i < n; i++) { sum += vals[i]; sumSq += vals[i]*vals[i]; }
+    const mean = sum / n;
+    const std = Math.sqrt(Math.max(1e-9, sumSq/n - mean*mean)) || 1;
+    for(let i = 1; i < n; i++) sumDiff += Math.abs(vals[i] - vals[i-1]);
+    return (sumDiff / (n-1)) / std;
+  };
+  const COUNT = 60000;
+  const startByte = header + Math.min(payLen >> 1, 6000000);   // mid-file
+  // 24-bit reading
+  const v24 = new Float64Array(COUNT);
+  for(let i = 0, p = startByte; i < COUNT && p+2 < bytes.length; i++, p += 3) {
+    let v = bytes[p] | (bytes[p+1] << 8) | (bytes[p+2] << 16);
+    if(v & 0x800000) v -= 0x1000000; v24[i] = v;
+  }
+  // 16-bit reading
+  const v16 = new Float64Array(COUNT);
+  for(let i = 0, p = startByte; i < COUNT && p+1 < bytes.length; i++, p += 2) {
+    let v = bytes[p] | (bytes[p+1] << 8);
+    if(v & 0x8000) v -= 0x10000; v16[i] = v;
+  }
+  return (rough(v24) < rough(v16) * 0.7) ? 24 : 16;
+}
+
+// ── Build one band: STFT (Hann, /fullScale, dB) over a signal ─
+function waBuildBand(sig, sampleRate, fftSize, fullScale, onProgress) {
+  const MAX_FRAMES = 8000;
+  const N = sig.length, F = fftSize, nBins = F >> 1;   // 512 channels
+  const hop = Math.max(F, Math.floor(N / MAX_FRAMES));
+  const nFrames = Math.max(1, Math.floor((N - F) / hop) + 1);
+  const win = new Float32Array(F);
+  for(let i = 0; i < F; i++) win[i] = 0.5 * (1 - Math.cos(2*Math.PI*i/(F-1)));
+  const logNorm = 20 * Math.log10(F);
+  const records = [];
+  const re = new Float32Array(F), im = new Float32Array(F);
+  // accumulate per-bin sum for whitening (mean subtraction removes static lines)
+  const binSum = new Float64Array(nBins);
+  for(let f = 0; f < nFrames; f++) {
+    if(onProgress && (f & 255) === 0) onProgress(f / nFrames, f, nFrames);
+    const start = f * hop;
+    for(let i = 0; i < F; i++) { re[i] = (sig[start+i] / fullScale) * win[i]; im[i] = 0; }
+    waFFT(re, im);
+    const spec = new Float32Array(nBins);
+    for(let k = 0; k < nBins; k++) {               // bins 1..512 (skip DC)
+      const kk = k + 1;
+      spec[k] = 10 * Math.log10(re[kk]*re[kk] + im[kk]*im[kk] + 1e-20) - logNorm;
+      binSum[k] += spec[k];
+    }
+    records.push({ spec });
+  }
+  // per-bin mean (for whitening / spectral normalisation)
+  const binMean = new Float32Array(nBins);
+  if(nFrames > 0) for(let k = 0; k < nBins; k++) binMean[k] = binSum[k] / nFrames;
+  return { records, sig, sampleRate, fftSize: F, hop, nBins, fullScale, binMean, nValid: nFrames };
+}
+
+// ── Radix-2 FFT ─────────────────────────────────────────────
+function waFFT(re, im) {
+  const N = re.length;
+  // bit-reversal
+  for(let i=1,j=0; i<N; i++) {
+    let bit = N>>1;
+    for(; j&bit; bit>>=1) j^=bit;
+    j^=bit;
+    if(i<j){ let t=re[i];re[i]=re[j];re[j]=t; t=im[i];im[i]=im[j];im[j]=t; }
+  }
+  // butterfly
+  for(let len=2; len<=N; len<<=1) {
+    const ang = -2*Math.PI/len;
+    const wr=Math.cos(ang), wi=Math.sin(ang);
+    for(let i=0; i<N; i+=len) {
+      let cr=1, ci=0;
+      for(let j=0; j<(len>>1); j++) {
+        const ur=re[i+j], ui=im[i+j];
+        const vr=re[i+j+(len>>1)]*cr - im[i+j+(len>>1)]*ci;
+        const vi=re[i+j+(len>>1)]*ci + im[i+j+(len>>1)]*cr;
+        re[i+j]=ur+vr; im[i+j]=ui+vi;
+        re[i+j+(len>>1)]=ur-vr; im[i+j+(len>>1)]=ui-vi;
+        const ncr=cr*wr-ci*wi; ci=cr*wi+ci*wr; cr=ncr;
+      }
+    }
+  }
+}
+
+// ── Navigation ──────────────────────────────────────────────
+function waNudge(delta) {
+  if(!WA.records.length) return;
+  WA.cursor = Math.max(0, Math.min(WA.records.length-1, WA.cursor+delta));
+  waDrawWave();
+  waDrawCursor();
+  waUpdateHeader();
+}
+
+function waUpdateHeader() {
+  const n = WA.records.length;
+  if(!n) return;
+  document.getElementById('wa-cur-time').textContent = waTsFmt(WA.cursor);
+  const bandName = WA.band === 'lfp' ? 'LFP 0–4 kHz' : 'HFP 0–60 kHz';
+  const durSec = (n - 1) * WA.hop / WA.sampleRate;
+  const validPct = n > 0 ? Math.round(100 * WA.nValid / n) : 0;
+  document.getElementById('wa-info').textContent =
+    WA.toolName + ' · ' + WA.filename +
+    '  |  ' + WA.bits + '-bit · ' + (WA.sampleRate/1000) + ' kHz · ' + bandName +
+    '  |  ' + durSec.toFixed(0) + 's · ' + n + ' frames · valid ' + WA.nValid + ' (' + validPct + '%)' +
+    '  |  [' + (WA.cursor+1) + '/' + n + ']';
+}
+
+// No real timestamps in the ALF stream → elapsed time of a frame (mm:ss)
+function waTsFmt(frameIdx) {
+  let sec = Math.max(0, Math.round(frameIdx)) * WA.hop / WA.sampleRate;
+  sec = Math.round(sec);
+  const p = v => String(v).padStart(2,'0');
+  return p(Math.floor(sec/60)) + ':' + p(sec%60);
+}
+
+// ── Spectrogram draw ─────────────────────────────────────────
+function waDrawSpec() {
+  const canvas = document.getElementById('wa-spec-canvas');
+  const wrap   = document.getElementById('wa-spec-wrap');
+  const dpr    = window.devicePixelRatio || 1;
+  const W = wrap.clientWidth  || 900;
+  const H = wrap.clientHeight || 300;
+  canvas.width  = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const PAD = {left:60, right:20, top:22, bot:32};
+  const PW = W - PAD.left - PAD.right;
+  const PH = H - PAD.top  - PAD.bot;
+  if(PW < 10 || PH < 10 || !WA.records.length) {
+    ctx.fillStyle='#ECEFF0'; ctx.fillRect(0,0,W,H); return;
+  }
+
+  const dv1    = parseFloat(document.getElementById('wa-db-lo').value);
+  const dv2    = parseFloat(document.getElementById('wa-db-hi').value);
+  const cmin   = Math.min(isNaN(dv1)?-40:dv1, isNaN(dv2)?15:dv2);
+  const cmax   = Math.max(isNaN(dv1)?-40:dv1, isNaN(dv2)?15:dv2);
+  const cspan  = (cmax - cmin) || 1;
+  const scheme = document.getElementById('wa-cmap').value;
+  const nRec   = WA.records.length;
+  const nBins  = WA.nBins;
+  // whitening: subtract per-bin mean (removes static harmonic lines)
+  const whiten = document.getElementById('wa-whiten') ? document.getElementById('wa-whiten').checked : true;
+  const bm = (whiten && WA.binMean) ? WA.binMean : null;
+
+  // background
+  ctx.fillStyle='#ECEFF0'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#ffffff'; ctx.fillRect(PAD.left,PAD.top,PW,PH);
+
+  // Current zoom window
+  const { t0, t1, f0, f1 } = waView();
+
+  // Spectrogram image
+  const iW = PW|0, iH = PH|0;
+  const img = ctx.createImageData(iW, iH);
+  const px  = img.data;
+  // temporal smoothing: average over ±SMOOTH frames to reduce vertical-stripe artefacts
+  const SMOOTH = parseInt((document.getElementById('wa-smooth')||{}).value||'0', 10) || 0;
+  for(let col=0;col<iW;col++){
+    const recIdx = Math.round(t0 + col/(iW-1||1)*(t1-t0));
+    const clamp  = v => Math.max(0, Math.min(nRec-1, v));
+    for(let row=0;row<iH;row++){
+      const binF = f0 + (1-row/(iH-1||1))*(f1-f0);
+      const b0=Math.max(0,Math.floor(binF)), b1=Math.min(nBins-1,b0+1);
+      const frac = binF - b0;
+      // accumulate over smoothing window
+      let sum = 0, cnt = 0;
+      for(let dd = -SMOOTH; dd <= SMOOTH; dd++) {
+        const spec = WA.records[clamp(recIdx+dd)].spec;
+        sum += spec[b0]*(1-frac) + spec[b1]*frac;
+        cnt++;
+      }
+      let val = sum / cnt;
+      if(bm) val -= bm[b0]*(1-frac) + bm[b1]*frac;  // whitening
+      const tn  = Math.max(0,Math.min(1,(val-cmin)/cspan));
+      const [r,g,b]= waRGB(tn, scheme);
+      const i4  = (row*iW+col)*4;
+      px[i4]=r; px[i4+1]=g; px[i4+2]=b; px[i4+3]=255;
+    }
+  }
+  ctx.putImageData(img, PAD.left, PAD.top);
+
+  // Y axis (frequency) — labelled across the zoomed bin range
+  ctx.fillStyle='#43494e'; ctx.font='9px IBM Plex Mono,monospace'; ctx.textAlign='right';
+  for(let i=0;i<=5;i++){
+    const binVal = f0 + i/5*(f1-f0);
+    const hz  = waHz(binVal);
+    const y   = PAD.top + (1-i/5)*PH;
+    ctx.fillText((hz>=1000?(hz/1000).toFixed(2)+'k':Math.round(hz)+'')+'Hz', PAD.left-4, y+3);
+    ctx.strokeStyle='rgba(200,200,210,.4)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(PAD.left+PW,y); ctx.stroke();
+  }
+  ctx.save(); ctx.translate(12,PAD.top+PH/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center'; ctx.fillStyle='rgba(70,80,90,.5)';
+  ctx.font='8px IBM Plex Mono,monospace'; ctx.fillText('FREQ',0,0); ctx.restore();
+
+  // X axis (time / record index) — across the zoomed record range
+  ctx.fillStyle='#43494e'; ctx.font='9px IBM Plex Mono,monospace'; ctx.textAlign='center';
+  const ticks = Math.min(10, Math.max(1, Math.round(t1-t0)));
+  for(let i=0;i<=ticks;i++){
+    const idx = Math.round(t0 + i/ticks*(t1-t0));
+    const x   = PAD.left + i/ticks*PW;
+    ctx.fillText(waTsFmt(idx), x, PAD.top+PH+20);
+    ctx.strokeStyle='rgba(200,200,210,.4)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(x,PAD.top); ctx.lineTo(x,PAD.top+PH); ctx.stroke();
+  }
+
+  // Title
+  ctx.fillStyle='rgba(60,70,80,.55)'; ctx.font='8px IBM Plex Mono,monospace'; ctx.textAlign='left';
+  const zoomed = !!WA.view;
+  const bandName = WA.band === 'lfp' ? 'LFP 0–4 kHz' : 'HFP 0–60 kHz';
+  const whitenLabel = bm ? ' · whitened' : '';
+  ctx.fillText('SPECTROGRAM · ' + bandName + ' · ' + WA.nBins + ' ch' + whitenLabel +
+    ' · drag = zoom box · wheel = zoom time (Shift = freq) · dbl-click = reset' +
+    (zoomed ? '  · [ZOOMED]' : ''), PAD.left+4, PAD.top-6);
+
+  waZoomInfo();
+  waDrawCursor();
+}
+
+// ── Cursor overlay ──────────────────────────────────────────
+function waDrawCursor() {
+  const specC  = document.getElementById('wa-spec-canvas');
+  const curC   = document.getElementById('wa-cursor-canvas');
+  const W = specC.width  / (window.devicePixelRatio||1);
+  const H = specC.height / (window.devicePixelRatio||1);
+  curC.width  = specC.width;  curC.height = specC.height;
+  curC.style.width  = W+'px'; curC.style.height = H+'px';
+  const dpr = window.devicePixelRatio||1;
+  const ctx = curC.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0,0,W,H);
+  if(!WA.records.length) return;
+
+  const PAD = {left:60, right:20, top:22, bot:32};
+  const PW = W - PAD.left - PAD.right;
+  const PH = H - PAD.top  - PAD.bot;
+  const { t0, t1 } = waView();
+
+  // Cursor line — only if the selected record lies inside the view
+  if(WA.cursor >= t0 - 0.5 && WA.cursor <= t1 + 0.5) {
+    const x = PAD.left + (WA.cursor - t0)/((t1 - t0)||1)*PW;
+    ctx.strokeStyle = 'rgba(26,79,196,0.85)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(x,PAD.top); ctx.lineTo(x,PAD.top+PH); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'rgba(26,79,196,0.9)';
+    ctx.font = 'bold 9px IBM Plex Mono,monospace';
+    ctx.textAlign = x > PAD.left + PW*0.7 ? 'right' : 'left';
+    ctx.fillText('#' + (WA.cursor + 1), x + (x > PAD.left + PW*0.7 ? -4 : 4), PAD.top + 14);
+  }
+
+  // Rubber-band zoom selection rectangle
+  if(WA._sel) {
+    const s = WA._sel;
+    ctx.fillStyle   = 'rgba(26,79,196,0.12)';
+    ctx.strokeStyle = 'rgba(26,79,196,0.85)';
+    ctx.lineWidth   = 1;
+    ctx.fillRect(s.x, s.y, s.w, s.h);
+    ctx.strokeRect(s.x, s.y, s.w, s.h);
+  }
+}
+
+// ── Waveform draw ────────────────────────────────────────────
+function waDrawWave() {
+  const canvas = document.getElementById('wa-wave-canvas');
+  const wrap   = document.getElementById('wa-wave-wrap');
+  const dpr    = window.devicePixelRatio || 1;
+  const W = wrap.clientWidth  || 900;
+  const H = wrap.clientHeight || 200;
+  canvas.width  = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const PAD = {left:60, right:20, top:22, bot:32};
+  const PW = W - PAD.left - PAD.right;
+  const PH = H - PAD.top  - PAD.bot;
+
+  ctx.fillStyle='#ECEFF0'; ctx.fillRect(0,0,W,H);
+
+  if(!WA.records.length || !WA.sig) return;
+  // RAW samples for the selected frame window (NO DC removal) — the fixed
+  // electrical-pickup spike must stay visible. WA.sig is real 24-bit counts
+  // (HFP full-rate) or the ÷15 decimated stream (LFP).
+  const start   = WA.cursor * WA.hop;
+  const end     = Math.min(WA.sig.length, start + WA.hop);
+  const samples = WA.sig.subarray(start, end);
+  const n = samples.length;
+  if(!n) { ctx.fillStyle='#ECEFF0'; return; }
+
+  ctx.fillStyle='rgba(255,255,255,.9)'; ctx.fillRect(PAD.left,PAD.top,PW,PH);
+
+  // grid
+  ctx.strokeStyle='rgba(0,0,0,.06)'; ctx.lineWidth=0.5;
+  for(let i=0;i<=4;i++){
+    const y=PAD.top+i/4*PH;
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+PW,y);ctx.stroke();
+  }
+
+  // Y axis (ADC counts) — auto-scale to this record's amplitude
+  let yMax = 1;
+  for(let i=0;i<n;i++){ const a=Math.abs(samples[i]); if(a>yMax) yMax=a; }
+  yMax *= 1.1; const yMin = -yMax;
+  const toY  = v => PAD.top + (1-(v-yMin)/(yMax-yMin))*PH;
+  ctx.fillStyle='#43494e'; ctx.font='9px IBM Plex Mono,monospace'; ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const v = yMin + i/4*(yMax-yMin);
+    const lbl = Math.abs(v) >= 1000 ? (v/1000).toFixed(0)+'k' : Math.round(v).toString();
+    ctx.fillText(lbl, PAD.left-4, toY(v)+3);
+  }
+  ctx.save(); ctx.translate(12, PAD.top+PH/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center'; ctx.fillStyle='rgba(70,80,90,.5)';
+  ctx.font='8px IBM Plex Mono,monospace'; ctx.fillText('ADC', 0, 0); ctx.restore();
+
+  // zero line
+  ctx.strokeStyle='rgba(100,120,140,.35)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  const y0=toY(0);
+  ctx.beginPath(); ctx.moveTo(PAD.left,y0); ctx.lineTo(PAD.left+PW,y0); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // X axis (ms)
+  const durMs = n / WA.sampleRate * 1000;
+  ctx.fillStyle='#43494e'; ctx.font='9px IBM Plex Mono,monospace'; ctx.textAlign='center';
+  const xTicks = 10;
+  for(let i=0;i<=xTicks;i++){
+    const ms = i/xTicks*durMs;
+    const x  = PAD.left + i/xTicks*PW;
+    const msLbl = (durMs < 20 ? ms.toFixed(2) : ms.toFixed(0)) + 'ms';
+    ctx.fillText(msLbl, x, PAD.top+PH+20);
+    ctx.strokeStyle='rgba(200,200,210,.4)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(x,PAD.top); ctx.lineTo(x,PAD.top+PH); ctx.stroke();
+  }
+
+  // Waveform line
+  ctx.save();
+  ctx.beginPath(); ctx.rect(PAD.left,PAD.top,PW,PH); ctx.clip();
+  ctx.strokeStyle='#1a4fc4'; ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const x = PAD.left + i/(n-1||1)*PW;
+    const y = toY(samples[i]);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // Title
+  ctx.fillStyle='rgba(60,70,80,.55)'; ctx.font='8px IBM Plex Mono,monospace'; ctx.textAlign='left';
+  ctx.fillText('RAW WAVEFORM  s' + (WA.cursor+1) + '  ' + waTsFmt(WA.cursor) +
+    '  (' + n + ' samples  ≈' + (durMs < 20 ? durMs.toFixed(2) : durMs.toFixed(0)) +
+    'ms @ ' + (WA.sampleRate/1000) + 'kHz · raw counts, no DC removal)', PAD.left+4, PAD.top-6);
+}
+
+// ── Colormap (same as nf2RGB but exported locally) ──────────
+function waRGB(t, scheme) {
+  const ci = v=>Math.max(0,Math.min(255,v|0));
+  if(scheme==='viridis'){
+    const r=ci(t<0.5?(68+t*340):(88+t*167));
+    const g=ci(t<0.5?(1+t*178):(148+t*107));
+    const b=ci(t<0.5?(84+t*(-84)):(255-t*130));
+    return[r,g,b];
+  }
+  if(scheme==='seismic'){
+    if(t<0.5){const s=t/0.5;return[ci(255-s*255),ci(255-s*255),255];}
+    const s=(t-0.5)/0.5;return[255,ci(255-s*255),ci(255-s*255)];
+  }
+  // acoustic (default)
+  if(t<0.25){const s=t/0.25;return[ci(236+s*(0-236)),ci(239+s*(0-239)),ci(240+s*(80-240))];}
+  if(t<0.5){const s=(t-0.25)/0.25;return[0,ci(0+s*100),ci(80+s*175)];}
+  if(t<0.75){const s=(t-0.5)/0.25;return[ci(s*220),ci(100+s*155),ci(255-s*255)];}
+  const s=(t-0.75)/0.25;return[ci(220+s*35),ci(255-s*255),0];
+}
+
+// ── Full redraw (colormap / dB only — STFT is fixed per band) ─
+function waRedraw() {
+  if(!WA.records.length) return;
+  waDrawSpec();
+  waDrawWave();
+}
+
+// ── Resize observer ──────────────────────────────────────────
+if(typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(() => {
+    if(document.getElementById('pane-wa').style.display !== 'none') {
+      if(WA.records.length) { waDrawSpec(); waDrawWave(); }
+    }
+  }).observe(document.getElementById('pane-wa'));
+}
 
 </script>
 </body>

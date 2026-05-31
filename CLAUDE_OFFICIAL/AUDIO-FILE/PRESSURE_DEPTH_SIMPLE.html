@@ -1,0 +1,2566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>PRESSURE → DEPTH SIMPLE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
+:root{
+  --bg:#f1f5f9;            /* light slate background */
+  --panel:#ffffff;
+  --panel2:#f8fafc;
+  --panel3:#e2e8f0;
+  --border:#cbd5e1;
+  --border2:#94a3b8;
+  --c-depth:#0d9488;       /* teal — depth */
+  --c-pres: #1d4ed8;       /* blue — pressure */
+  --c-temp: #c2410c;       /* orange — temperature */
+  --c-ccl:  #a21caf;       /* fuchsia — CCL (distinct from orange temperature) */
+  --text:#0f172a; --muted:#475569; --muted2:#94a3b8;
+  --mono:'JetBrains Mono',monospace; --display:'Barlow Condensed',sans-serif; --r:5px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;display:flex;flex-direction:column;}
+
+.topbar{display:flex;align-items:center;padding:0 16px;height:54px;border-bottom:2px solid var(--border);background:var(--panel);gap:12px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+.logo{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.06em;white-space:nowrap;color:var(--text);}
+.logo em{color:var(--c-depth);font-style:normal;}
+.logo-sub{font-size:10px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;margin-top:2px;}
+.tsep{width:1px;height:32px;background:var(--border);flex-shrink:0;}
+
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);border-radius:4px;padding:6px 12px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;user-select:none;color:var(--muted);background:var(--panel2);}
+.pill .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;opacity:.4;background:var(--muted);}
+.pill.on{color:var(--text);}
+.pill.on .dot{opacity:1;}
+.pill.p-on{border-color:var(--c-depth);color:var(--c-depth);background:rgba(13,148,136,.08);}
+.pill.p-on .dot{background:var(--c-depth);}
+.pill.pr-on{border-color:var(--c-pres);color:var(--c-pres);background:rgba(29,78,216,.08);}
+.pill.pr-on .dot{background:var(--c-pres);}
+.pill.t-on{border-color:var(--c-temp);color:var(--c-temp);background:rgba(194,65,12,.08);}
+.pill.t-on .dot{background:var(--c-temp);}
+.pill.c-on{border-color:var(--c-ccl);color:var(--c-ccl);background:rgba(162,28,175,.08);}
+.pill.c-on .dot{background:var(--c-ccl);}
+.pill.b-on{border-color:#7c3aed;color:#7c3aed;background:rgba(124,58,237,.08);}
+.pill.b-on .dot{background:#7c3aed;}
+
+.tr{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.zoom-controls{display:flex;gap:3px;margin-left:10px;border-left:1px solid var(--border);padding-left:10px;}
+.zbtn{background:var(--panel2);border:1px solid var(--border2);color:var(--text);padding:6px 12px;border-radius:4px;font-family:var(--mono);font-size:14px;font-weight:700;cursor:pointer;line-height:1;}
+.zbtn:hover{color:var(--c-depth);border-color:var(--c-depth);background:var(--panel);}
+.xbtn{background:var(--panel);border:1px solid var(--border2);color:var(--text);padding:7px 14px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+.xbtn:hover{border-color:var(--c-depth);color:var(--c-depth);}
+.xbtn.e{border-color:var(--c-pres);color:var(--c-pres);}
+.xbtn.e:hover{background:rgba(29,78,216,.06);}
+
+.layout{display:flex;flex:1;min-height:0;}
+.sb{width:320px;flex-shrink:0;background:var(--panel);border-right:2px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sb-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:8px;}
+.sb-scroll::-webkit-scrollbar{width:6px;}
+.sb-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.sb-scroll::-webkit-scrollbar-track{background:var(--panel2);}
+.sec{border-bottom:1px solid var(--border);padding:14px 14px;}
+.sec-title{font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.sec-title::before{content:'';display:block;width:4px;height:14px;border-radius:1px;background:currentColor;}
+
+.dz{border:2px dashed var(--border2);border-radius:var(--r);padding:12px 12px;text-align:center;cursor:pointer;color:var(--muted);font-size:13px;line-height:1.6;background:var(--panel2);margin-bottom:8px;}
+.dz:hover,.dz.drag-over{border-color:var(--c-depth);color:var(--c-depth);background:rgba(13,148,136,.04);}
+.dz.ok{border-style:solid;border-color:var(--c-depth);background:rgba(13,148,136,.06);color:var(--text);}
+.dz-sub{font-size:11px;color:var(--muted);margin-top:4px;word-break:break-all;}
+input[type=file]{display:none;}
+
+.row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;}
+.lbl{font-size:12px;color:var(--muted);font-weight:500;}
+.val{font-size:13px;color:var(--text);font-weight:600;}
+select,input[type=number]{background:var(--panel);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:var(--r);font-family:var(--mono);font-size:13px;font-weight:500;outline:none;}
+select:focus,input[type=number]:focus{border-color:var(--c-depth);box-shadow:0 0 0 2px rgba(13,148,136,.15);}
+input[type=number]{width:90px;text-align:right;}
+input[type=checkbox]{width:16px;height:16px;cursor:pointer;}
+
+.btn-row{display:flex;gap:5px;margin-top:5px;}
+.sbtn{flex:1;background:var(--panel2);border:1px solid var(--border2);color:var(--text);padding:8px 6px;border-radius:var(--r);font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;text-align:center;letter-spacing:.03em;white-space:nowrap;}
+.sbtn:hover{background:var(--panel);border-color:var(--muted);}
+
+.stat-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.slbl{font-size:12px;color:var(--muted);}
+.sval{font-size:13px;font-weight:700;}
+
+.info{background:rgba(29,78,216,.06);border:1px solid rgba(29,78,216,.25);border-radius:var(--r);padding:8px 11px;font-size:12px;color:#1e40af;line-height:1.55;margin-top:6px;}
+.warn{background:rgba(234,88,12,.08);border:1px solid rgba(234,88,12,.4);border-radius:var(--r);padding:8px 11px;font-size:12px;color:#9a3412;line-height:1.55;margin-top:6px;}
+
+.sb-foot{padding:11px 14px;border-top:2px solid var(--border);flex-shrink:0;background:var(--panel2);}
+.foot-txt{font-size:10.5px;color:var(--muted);line-height:1.6;letter-spacing:.04em;}
+
+.chart-main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);}
+.stats-strip{display:flex;border-bottom:2px solid var(--border);background:var(--panel);flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,0.03);}
+.sc{flex:1;padding:10px 14px;border-right:1px solid var(--border);}
+.sc:last-child{border-right:none;}
+.sl{font-size:11px;color:var(--muted);letter-spacing:.13em;text-transform:uppercase;margin-bottom:4px;font-weight:600;}
+.sv{font-family:var(--display);font-size:28px;font-weight:700;line-height:1;}
+.su{font-size:12px;color:var(--muted);margin-left:4px;font-family:var(--mono);font-weight:500;}
+
+.canvas-wrap{flex:1;position:relative;min-height:0;overflow:hidden;cursor:crosshair;background:var(--panel);}
+canvas#chart{position:absolute;inset:0;width:100%;height:100%;}
+#hline{position:absolute;top:0;bottom:0;width:1px;background:rgba(15,23,42,.25);pointer-events:none;display:none;z-index:6;}
+#zoom-rect{position:absolute;pointer-events:none;display:none;border:1px solid rgba(13,148,136,.6);background:rgba(13,148,136,.08);z-index:6;}
+
+.statusbar{height:30px;border-top:1px solid var(--border);background:var(--panel);display:flex;align-items:center;padding:0 14px;gap:22px;flex-shrink:0;}
+.si{font-size:11px;color:var(--muted);}
+.si span{color:var(--text);font-weight:600;}
+.zoom-badge{margin-left:auto;font-size:11px;color:var(--c-depth);background:rgba(13,148,136,.08);border:1px solid rgba(13,148,136,.4);padding:3px 10px;border-radius:3px;cursor:pointer;font-weight:600;}
+
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted);pointer-events:none;z-index:8;}
+.empty-big{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.empty-sm{font-size:13px;line-height:1.7;text-align:center;max-width:380px;color:var(--muted);}
+
+#tt{position:fixed;display:none;z-index:200;background:rgba(255,255,255,.98);border:1px solid var(--border2);border-radius:var(--r);padding:11px 15px;pointer-events:none;min-width:230px;box-shadow:0 4px 16px rgba(0,0,0,0.15);}
+.tt-hd{font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:6px;font-weight:600;}
+.tt-r{display:flex;justify-content:space-between;gap:16px;margin-bottom:4px;font-size:13px;}
+.tt-lbl{color:var(--muted);font-weight:500;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="logo"><em>P→D</em> SIMPLE</div>
+    <div style="font-size:11px;background:#ecfdf5;border:1px solid #0d9488;border-radius:4px;padding:3px 10px;color:#0d9488;letter-spacing:.08em;font-weight:600">v2026-05-31-S17</div>
+    <div class="logo-sub">uppass P→D mirror · fuchsia CCL</div>
+  </div>
+  <div class="tsep"></div>
+
+  <div id="pill-p"  class="pill p-on"  onclick="toggleCh('p')"><div class="dot"></div>DEPTH</div>
+  <div id="pill-pr" class="pill pr-on" onclick="toggleCh('pr')"><div class="dot"></div>PRESSURE</div>
+  <div id="pill-t"  class="pill t-on"  onclick="toggleCh('t')"><div class="dot"></div>TEMP</div>
+  <div id="pill-c"  class="pill c-on"  onclick="toggleCh('c')"><div class="dot"></div>CCL</div>
+  <div id="pill-b"  class="pill b-on"  onclick="toggleCh('b')"><div class="dot"></div>STANDS</div>
+
+  <!-- Zoom controls -->
+  <div class="zoom-controls">
+    <button class="zbtn" onclick="zoomOut()" title="Zoom out 2× (centered)">−</button>
+    <button class="zbtn" onclick="zoomIn()" title="Zoom in 2× (centered)">+</button>
+    <button class="zbtn" onclick="resetZoom()" title="Reset zoom to 100%">⟲</button>
+  </div>
+
+  <div class="tr">
+    <button class="xbtn e" onclick="generateDepthFile()">GENERATE DEPTH FILE</button>
+    <button class="xbtn e" onclick="exportCSV()">⬇ CSV</button>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sb">
+<div class="sb-scroll">
+
+  <!-- DEBUG -->
+  <div id="depth-debug" style="margin:8px 10px;font-size:11.5px;color:#1e40af;background:#eff6ff;border:1px solid #93c5fd;border-radius:4px;padding:8px 10px;line-height:1.65;word-break:break-word;display:none"></div>
+
+  <!-- FILE LOAD -->
+  <div class="sec" style="color:var(--c-depth)">
+    <div class="sec-title">Base Module DMP</div>
+    <div class="dz" id="dz-dmp" onclick="document.getElementById('fi-dmp').click()">
+      📡 Drop .dmp here
+      <div class="dz-sub" id="dz-dmp-sub">MCS32J-A · 260 B/record · or click</div>
+    </div>
+    <input type="file" id="fi-dmp" accept=".dmp,.DMP,.mcs32ja,.MCS32JA,.mcs32j" onchange="handleDmpInput(this)">
+  </div>
+
+  <!-- EXPECTED TOP & BOTTOM -->
+  <div class="sec" style="color:var(--c-depth)">
+    <div class="sec-title">Expected TOP &amp; BOTTOM</div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;line-height:1.5">
+      TOP = top of interval (shallow), BOTTOM = bottom of interval (deep).
+      Enter depth → click button → click on chart at the time when tool was there.
+    </div>
+
+    <div class="row"><span class="lbl" style="color:var(--c-depth)">TOP depth (m)</span><input type="number" id="inp-ref-a-m" value="0" step="0.1"></div>
+    <div class="btn-row"><button class="sbtn" onclick="startMarkRef('a')">Set TOP time @ chart</button></div>
+    <div id="lbl-ref-a" class="val" style="font-size:11px;color:var(--muted);margin-bottom:8px">TOP time: —</div>
+
+    <div class="row"><span class="lbl" style="color:#d97706">BOTTOM depth (m)</span><input type="number" id="inp-ref-b-m" value="0" step="0.1"></div>
+    <div class="btn-row"><button class="sbtn" onclick="startMarkRef('b')">Set BOTTOM time @ chart</button></div>
+    <div id="lbl-ref-b" class="val" style="font-size:11px;color:var(--muted);margin-bottom:6px">BOTTOM time: —</div>
+
+    <div class="row">
+      <span class="lbl">Station length</span>
+      <input type="number" id="inp-station-len" value="9.5" min="0.5" max="200" step="0.1" onchange="refreshDepthModel()">
+      <select id="sel-station-unit" style="width:60px;flex-shrink:0" onchange="refreshDepthModel()">
+        <option value="m" selected>m</option>
+        <option value="ft">ft</option>
+      </select>
+    </div>
+    <div id="n-hint" style="font-size:11px;color:var(--c-ccl);margin:3px 0 6px;line-height:1.45"></div>
+    <div id="computed-bottom-hint" style="font-size:11px;color:#7c3aed;margin:3px 0 6px;line-height:1.45"></div>
+    <div id="depth-mark-hint" style="display:none;margin-top:5px;font-size:12px;color:var(--c-ccl);line-height:1.5"></div>
+    <div class="btn-row" style="margin-top:6px">
+      <button class="sbtn" onclick="applyComputedBottom()" title="Replace the value in TOP or BOTTOM (whichever was 'later' in time) with the value computed from N × L. Useful if you're unsure of one boundary — the algorithm recalculates from stand count.">Apply computed (TOP/BOT)</button>
+    </div>
+  </div>
+
+  <!-- ALGORITHM -->
+  <div class="sec">
+    <div class="sec-title" style="color:var(--c-depth)">Stand Detector</div>
+
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;line-height:1.5">
+      <b style="color:var(--text)">STOP</b> = pressure flat AND CCL quiet.<br>
+      <b style="color:var(--text)">MOVE</b> = pressure changing OR CCL noisy.
+    </div>
+
+    <div class="row" title="Minimum stand duration (sec). Shorter runs are discarded as noise. Not used for merging — only filtering.">
+      <span class="lbl">Min stand, sec</span>
+      <input type="number" id="inp-min-stand" value="8" min="1" max="300" step="1" onchange="refreshDepthModel()">
+    </div>
+    <div class="row" title="CCL deviation threshold = this × MAD (median absolute deviation). A sample is a spike if |CCL − median| > threshold. Lower = more sensitive (more movements). Typical: 1.5–3.0.">
+      <span class="lbl">CCL × MAD</span>
+      <input type="number" id="inp-ccl-mul" value="2.5" min="0.3" max="20" step="0.1" onchange="refreshDepthModel()">
+    </div>
+    <div class="row" title="Pressure flatness tolerance as a fraction of expected ΔP per stand. Lower = stricter = more movements detected.">
+      <span class="lbl">P-flat × ΔP/stand</span>
+      <input type="number" id="inp-dp-frac" value="0.30" min="0.05" max="3" step="0.05" onchange="refreshDepthModel()">
+    </div>
+
+    <div class="row" style="margin-top:8px" title="Depth follows pressure: if P between stands rises = tool went deeper (+L), falls = shallower (−L). Handles overlap (e.g. down→up→down).">
+      <span class="lbl">Depth by pressure (overlap)</span>
+      <input type="checkbox" id="cb-signed-depth" onchange="refreshDepthModel()">
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="sbtn" style="flex:1.2;border-color:var(--c-depth);color:var(--c-depth);font-weight:700" onclick="refreshDepthModel()">REFRESH DEPTH</button>
+    </div>
+    <div class="btn-row">
+      <button class="sbtn" style="flex:1.2;border-color:var(--c-pres);color:var(--c-pres);font-weight:700" onclick="generateDepthFile()">GENERATE DEPTH FILE</button>
+    </div>
+  </div>
+
+  <!-- MANUAL STANDS -->
+  <div class="sec">
+    <div class="sec-title" style="color:var(--c-ccl)">Manual Stands</div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;line-height:1.55">
+      <b style="color:var(--c-ccl)">+ AUTO</b>: click at center of stand, width from field below.<br>
+      <b style="color:#7c3aed">+ MANUAL</b>: click START → click END.<br>
+      <b style="color:var(--c-temp)">×</b>: click on band to remove.<br>
+      <b style="color:var(--c-pres)">⇧ SHIFT+click</b>: repeat add in selected mode (fast batch markup).
+    </div>
+    <div class="btn-row">
+      <button class="sbtn" onclick="startAddStand('auto')" style="color:var(--c-ccl);border-color:var(--c-ccl)">+ AUTO</button>
+      <button class="sbtn" onclick="startAddStand('manual')" style="color:#7c3aed;border-color:#7c3aed">+ MANUAL</button>
+      <button class="sbtn" onclick="startDelStand()" style="color:var(--c-temp);border-color:var(--c-temp)">× DEL</button>
+    </div>
+    <div class="btn-row">
+      <button class="sbtn" onclick="clearManualStands()">Clear manual</button>
+    </div>
+    <div class="row" title="Width of AUTO stand (seconds). Does not affect MANUAL." style="margin-top:8px">
+      <span class="lbl">AUTO width, sec</span>
+      <input type="number" id="inp-add-width" value="15" min="3" max="120" step="1">
+    </div>
+    <div id="stand-edit-hint" style="display:none;font-size:12px;color:var(--c-ccl);margin-top:8px;line-height:1.5;font-weight:600"></div>
+    <div id="manual-stand-count" style="font-size:11px;color:var(--muted);margin-top:8px">Added: 0 · Removed: 0</div>
+  </div>
+
+  <!-- DRAW DEPTH -->
+  <div class="sec">
+    <div class="sec-title" style="color:#b45309">Draw Depth</div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;line-height:1.55">
+      Drag start → end to draw a straight depth segment.<br>
+      Chart auto-extends when you drag below the visible area.
+    </div>
+    <div class="row"><span class="lbl">Snap to (m)</span><input type="number" id="inp-draw-snap" value="1" min="0" max="100" step="0.5" style="width:72px" title="Snap drawn endpoint to nearest N meters. Set 0 to disable."></div>
+    <div class="btn-row">
+      <button id="btn-draw-depth" class="sbtn" onclick="toggleDrawDepth()" style="color:#b45309;border-color:#b45309;font-weight:700">✏ DRAW</button>
+      <button id="btn-edit-eps"   class="sbtn" onclick="toggleEditEndpoints()" style="color:#0369a1;border-color:#0369a1;font-weight:700">✎ EDIT</button>
+    </div>
+    <div class="btn-row">
+      <button class="sbtn" onclick="undoLastStroke()" style="color:#6b7280;border-color:#6b7280">↩ UNDO</button>
+      <button class="sbtn" onclick="clearDepthStrokes()" style="color:var(--c-temp);border-color:var(--c-temp)">× CLEAR</button>
+    </div>
+    <div id="draw-depth-hint" style="font-size:12px;color:#b45309;margin-top:8px;line-height:1.5;display:none;font-weight:600"></div>
+    <div id="draw-depth-count" style="font-size:11px;color:var(--muted);margin-top:6px">Strokes: 0</div>
+  </div>
+
+  <!-- Hidden fallback controls (kept in DOM for state persistence; auto-defaults work for 99% of cases) -->
+  <select id="sel-depth-sg" style="display:none">
+    <option value="fresh">1.000</option>
+    <option value="b105">1.050</option>
+    <option value="b110" selected>1.100</option>
+    <option value="b115">1.150</option>
+    <option value="b120">1.200</option>
+  </select>
+  <input type="checkbox" id="cb-man-grad" style="display:none">
+  <input type="number" id="inp-man-grad" value="10.791" style="display:none">
+
+  <!-- PROJECT SAVE/LOAD -->
+  <div class="sec">
+    <div class="sec-title" style="color:#7c3aed">Project</div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;line-height:1.5">
+      Save settings + TOP/BOTTOM + manual stands → .json.<br>
+      Load later when the DMP is already loaded.
+    </div>
+    <div class="btn-row">
+      <button class="sbtn" onclick="saveProject()" style="color:#7c3aed;border-color:#7c3aed">💾 SAVE</button>
+      <button class="sbtn" onclick="document.getElementById('fi-proj').click()" style="color:#7c3aed;border-color:#7c3aed">📂 LOAD</button>
+    </div>
+    <input type="file" id="fi-proj" accept=".json" style="display:none" onchange="handleProjectLoad(this)">
+    <div id="proj-hint" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+  </div>
+
+  <!-- STATISTICS -->
+  <div class="sec">
+    <div class="sec-title" style="color:var(--muted)">Statistics</div>
+    <div class="stat-row"><span class="slbl">Records</span><span class="sval" id="s-nrec">—</span></div>
+    <div class="stat-row"><span class="slbl">Duration</span><span class="sval" id="s-dur">—</span></div>
+    <div class="stat-row"><span class="slbl">Start</span><span class="sval" id="s-t0" style="font-size:11px">—</span></div>
+    <div class="stat-row"><span class="slbl">End</span><span class="sval" id="s-t1" style="font-size:11px">—</span></div>
+    <div class="stat-row"><span class="slbl" style="color:var(--c-pres)">P min/max (kPa)</span><span class="sval" id="s-prange" style="color:var(--c-pres)">—</span></div>
+    <div class="stat-row"><span class="slbl" style="color:var(--c-depth)">Depth min/max</span><span class="sval" id="s-drange" style="color:var(--c-depth)">—</span></div>
+    <div class="stat-row"><span class="slbl" style="color:var(--c-temp)">Temp min/max</span><span class="sval" id="s-trange" style="color:var(--c-temp)">—</span></div>
+  </div>
+
+  <!-- DISPLAY -->
+  <div class="sec">
+    <div class="sec-title" style="color:var(--muted)">Display</div>
+    <div class="row"><span class="lbl">Depth smooth (pts)</span><input type="number" id="inp-sm" value="1" min="1" max="200" step="1" onchange="redraw()"></div>
+    <div class="row"><span class="lbl">Invert depth axis</span><input type="checkbox" id="cb-inv" onchange="redraw()"></div>
+    <div style="margin-top:6px;padding:6px 0;font-size:11.5px;color:var(--muted);line-height:1.8">
+      🖱 <b style="color:var(--text)">Wheel</b> = zoom · <b style="color:var(--text)">Drag</b> = pan<br>
+      ⇧ <b style="color:var(--text)">Shift+drag</b> = select region · <b style="color:var(--text)">dbl-click</b> = reset
+    </div>
+  </div>
+
+</div><!-- sb-scroll -->
+<div class="sb-foot">
+  <div class="foot-txt">
+    SIMPLE · classify → find → assign → lookup<br>
+    teal band = auto stand · yellow band = manual · ✕ stripe = removed
+  </div>
+</div>
+</div><!-- sidebar -->
+
+<!-- CHART -->
+<div class="chart-main">
+  <div class="stats-strip">
+    <div class="sc"><div class="sl" id="sl-depth">Depth</div><div class="sv" id="sv-depth" style="color:var(--c-depth)">—<span class="su">m</span></div></div>
+    <div class="sc"><div class="sl" id="sl-pres">Pressure</div><div class="sv" id="sv-pres" style="color:var(--c-pres)">—<span class="su">kPa</span></div></div>
+    <div class="sc"><div class="sl">Temperature</div><div class="sv" id="sv-temp" style="color:var(--c-temp)">—<span class="su">°C</span></div></div>
+    <div class="sc" style="flex:1.4"><div class="sl">Timestamp</div><div class="sv" id="sv-time" style="color:var(--muted);font-size:19px">—</div></div>
+  </div>
+
+  <div class="canvas-wrap" id="cwrap">
+    <canvas id="chart"></canvas>
+    <div id="hline"></div>
+    <div id="zoom-rect"></div>
+
+    <div class="empty" id="empty">
+      <div class="empty-big">No Data Loaded</div>
+      <div class="empty-sm">
+        Drop <strong style="color:var(--c-depth)">.dmp</strong> or <strong style="color:var(--c-depth)">.mcs32ja</strong> anywhere on this page.<br><br>
+        After load: set <strong>TOP</strong> + <strong>BOTTOM</strong> marks, set <strong>station length</strong>, press <strong>REFRESH DEPTH</strong>.<br>
+        Stand bands appear on chart. Click <strong>+/×</strong> to fix what auto missed.
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="si">File: <span id="st-file">none</span></div>
+    <div class="si">Records: <span id="st-recs">0</span></div>
+    <div class="si">SG: <span id="st-sg">1.10</span></div>
+    <div class="si">Gradient: <span id="st-grad">0.1079 bar/m</span></div>
+    <div class="zoom-badge" id="zoom-badge" onclick="resetZoom()" style="display:none">× Reset Zoom</div>
+    <div class="si" style="margin-left:auto;color:var(--muted2)">Simple · P→D</div>
+  </div>
+</div>
+</div><!-- layout -->
+
+<div id="tt">
+  <div class="tt-hd" id="tt-hd">—</div>
+  <div class="tt-r"><span class="tt-lbl" style="color:var(--c-depth)">Depth</span><span id="tt-d" style="color:var(--c-depth);font-weight:700">—</span></div>
+  <div class="tt-r"><span class="tt-lbl" style="color:var(--c-pres)">Pressure</span><span id="tt-p" style="color:var(--c-pres)">—</span></div>
+  <div class="tt-r"><span class="tt-lbl" style="color:var(--c-temp)">Temperature</span><span id="tt-t" style="color:var(--c-temp)">—</span></div>
+  <div class="tt-r" id="tt-row-ccl" style="display:none"><span class="tt-lbl" style="color:var(--c-ccl)">CCL</span><span id="tt-ccl" style="color:var(--c-ccl);font-weight:700">—</span></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+const S = {
+  recs   : [],
+  sg     : 1.10,
+  grad   : 1.10 * 0.0981,
+  pRef   : 101.325,
+  ch     : {p:true, pr:true, t:true, c:true, b:true},
+  view   : {x0:0, x1:100},
+  fname  : '',
+  hasDynP: false,
+  cclOffset: 82,
+  depthCfg: {
+    stationLen: 9.5,
+    stationUnit: 'm',
+    refA: { unix: null, m: 0 },
+    refB: { unix: null, m: 0 },
+    pendingMark: null,         // 'a' | 'b' | 'add-stand' | 'del-stand'
+    manualGrad: false,
+    manualGradKpaM: 10.791,
+    weightMode: 'auto',        // 'auto' | 'pres' | 'ccl'
+    signedDepth: false,        // false = equal step, true = ±L by pressure direction
+    minStandSec: 8,
+    cclThreshMul: 2.5,
+    dpdtThreshFrac: 0.30,
+    addedStands: [],           // [{t0,t1,src}] user-added (src='auto-add'|'manual')
+    removedStands: [],         // [{t0,t1}] user-removed auto stands
+    lastAddMode: null,         // 'auto' | 'manual' — remembered for SHIFT+click batch mode
+    _manualStartUnix: null,    // first click of MANUAL add
+    _lastStands: [],           // for chart rendering
+    _computedBottom: null,     // for "Apply" button
+    depthDrawActive: false,    // draw-depth mode
+    manualDepthStrokes: [],    // [{points:[{unix,depth}]}] committed strokes
+    _drawingDepth: null,       // [{unix,depth}] stroke being drawn
+    editEpActive: false,       // endpoint-edit mode
+    _editDrag: null,           // {strokeIdx, ptIdx} while dragging an endpoint
+  },
+};
+const SG_MAP = {fresh:1.000, b105:1.050, b110:1.100, b115:1.150, b120:1.200};
+
+// ══════════════════════════════════════════════════════════════
+// DRAG-DROP
+// ══════════════════════════════════════════════════════════════
+function pickDropFile(dt){
+  if(!dt) return null;
+  try{
+    if(dt.files && dt.files.length) return dt.files[0];
+    if(dt.items && dt.items.length){
+      for(let i=0;i<dt.items.length;i++){
+        const it = dt.items[i];
+        if(it.kind === 'file'){
+          const f = it.getAsFile && it.getAsFile();
+          if(f) return f;
+        }
+      }
+    }
+  }catch(_){}
+  return null;
+}
+function isFileDrag(dt){
+  if(!dt || !dt.types) return false;
+  const t = dt.types;
+  if(typeof t.contains === 'function') return t.contains('Files') || t.contains('application/x-moz-file');
+  for(let i=0;i<t.length;i++){ if(t[i]==='Files'||t[i]==='application/x-moz-file') return true; }
+  return false;
+}
+function isBaseModuleFilename(name){
+  if(!name||typeof name!=='string') return false;
+  const n = name.toLowerCase();
+  return n.endsWith('.dmp')||n.endsWith('.mcs32ja')||n.endsWith('.mcs32j');
+}
+function handleDmpInput(input){
+  const f = input && input.files && input.files[0];
+  if(f) loadDmp(f);
+  if(input) input.value = '';
+}
+
+document.addEventListener('dragover', e=>{
+  if(!isFileDrag(e.dataTransfer)) return;
+  e.preventDefault();
+  try{ e.dataTransfer.dropEffect = 'copy'; }catch(_){}
+}, true);
+document.addEventListener('drop', e=>{
+  if(!isFileDrag(e.dataTransfer)) return;
+  e.preventDefault();
+  document.querySelectorAll('.dz').forEach(d=>d.classList.remove('drag-over'));
+  const f = pickDropFile(e.dataTransfer);
+  if(!f) return;
+  if(isBaseModuleFilename(f.name)) loadDmp(f);
+  else if(typeof f.size==='number' && f.size>=520 && f.size%260===0) loadDmp(f);
+  else alert('Unknown file type: '+f.name);
+}, true);
+
+(function(){
+  const el = document.getElementById('dz-dmp'); if(!el) return;
+  const on = e=>{ if(!isFileDrag(e.dataTransfer)) return; e.preventDefault(); el.classList.add('drag-over'); };
+  el.addEventListener('dragenter', on, false);
+  el.addEventListener('dragover',  on, false);
+  el.addEventListener('dragleave', e=>{ if(!el.contains(e.relatedTarget)) el.classList.remove('drag-over'); }, false);
+  el.addEventListener('drop', ()=>el.classList.remove('drag-over'), false);
+})();
+
+// ══════════════════════════════════════════════════════════════
+// PARSE DMP — LOCKED P/T logic (preserved from original)
+// ══════════════════════════════════════════════════════════════
+function mcsRowUnixOrNull(view, u8, b){
+  const yr=u8[b+100], mo=u8[b+101], dy=u8[b+102];
+  const hr=u8[b+103], mn=u8[b+104], sc=u8[b+105];
+  if(mo<1||mo>12||dy<1||dy>31||hr>23||mn>59||sc>59) return null;
+  const unix = Date.UTC(2000+yr, mo-1, dy, hr, mn, sc);
+  if(unix < Date.UTC(2000,0,1)) return null;
+  const P_wh  = view.getUint16(b+110, true);
+  const raw114= view.getUint16(b+114, true);
+  const raw120= view.getUint16(b+120, true);
+  if(P_wh<1000||P_wh>60000) return null;
+  if(raw114<1500||raw114>25000) return null;
+  if(raw120<15000||raw120>65000) return null;
+  return unix;
+}
+
+function loadDmp(file){
+  if(!file) return;
+  S.fname = file.name;
+  const reader = new FileReader();
+  reader.onload = e=>{ try{ parseDmpBin(e.target.result, file.name); }catch(err){ alert('Parse error: '+err.message); } };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseDmpBin(buf, fname){
+  const REC = 260;
+  const nRec = Math.floor(buf.byteLength / REC);
+  const view = new DataView(buf);
+  const u8   = new Uint8Array(buf);
+  const recs = [];
+
+  const CCL_CAND = [76, 78, 80, 82, 84, 86, 88];
+  const acc = CCL_CAND.map(()=>({ n: 0, minv: Infinity, maxv: -Infinity }));
+  for(let i = 1; i < nRec; i++){
+    const b = i * REC;
+    if(mcsRowUnixOrNull(view, u8, b) === null) continue;
+    for(let ci = 0; ci < CCL_CAND.length; ci++){
+      const v = view.getInt16(b + CCL_CAND[ci], true);
+      if(v === -1 || !Number.isFinite(v)) continue;
+      const a = acc[ci];
+      a.n++; if(v < a.minv) a.minv = v; if(v > a.maxv) a.maxv = v;
+    }
+  }
+  let bestCi = CCL_CAND.indexOf(82);
+  let bestSpan = -1;
+  for(let ci = 0; ci < CCL_CAND.length; ci++){
+    const a = acc[ci];
+    if(a.n < 200) continue;
+    const span = a.maxv - a.minv;
+    if(span > bestSpan){ bestSpan = span; bestCi = ci; }
+  }
+  const cclOff = CCL_CAND[bestCi];
+  S.cclOffset = cclOff;
+
+  for(let i = 1; i < nRec; i++){
+    const b = i * REC;
+    const unix = mcsRowUnixOrNull(view, u8, b);
+    if(unix === null) continue;
+    const P_wh  = view.getUint16(b+110, true);
+    const raw114= view.getUint16(b+114, true);
+    const raw120= view.getUint16(b+120, true);
+    const cclRaw = view.getInt16(b + cclOff, true);
+    const ccl = (cclRaw !== -1) ? cclRaw : null;
+    recs.push({unix, P_kPa:P_wh, _r114:raw114, _r120:raw120, T_C:0, depth:0, ccl});
+  }
+
+  const P_DYN_K = 2.354;
+  const sl = recs.slice(5, 35);
+  const surf120 = sl.length ? sl.reduce((s,r)=>s+r._r120,0)/sl.length : (recs[0]&&recs[0]._r120)||0;
+  const surf114 = sl.length ? sl.reduce((s,r)=>s+r._r114,0)/sl.length : (recs[0]&&recs[0]._r114)||0;
+  const T_ref = surf114/200 + 7;
+
+  let alpha = 1.4;
+  if(recs.length > 200){
+    const n = recs.length;
+    let m120 = 0, m114 = 0;
+    for(const r of recs){ m120 += r._r120; m114 += r._r114; }
+    m120 /= n; m114 /= n;
+    let cov = 0, v120 = 0;
+    for(const r of recs){
+      const d120 = r._r120 - m120, d114 = r._r114 - m114;
+      cov += d120 * d114; v120 += d120 * d120;
+    }
+    if(v120 > 1e-3) alpha = cov / v120;
+    if(!isFinite(alpha) || alpha < 0.35 || alpha > 6) alpha = 1.4;
+  }
+
+  const r114vals = recs.map(r=>r._r114);
+  const r114mean = r114vals.reduce((a,b)=>a+b,0)/(r114vals.length||1);
+  const r114std = r114vals.length > 5
+    ? Math.sqrt(r114vals.reduce((s,v)=>{ const d = v - r114mean; return s + d*d; }, 0) / r114vals.length)
+    : 0;
+  const hasDynP = r114std > 50;
+
+  for(const r of recs){
+    r.T_C = (r._r120 - surf120) * (alpha / 200) + T_ref;
+    if(hasDynP) r.P_kPa = r.P_kPa + (r._r114 - surf114) * (P_DYN_K / alpha);
+    delete r._r114; delete r._r120;
+  }
+
+  recs.sort((a,b)=>a.unix-b.unix);
+  S.recs    = recs;
+  S.hasDynP = hasDynP;
+  S.view    = {x0:0, x1:100};
+
+  // Clear A/B from prior log
+  S.depthCfg.refA.unix = null;
+  S.depthCfg.refB.unix = null;
+  S.depthCfg.pendingMark = null;
+  S.depthCfg.addedStands = [];
+  S.depthCfg.removedStands = [];
+  S.depthCfg.manualDepthStrokes = [];
+  S.depthCfg._drawingDepth = null;
+  S.depthCfg._editDrag = null;
+  S.depthCfg._lastStands = [];
+  S.depthCfg._manualStartUnix = null;
+  S.depthCfg._computedBottom = null;
+  document.getElementById('lbl-ref-a').textContent = 'TOP time: —';
+  document.getElementById('lbl-ref-b').textContent = 'BOTTOM time: —';
+
+  refreshDepthModel();
+
+  document.getElementById('dz-dmp').classList.add('ok');
+  document.getElementById('dz-dmp-sub').textContent = fname + '  ·  ' + recs.length.toLocaleString() + ' records';
+  document.getElementById('st-file').textContent = fname;
+  document.getElementById('st-recs').textContent = recs.length.toLocaleString();
+  document.getElementById('empty').style.display = 'none';
+  updateManualStandCount();
+}
+
+// ══════════════════════════════════════════════════════════════
+// SIMPLE DEPTH BUILDER — 4 STEP ALGORITHM
+// ══════════════════════════════════════════════════════════════
+function stationLenMeters(){
+  const c = S.depthCfg;
+  const L = c.stationLen || 9.5;
+  return (c.stationUnit === 'ft') ? L * 0.3048 : L;
+}
+
+function nearestIndexForUnix(u){
+  const recs = S.recs;
+  if(!recs.length) return 0;
+  let lo = 0, hi = recs.length - 1;
+  while(hi - lo > 1){
+    const mid = (lo + hi) >> 1;
+    if(recs[mid].unix <= u) lo = mid; else hi = mid;
+  }
+  return Math.abs(recs[lo].unix - u) <= Math.abs(recs[hi].unix - u) ? lo : hi;
+}
+
+function unixFromMouseX(mx){
+  if(!S.recs.length || !_c) return null;
+  const xPct = _c.fromX(mx);
+  const t0 = S.recs[0].unix, t1 = S.recs[S.recs.length - 1].unix;
+  const dur = t1 - t0 || 1;
+  return t0 + (S.view.x0 / 100 + (xPct / 100) * ((S.view.x1 - S.view.x0) / 100)) * dur;
+}
+
+/** Linear interpolation of P_kPa at a unix timestamp. */
+function lerpPAtUnix(u){
+  const recs = S.recs;
+  if(!recs.length) return S.pRef;
+  if(u <= recs[0].unix) return recs[0].P_kPa;
+  if(u >= recs[recs.length-1].unix) return recs[recs.length-1].P_kPa;
+  let lo = 0, hi = recs.length - 1;
+  while(hi - lo > 1){
+    const mid = (lo + hi) >> 1;
+    if(recs[mid].unix <= u) lo = mid; else hi = mid;
+  }
+  const a = recs[lo], b = recs[hi];
+  const f = (u - a.unix) / Math.max(1, b.unix - a.unix);
+  return a.P_kPa + f * (b.P_kPa - a.P_kPa);
+}
+
+/** Mean pressure over an inclusive index range. */
+function meanPInRange(recs, i0, i1){
+  if(i1 < i0) return recs[i0].P_kPa;
+  let s = 0, n = 0;
+  for(let i = i0; i <= i1; i++){ s += recs[i].P_kPa; n++; }
+  return n ? s/n : 0;
+}
+
+function depthGuessAtChartUnix(ux){
+  const recs = S.recs;
+  if(!recs.length) return 0;
+  const bi = nearestIndexForUnix(ux);
+  const d = recs[bi].depth;
+  if(typeof d === 'number' && isFinite(d) && d !== 0) return d;
+  const g = S.depthCfg.manualGrad ? S.depthCfg.manualGradKpaM : (S.sg * 9.81);
+  return (recs[bi].P_kPa - S.pRef) / g;
+}
+
+function startMarkRef(which){
+  if(!S.recs.length){ alert('Load a .dmp file first.'); return; }
+  S.depthCfg.pendingMark = which;
+  const h = document.getElementById('depth-mark-hint');
+  if(h){
+    h.style.display = 'block';
+    h.textContent = which === 'a'
+      ? '→ Click on chart: time when tool was at TOP depth'
+      : '→ Click on chart: time when tool was at BOTTOM depth';
+  }
+}
+
+function startAddStand(mode){
+  if(!S.recs.length){ alert('Load a .dmp file first.'); return; }
+  S.depthCfg._manualStartUnix = null;
+  S.depthCfg.lastAddMode = mode;   // remember for SHIFT+click batch mode
+  if(mode === 'manual'){
+    S.depthCfg.pendingMark = 'manual-start';
+    const h = document.getElementById('stand-edit-hint');
+    if(h){
+      h.style.display = 'block';
+      h.style.color = '#7c3aed';
+      h.textContent = '→ MANUAL armed. Click START (repeat: ⇧SHIFT+click).';
+    }
+  } else {
+    S.depthCfg.pendingMark = 'add-auto';
+    const h = document.getElementById('stand-edit-hint');
+    if(h){
+      h.style.display = 'block';
+      h.style.color = 'var(--c-ccl)';
+      h.textContent = '→ AUTO armed (width=' +
+                      (document.getElementById('inp-add-width').value || 15) + 's). Click at center. Repeat: ⇧SHIFT+click.';
+    }
+  }
+}
+function startDelStand(){
+  if(!S.recs.length){ alert('Load a .dmp file first.'); return; }
+  S.depthCfg.pendingMark = 'del-stand';
+  const h = document.getElementById('stand-edit-hint');
+  if(h){
+    h.style.display = 'block';
+    h.style.color = 'var(--c-temp)';
+    h.textContent = '→ Click on a stand band to remove it';
+  }
+}
+function clearManualStands(){
+  S.depthCfg.addedStands = [];
+  S.depthCfg.removedStands = [];
+  S.depthCfg._manualStartUnix = null;
+  updateManualStandCount();
+  refreshDepthModel();
+}
+function updateManualStandCount(){
+  const el = document.getElementById('manual-stand-count');
+  if(!el) return;
+  const added = S.depthCfg.addedStands || [];
+  const a_auto = added.filter(s => s.src === 'auto-add').length;
+  const a_man  = added.filter(s => s.src === 'manual').length;
+  const r = (S.depthCfg.removedStands || []).length;
+  el.textContent = `Added: ${a_auto} auto + ${a_man} manual · Removed: ${r}`;
+}
+
+function applyComputedBottom(){
+  const cb = S.depthCfg._computedBottom;
+  const side = S.depthCfg._computedSide;  // 'TOP' or 'BOTTOM'
+  if(cb === null || cb === undefined || !isFinite(cb) || !side){
+    alert('Run REFRESH DEPTH first to compute the value.');
+    return;
+  }
+  // Write to whichever marker corresponds to the later time (that's what we computed)
+  if(side === 'TOP'){
+    document.getElementById('inp-ref-a-m').value = String(Math.round(cb * 1000) / 1000);
+    S.depthCfg.refA.m = cb;
+  } else {
+    document.getElementById('inp-ref-b-m').value = String(Math.round(cb * 1000) / 1000);
+    S.depthCfg.refB.m = cb;
+  }
+  refreshDepthModel();
+}
+
+// ── Save / Load project ────────────────────────────────────────
+function saveProject(){
+  if(!S.recs.length){ alert('Load a .dmp file first — nothing to save yet.'); return; }
+  readCfgFromForm();
+  const c = S.depthCfg;
+  const proj = {
+    _format: 'pressure-depth-simple-project',
+    _version: 1,
+    savedAt: new Date().toISOString(),
+    fname: S.fname,
+    sgKey: document.getElementById('sel-depth-sg').value,
+    depthCfg: {
+      stationLen: c.stationLen,
+      stationUnit: c.stationUnit,
+      refA: { unix: c.refA.unix, m: c.refA.m },
+      refB: { unix: c.refB.unix, m: c.refB.m },
+      manualGrad: c.manualGrad,
+      manualGradKpaM: c.manualGradKpaM,
+      weightMode: c.weightMode,
+      signedDepth: c.signedDepth,
+      minStandSec: c.minStandSec,
+      cclThreshMul: c.cclThreshMul,
+      dpdtThreshFrac: c.dpdtThreshFrac,
+      addedStands: (c.addedStands || []).map(s => ({ t0: s.t0, t1: s.t1, src: s.src || 'manual' })),
+      removedStands: (c.removedStands || []).map(s => ({ t0: s.t0, t1: s.t1 })),
+      manualDepthStrokes: (c.manualDepthStrokes || []).map(s => ({ points: s.points })),
+      lastAddMode: c.lastAddMode,
+    },
+  };
+  const json = JSON.stringify(proj, null, 2);
+  const base = (S.fname || 'project').replace(/\.(dmp|mcs32ja|mcs32j)$/i, '');
+  dl(json, base + '.pdproj.json', 'application/json');
+  const ph = document.getElementById('proj-hint');
+  if(ph) ph.textContent = '✓ Saved at ' + new Date().toTimeString().slice(0,8);
+}
+
+function handleProjectLoad(input){
+  const f = input && input.files && input.files[0];
+  if(f) loadProjectFile(f);
+  if(input) input.value = '';
+}
+
+function loadProjectFile(file){
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = e=>{
+    try{
+      const proj = JSON.parse(e.target.result);
+      if(proj._format !== 'pressure-depth-simple-project'){
+        alert('Not a valid Pressure-Depth Simple project file.'); return;
+      }
+      // Warn if a different DMP is loaded
+      if(S.recs.length && proj.fname && proj.fname !== S.fname){
+        if(!confirm(`Project was saved for "${proj.fname}".\nCurrently loaded: "${S.fname}".\nTOP/BOTTOM times may not match. Apply anyway?`)) return;
+      }
+      const c = proj.depthCfg || {};
+      Object.assign(S.depthCfg, {
+        stationLen: c.stationLen ?? 9.5,
+        stationUnit: c.stationUnit || 'm',
+        refA: c.refA || { unix: null, m: 0 },
+        refB: c.refB || { unix: null, m: 0 },
+        manualGrad: !!c.manualGrad,
+        manualGradKpaM: c.manualGradKpaM || 10.791,
+        weightMode: c.weightMode || 'auto',
+        signedDepth: !!c.signedDepth,
+        minStandSec: c.minStandSec ?? 8,
+        cclThreshMul: c.cclThreshMul ?? 2.5,
+        dpdtThreshFrac: c.dpdtThreshFrac ?? 0.3,
+        addedStands: Array.isArray(c.addedStands) ? c.addedStands.map(s => ({ ...s })) : [],
+        removedStands: Array.isArray(c.removedStands) ? c.removedStands.map(s => ({ ...s })) : [],
+        manualDepthStrokes: Array.isArray(c.manualDepthStrokes) ? c.manualDepthStrokes.map(s => ({ points: s.points.map(p => ({...p})) })) : [],
+        lastAddMode: c.lastAddMode || null,
+        pendingMark: null,
+        _manualStartUnix: null,
+      });
+      // Push values into form
+      const sv = (id, val) => { const e=document.getElementById(id); if(e) e.value = val; };
+      sv('inp-station-len', S.depthCfg.stationLen);
+      sv('sel-station-unit', S.depthCfg.stationUnit);
+      sv('inp-ref-a-m', S.depthCfg.refA.m);
+      sv('inp-ref-b-m', S.depthCfg.refB.m);
+      sv('inp-min-stand', S.depthCfg.minStandSec);
+      sv('inp-ccl-mul', S.depthCfg.cclThreshMul);
+      sv('inp-dp-frac', S.depthCfg.dpdtThreshFrac);
+      sv('inp-man-grad', S.depthCfg.manualGradKpaM);
+      if(proj.sgKey) sv('sel-depth-sg', proj.sgKey);
+      const cb1 = document.getElementById('cb-man-grad'); if(cb1) cb1.checked = !!S.depthCfg.manualGrad;
+      const cb2 = document.getElementById('cb-signed-depth'); if(cb2) cb2.checked = !!S.depthCfg.signedDepth;
+      const wm = document.querySelector(`input[name="wmode"][value="${S.depthCfg.weightMode}"]`);
+      if(wm) wm.checked = true;
+      // Refresh labels
+      if(S.depthCfg.refA.unix !== null) document.getElementById('lbl-ref-a').textContent = 'TOP time: ' + fmtTs(S.depthCfg.refA.unix);
+      if(S.depthCfg.refB.unix !== null) document.getElementById('lbl-ref-b').textContent = 'BOTTOM time: ' + fmtTs(S.depthCfg.refB.unix);
+      updateManualStandCount();
+      updateDrawDepthCount();
+      updateFluid();
+      const ph = document.getElementById('proj-hint');
+      if(ph) ph.textContent = '✓ Loaded: ' + file.name;
+    } catch(err){
+      alert('Failed to load project: ' + (err && err.message ? err.message : String(err)));
+    }
+  };
+  r.readAsText(file);
+}
+
+function readCfgFromForm(){
+  const c = S.depthCfg;
+  const v = id => { const e = document.getElementById(id); return e ? e.value : null; };
+  c.stationLen = Math.max(0.1, parseFloat(v('inp-station-len')) || 9.5);
+  c.stationUnit = (v('sel-station-unit') === 'ft') ? 'ft' : 'm';
+  c.refA.m = parseFloat(v('inp-ref-a-m')) || 0;
+  c.refB.m = parseFloat(v('inp-ref-b-m')) || 0;
+  c.manualGrad = !!document.getElementById('cb-man-grad').checked;
+  c.manualGradKpaM = Math.max(2, parseFloat(v('inp-man-grad')) || S.sg*9.81);
+  c.minStandSec = Math.max(1, parseFloat(v('inp-min-stand')) || 8);
+  c.cclThreshMul = Math.max(0.1, parseFloat(v('inp-ccl-mul')) || 2.5);
+  c.dpdtThreshFrac = Math.max(0.01, parseFloat(v('inp-dp-frac')) || 0.3);
+  c.signedDepth = !!document.getElementById('cb-signed-depth').checked;
+  const wm = document.querySelector('input[name="wmode"]:checked');
+  c.weightMode = wm ? wm.value : 'auto';
+
+  // N-hint (expected from TOP/BOTTOM span)
+  const nh = document.getElementById('n-hint');
+  if(nh){
+    const lenM = stationLenMeters();
+    if(c.refA.unix !== null && c.refB.unix !== null){
+      const span = Math.abs(c.refA.m - c.refB.m);
+      if(span > lenM){
+        nh.textContent = `Expected N stands ≈ ${Math.round(span/lenM)+1} (|TOP−BOT| ÷ L + 1)`;
+      } else {
+        nh.textContent = 'TOP↔BOTTOM span < station length — check inputs.';
+      }
+    } else {
+      nh.textContent = 'Set TOP and BOTTOM marks';
+    }
+  }
+}
+
+/**
+ * STEP 1 + 2 (fused): find STAND windows by detecting BOTH
+ *   FLAT = local pressure variation < flatTol  (sliding window)
+ *   QUIET = no nearby CCL spike (|CCL| > cclThresh in ±W)
+ *
+ * Stand = FLAT AND QUIET. Each CCL spike forcibly splits an otherwise-flat
+ * window into separate stands → fixes "long false stand" merging.
+ *
+ * flatTol auto-adapts: max(2 × median window variation,  expectedDpPerStand × frac).
+ * The expectedDpPerStand term makes it work in gas (tiny dP) AND water (big dP).
+ */
+function findStands(recs, lo, hi, cfg, pA, pB, N_hint){
+  const n = hi - lo + 1;
+  if(n < 8) return { stands: [], _dpTol: 0, _cclMed: 0, _cclThresh: 0, _cclMad: 0 };
+
+  // ── CCL spike detection by MAD (Median Absolute Deviation), GLOBAL stats ──
+  // Critical: compute median + MAD over the ENTIRE record, not just [lo, hi].
+  //
+  // Why: if [lo, hi] contains a long stationary period (tool parked at BOTTOM for hours),
+  // the LOCAL CCL distribution is dominated by quiet → MAD becomes tiny (e.g. 50 u) →
+  // threshold = 50 × 2.5 = 125 → normal CCL drift of 200 u registers as "spike" →
+  // long real stand gets falsely split into many short fragments (staircase artefact).
+  //
+  // Global MAD includes both quiet zones AND collar-train spikes (from descent/ascent),
+  // giving a representative noise floor. Real spikes still trigger; quiet drift doesn't.
+  const cclAbsAll = [];
+  for(let i = 0; i < recs.length; i++){
+    const c = recs[i].ccl;
+    if(c !== null && isFinite(c)) cclAbsAll.push(Math.abs(c));
+  }
+  const cclSortedAll = cclAbsAll.slice().sort((a,b)=>a-b);
+  const cclMed = cclSortedAll.length >= 5
+    ? cclSortedAll[Math.floor(cclSortedAll.length * 0.5)]
+    : 0;
+  const devsAll = cclAbsAll.map(v => Math.abs(v - cclMed)).sort((a,b)=>a-b);
+  const cclMadRaw = devsAll.length >= 5
+    ? devsAll[Math.floor(devsAll.length * 0.5)]
+    : 100;
+  // Absolute floor: never go below 50 u (prevents extreme sensitivity on a record that is
+  // mostly stationary — MAD would otherwise be near zero).
+  const cclMad = Math.max(50, cclMadRaw);
+  const cclThresh = cclMad * cfg.cclThreshMul;  // deviation threshold (not absolute value)
+
+  // Mark spikes by deviation from median, expand ±W (collar crossings span samples).
+  const W = 3;
+  const isSpike = new Uint8Array(n);
+  for(let i = 0; i < n; i++){
+    const c = recs[lo + i].ccl;
+    if(c !== null && isFinite(c) && Math.abs(Math.abs(c) - cclMed) > cclThresh){
+      for(let k = -W; k <= W; k++){
+        const j = i + k;
+        if(j >= 0 && j < n) isSpike[j] = 1;
+      }
+    }
+  }
+
+  // ── Pressure flatness tolerance ──
+  // Per-stand expected ΔP from marks + station count, capped by median window variation.
+  const totalP = Math.abs(pB - pA);
+  const expectedDpPerStand = N_hint > 1 ? totalP / (N_hint - 1) : totalP;
+
+  // Median window variation (typical sensor noise in a "flat" segment)
+  const winLen = 5;
+  const winVars = [];
+  for(let i = 0; i + winLen - 1 < n; i += 2){
+    let mn = Infinity, mx = -Infinity;
+    for(let k = 0; k < winLen; k++){
+      const p = recs[lo + i + k].P_kPa;
+      if(p < mn) mn = p; if(p > mx) mx = p;
+    }
+    winVars.push(mx - mn);
+  }
+  winVars.sort((a,b)=>a-b);
+  const medVar = winVars.length ? winVars[Math.floor(winVars.length * 0.30)] : 1;
+  const flatTol = Math.max(medVar * 2.5, expectedDpPerStand * cfg.dpdtThreshFrac);
+
+  // Mark each sample as FLAT if it sits inside any flat window
+  const isFlat = new Uint8Array(n);
+  for(let i = 0; i + winLen - 1 < n; i++){
+    let mn = Infinity, mx = -Infinity;
+    for(let k = 0; k < winLen; k++){
+      const p = recs[lo + i + k].P_kPa;
+      if(p < mn) mn = p; if(p > mx) mx = p;
+    }
+    if((mx - mn) < flatTol){
+      for(let k = 0; k < winLen; k++) isFlat[i + k] = 1;
+    }
+  }
+
+  // STOP = FLAT AND NOT SPIKE
+  // Mode overrides:
+  //   pres → ignore CCL, STOP = FLAT
+  //   ccl  → ignore pressure, STOP = NOT SPIKE
+  const isStop = new Uint8Array(n);
+  if(cfg.weightMode === 'pres'){
+    for(let i = 0; i < n; i++) isStop[i] = isFlat[i];
+  } else if(cfg.weightMode === 'ccl'){
+    for(let i = 0; i < n; i++) isStop[i] = isSpike[i] ? 0 : 1;
+  } else {
+    for(let i = 0; i < n; i++) isStop[i] = (isFlat[i] && !isSpike[i]) ? 1 : 0;
+  }
+
+  // Group contiguous STOP runs
+  const minMs = cfg.minStandSec * 1000;
+  const stands = [];
+  let i = 0;
+  while(i < n){
+    if(!isStop[i]){ i++; continue; }
+    let j = i;
+    while(j < n && isStop[j]) j++;
+    const i0 = lo + i, i1 = lo + j - 1;
+    if(i1 > i0 && (recs[i1].unix - recs[i0].unix) >= minMs){
+      stands.push({ i0, i1, t0: recs[i0].unix, t1: recs[i1].unix, src: 'auto' });
+    }
+    i = j;
+  }
+  return { stands, _dpTol: flatTol, _cclMed: cclMed, _cclMad: cclMad, _cclThresh: cclThresh };
+}
+
+/** Apply manual removals + additions. Manual stands are PRESERVED EXACTLY (no merging/splitting). */
+function applyManualEdits(autoStands, removed, added, recs){
+  // Drop auto-stands that overlap any removed window
+  let filtered = autoStands.filter(s =>
+    !removed.some(r => s.t0 < r.t1 && s.t1 > r.t0)
+  );
+  // Add manual stands as-is (preserve exact t0/t1 the user clicked)
+  for(const a of added){
+    const t0 = Math.min(a.t0, a.t1);
+    const t1 = Math.max(a.t0, a.t1);
+    if(t1 - t0 < 100) continue;  // skip degenerate
+    const i0 = nearestIndexForUnix(t0);
+    const i1 = nearestIndexForUnix(t1);
+    filtered.push({
+      i0: Math.min(i0, i1), i1: Math.max(i0, i1),
+      t0, t1, src: a.src || 'manual'
+    });
+  }
+  filtered.sort((a, b) => a.t0 - b.t0);
+  // Resolve overlap: a manual stand sitting inside an auto wins (replace).
+  // Two manual overlapping: keep both (user's choice).
+  const out = [];
+  for(const s of filtered){
+    const prev = out[out.length - 1];
+    if(prev && s.t0 < prev.t1){
+      const sIsManual = (s.src === 'manual' || s.src === 'auto-add');
+      const pIsManual = (prev.src === 'manual' || prev.src === 'auto-add');
+      if(sIsManual && !pIsManual){
+        // replace auto with manual
+        out[out.length - 1] = s;
+        continue;
+      }
+      if(!sIsManual && pIsManual){
+        // skip auto that overlaps manual
+        continue;
+      }
+      // both same kind: merge
+      out[out.length - 1] = {
+        i0: Math.min(prev.i0, s.i0),
+        i1: Math.max(prev.i1, s.i1),
+        t0: Math.min(prev.t0, s.t0),
+        t1: Math.max(prev.t1, s.t1),
+        src: prev.src
+      };
+    } else {
+      out.push({ ...s });
+    }
+  }
+  return out;
+}
+
+/**
+ * Assign depths to all records.
+ *
+ * Stand depths:
+ *   equal mode  (default): standD[k] = m0 + k × (m1 − m0) / (N − 1)
+ *   signed mode (overlap): standD[k] = standD[k−1] ± stationLen, sign from sign(meanP[k] − meanP[k−1])
+ *                          (handles down→up→down trips where pressure shows direction reversals)
+ *
+ * Between stands: linear interpolation in time.
+ * Outside [t0u, t1u]: hydrostatic from current pressure, offset to match m0/m1 at the borders.
+ */
+function assignDepths(recs, stands, m0, m1, lo, hi, t0u, t1u, cfg, pA, pB){
+  const N = stands.length;
+
+  // Build per-stand depth
+  const standD = new Array(N);
+  let computedBottom = m1;
+  if(N === 0){
+    // no stands → linear-in-time
+    for(let i = lo; i <= hi; i++){
+      const f = (recs[i].unix - t0u) / Math.max(1, t1u - t0u);
+      recs[i].depth = m0 + f * (m1 - m0);
+    }
+  } else if(cfg.signedDepth){
+    // Pressure-direction mode — handles overlap (down→up→down trips).
+    const lenM = stationLenMeters();
+    const standP = stands.map(s => meanPInRange(recs, s.i0, s.i1));
+    const defaultSign = pA > pB ? -1 : 1;
+    const expectedDpPerStand = N > 1 ? Math.abs(pB - pA) / (N - 1) : 100;
+    const minDpToFlip = Math.max(2, expectedDpPerStand * 0.20);
+    standD[0] = m0;
+    for(let k = 1; k < N; k++){
+      const dp = standP[k] - standP[k - 1];
+      let sign;
+      if(Math.abs(dp) < minDpToFlip) sign = defaultSign;
+      else sign = dp > 0 ? 1 : -1;
+      standD[k] = standD[k - 1] + sign * lenM;
+    }
+    // ENDPOINT SCALING: rescale standD so the last stand matches m1 exactly.
+    // Without this, signed mode often drifts (267 steps × 2.5m = 667.5m vs user's
+    // intended |m1−m0| = 627.5m → final standD off by 40m → distorts lookup table
+    // and disconnects extrapolation from user's TOP/BOT inputs).
+    // Scaling preserves the relative overlap shape (proportional to original deltas)
+    // while pinning endpoints to user's marker values.
+    if(N >= 2){
+      const finalD = standD[N - 1];
+      const expectedDelta = m1 - m0;
+      const actualDelta = finalD - m0;
+      if(Math.abs(actualDelta) > 0.01 && Math.sign(actualDelta) === Math.sign(expectedDelta)){
+        const scale = expectedDelta / actualDelta;
+        for(let k = 1; k < N; k++){
+          standD[k] = m0 + (standD[k] - m0) * scale;
+        }
+      }
+    }
+    computedBottom = standD[N - 1];
+  } else {
+    // Equal-distribution (default)
+    if(N === 1){ standD[0] = (m0 + m1) / 2; }
+    else { for(let k = 0; k < N; k++) standD[k] = m0 + k * (m1 - m0) / (N - 1); }
+    // Computed bottom from station length (independent of m1, for the hint)
+    const lenM = stationLenMeters();
+    const dirSign = pA > pB ? -1 : 1;
+    computedBottom = m0 + dirSign * (N - 1) * lenM;
+  }
+
+  // Per-record stand index
+  const siArr = new Int32Array(recs.length).fill(-1);
+  for(let k = 0; k < N; k++){
+    for(let i = stands[k].i0; i <= stands[k].i1 && i < recs.length; i++) siArr[i] = k;
+  }
+
+  // INSIDE [t0u, t1u]: flat on stands, linear-in-time between
+  if(N > 0){
+    for(let i = lo; i <= hi; i++){
+      if(siArr[i] >= 0){
+        recs[i].depth = standD[siArr[i]];
+      } else {
+        let pk = -1, nk = -1;
+        for(let k = N - 1; k >= 0; k--) if(stands[k].i1 < i){ pk = k; break; }
+        for(let k = 0; k < N; k++) if(stands[k].i0 > i){ nk = k; break; }
+        if(pk < 0 && nk < 0){ recs[i].depth = m0; }
+        else if(pk < 0){
+          const tn = recs[stands[nk].i0].unix;
+          const f = (recs[i].unix - t0u) / Math.max(1, tn - t0u);
+          recs[i].depth = m0 + f * (standD[nk] - m0);
+        } else if(nk < 0){
+          const tp = recs[stands[pk].i1].unix;
+          const f = (recs[i].unix - tp) / Math.max(1, t1u - tp);
+          // Tail anchor: use m1 (user's bottom) or last stand depth in signed mode
+          const tail = cfg.signedDepth ? standD[N - 1] : m1;
+          recs[i].depth = standD[pk] + f * (tail - standD[pk]);
+        } else {
+          const tp = recs[stands[pk].i1].unix;
+          const tn = recs[stands[nk].i0].unix;
+          const f = (recs[i].unix - tp) / Math.max(1, tn - tp);
+          recs[i].depth = standD[pk] + f * (standD[nk] - standD[pk]);
+        }
+      }
+    }
+  }
+
+  // OUTSIDE [t0u, t1u]: extrapolate using a PRESSURE→DEPTH LOOKUP TABLE built from stands.
+  //
+  // User's principle: if a stand inside the survey has a specific pressure, then any
+  // record OUTSIDE the survey with the same pressure must have the same depth as that stand.
+  //
+  // Implementation:
+  //   1. Take every stand's (mean P, assigned D).
+  //   2. Sort by pressure.
+  //   3. For any outside record at pressure P:
+  //        a) If P is inside the table range → piecewise-linear interpolation between the two
+  //           bracketing stand pairs (exact at every stand point — no boundary discontinuity).
+  //        b) If P is below the lowest stand pressure → extrapolate using the FIRST two stands.
+  //        c) If P is above the highest stand pressure → extrapolate using the LAST two stands.
+  //
+  // This is strictly better than a single linear regression:
+  //   - Passes through every stand pair (no fitting error at boundaries → continuous depth).
+  //   - Reproduces non-linear pressure-depth curves (e.g. gas cap above a water column).
+  //   - The user's intuition is preserved: identical pressure ⇒ identical depth.
+  //
+  // Fallback chain when stands are sparse:
+  //   N ≥ 2 stands  → lookup (preferred)
+  //   N == 1        → anchor m0 + (P − pAleft) / SG-gradient
+  //   N == 0        → endpoint or SG (pre-lookup behaviour)
+
+  const g_SG = cfg.manualGrad ? cfg.manualGradKpaM : (S.sg * 9.81);
+  const pAleft  = lerpPAtUnix(t0u);
+  const pAright = lerpPAtUnix(t1u);
+  const dmAB = m1 - m0;
+  const dpAB = pAright - pAleft;
+
+  // ── Build sorted P→D table from stands + marker anchors ──
+  //
+  // The lookup uses the actual standD values (whatever mode produced them — equal or signed).
+  // This satisfies the user's principle: «pressure-depth uppass = pressure-depth downpass».
+  // For each stand, its real (pressure, depth) pair becomes a lookup entry. Outside-records
+  // with matching pressure get the same depth as the corresponding inside stand.
+  //
+  // Signed mode endpoint scaling (above) ensures standD spans m0 → m1 exactly, so the lookup
+  // table edges align with the user's marker depths.
+  //
+  // Marker anchors (pAleft, m0) and (pAright, m1) are added explicitly to guarantee that the
+  // lookup at marker pressures returns marker depths, even if the first/last detected stand
+  // doesn't sit exactly at the boundary.
+  let pdTable = null;
+  if(!cfg.manualGrad){
+    const rawPairs = [];
+    if(N > 0){
+      const standP_arr = stands.map(s => meanPInRange(recs, s.i0, s.i1));
+      for(let k = 0; k < N; k++){
+        if(isFinite(standP_arr[k]) && isFinite(standD[k])){
+          rawPairs.push({ p: standP_arr[k], d: standD[k] });
+        }
+      }
+    }
+    if(isFinite(pAleft) && isFinite(m0))  rawPairs.push({ p: pAleft,  d: m0 });
+    if(isFinite(pAright) && isFinite(m1)) rawPairs.push({ p: pAright, d: m1 });
+    if(rawPairs.length >= 2){
+      rawPairs.sort((a, b) => a.p - b.p);
+      // Collapse near-duplicate pressures by averaging their depths.
+      const collapsed = [rawPairs[0]];
+      for(let k = 1; k < rawPairs.length; k++){
+        const prev = collapsed[collapsed.length - 1];
+        if(Math.abs(rawPairs[k].p - prev.p) < 0.01){
+          prev.d = (prev.d + rawPairs[k].d) / 2;
+        } else {
+          collapsed.push(rawPairs[k]);
+        }
+      }
+      if(collapsed.length >= 2) pdTable = collapsed;
+    }
+  }
+
+  // Helper: piecewise-linear lookup with linear extrapolation at both ends
+  function depthFromP(P){
+    const n = pdTable.length;
+    // Below table → extrapolate from first two
+    if(P <= pdTable[0].p){
+      const a = pdTable[0], b = pdTable[1];
+      const slope = (b.d - a.d) / (b.p - a.p);
+      return a.d + slope * (P - a.p);
+    }
+    // Above table → extrapolate from last two
+    if(P >= pdTable[n - 1].p){
+      const a = pdTable[n - 2], b = pdTable[n - 1];
+      const slope = (b.d - a.d) / (b.p - a.p);
+      return b.d + slope * (P - b.p);
+    }
+    // Inside → binary search bracketing pair
+    let lo2 = 0, hi2 = n - 1;
+    while(hi2 - lo2 > 1){
+      const mid = (lo2 + hi2) >> 1;
+      if(pdTable[mid].p <= P) lo2 = mid; else hi2 = mid;
+    }
+    const a = pdTable[lo2], b = pdTable[hi2];
+    const dp = b.p - a.p;
+    if(dp < 1e-6) return (a.d + b.d) / 2;
+    const f = (P - a.p) / dp;
+    return a.d + f * (b.d - a.d);
+  }
+
+  // ── Determine extrapolation source for debug display ──
+  let gEff, gEffSrc;
+  if(pdTable){
+    const first = pdTable[0], last = pdTable[pdTable.length - 1];
+    gEff = (last.p - first.p) / Math.max(0.001, (last.d - first.d));
+    const dMin = Math.min(first.d, last.d);
+    const dMax = Math.max(first.d, last.d);
+    gEffSrc = `lookup table: ${pdTable.length} pts · P=[${Math.round(first.p)}…${Math.round(last.p)}] · D=[${dMin.toFixed(1)}…${dMax.toFixed(1)}]`;
+  } else if(cfg.manualGrad){
+    gEff = g_SG; gEffSrc = 'manual dP/dz';
+  } else if(Math.abs(dmAB) > 0.5 && Math.abs(dpAB) > 1){
+    const g_derived = dpAB / dmAB;
+    gEff = (g_derived >= 0.5 && g_derived <= 200) ? g_derived : g_SG;
+    gEffSrc = (g_derived >= 0.5 && g_derived <= 200) ? 'endpoint TOP/BOT' : 'SG (endpoint abnormal)';
+  } else {
+    gEff = g_SG; gEffSrc = 'SG (no stands)';
+  }
+
+  // ── Apply extrapolation outside [t0u, t1u] ──
+  // Two modes:
+  //   (A) Linear time (default): smooth uniform interpolation
+  //        Pre-survey:  depth(t) = 0  → m0  over [recs[0].unix, t0u]
+  //        Post-survey: depth(t) = m1 → 0   over [t1u, recs[N-1].unix]
+  //        Assumes typical workflow: tool at surface at file start, returns to surface at end.
+  //        Ignores pressure shape — produces a clean linear descent/ascent regardless of
+  //        pressure plateaus or rapid changes (e.g. when tool runs through gas-filled tubing).
+  // Outside TOP-BOT: pressure-based lookup mirrors uppass P→D relationship.
+  // Same pressure = same depth, faithfully following gradient changes (gas, water, overlaps).
+  const rightAnchor = (N > 0 && cfg.signedDepth) ? standD[N - 1] : m1;
+
+  for(let i = 0; i < recs.length; i++){
+    if(recs[i].unix >= t0u && recs[i].unix <= t1u) continue;
+    const P = recs[i].P_kPa;
+    if(pdTable){
+      recs[i].depth = depthFromP(P);
+    } else if(recs[i].unix < t0u){
+      recs[i].depth = m0 + (P - pAleft) / gEff;
+    } else {
+      recs[i].depth = rightAnchor + (P - pAright) / gEff;
+    }
+  }
+
+  // ── MONOTONIC ENFORCEMENT for outside-survey records ──
+  // Pressure fluctuations (noise, pauses) can cause depth zig-zags during
+  // an otherwise-monotonic trip. Sweep through time and forbid depth from
+  // moving the wrong way — dominant direction detected from first vs last sample.
+
+  // Pre-survey monotonic
+  let i_pre_first = -1, i_pre_last = -1;
+  for(let i = 0; i < recs.length; i++){
+    if(recs[i].unix >= t0u) break;
+    if(i_pre_first < 0) i_pre_first = i;
+    i_pre_last = i;
+  }
+  if(i_pre_first >= 0 && i_pre_last > i_pre_first){
+    const preDir = recs[i_pre_last].depth > recs[i_pre_first].depth ? 1 : -1;
+    if(preDir > 0){
+      let acc = -Infinity;
+      for(let i = i_pre_first; i <= i_pre_last; i++){
+        if(recs[i].depth > acc) acc = recs[i].depth;
+        else recs[i].depth = acc;
+      }
+    } else {
+      let acc = Infinity;
+      for(let i = i_pre_first; i <= i_pre_last; i++){
+        if(recs[i].depth < acc) acc = recs[i].depth;
+        else recs[i].depth = acc;
+      }
+    }
+  }
+
+  // Post-survey monotonic
+  let i_post_first = -1, i_post_last = -1;
+  for(let i = 0; i < recs.length; i++){
+    if(recs[i].unix <= t1u) continue;
+    if(i_post_first < 0) i_post_first = i;
+    i_post_last = i;
+  }
+  if(i_post_first >= 0 && i_post_last > i_post_first){
+    const postDir = recs[i_post_last].depth > recs[i_post_first].depth ? 1 : -1;
+    if(postDir > 0){
+      let acc = -Infinity;
+      for(let i = i_post_first; i <= i_post_last; i++){
+        if(recs[i].depth > acc) acc = recs[i].depth;
+        else recs[i].depth = acc;
+      }
+    } else {
+      let acc = Infinity;
+      for(let i = i_post_first; i <= i_post_last; i++){
+        if(recs[i].depth < acc) acc = recs[i].depth;
+        else recs[i].depth = acc;
+      }
+    }
+  }
+
+  return { computedBottom, gEff, gEffSrc };
+}
+
+// ══════════════════════════════════════════════════════════════
+// DRAW DEPTH — manual depth override by freehand strokes
+// ══════════════════════════════════════════════════════════════
+function applyManualDepthStrokes(){
+  const strokes = S.depthCfg.manualDepthStrokes;
+  if(!strokes.length) return;
+  for(const stroke of strokes){
+    const pts = stroke.points;
+    if(!pts || pts.length < 2) continue;
+    const t0 = pts[0].unix, t1 = pts[pts.length - 1].unix;
+    for(const r of S.recs){
+      if(r.unix < t0 || r.unix > t1) continue;
+      // Binary search for bracketing control points
+      let lo = 0, hi = pts.length - 1;
+      while(hi - lo > 1){
+        const mid = (lo + hi) >> 1;
+        if(pts[mid].unix <= r.unix) lo = mid; else hi = mid;
+      }
+      const a = pts[lo], b = pts[hi];
+      const f = (r.unix - a.unix) / Math.max(1, b.unix - a.unix);
+      r.depth = a.depth + f * (b.depth - a.depth);
+    }
+  }
+}
+
+function updateDrawDepthCount(){
+  const el = document.getElementById('draw-depth-count');
+  if(el) el.textContent = 'Strokes: ' + (S.depthCfg.manualDepthStrokes || []).length;
+}
+
+function toggleDrawDepth(){
+  if(!S.recs.length){ alert('Load a .dmp file first.'); return; }
+  const c = S.depthCfg;
+  c.depthDrawActive = !c.depthDrawActive;
+  const btn = document.getElementById('btn-draw-depth');
+  const hint = document.getElementById('draw-depth-hint');
+  if(c.depthDrawActive){
+    if(btn){ btn.style.background='rgba(180,83,9,.15)'; btn.textContent='✏ DRAWING…'; }
+    if(hint){ hint.style.display='block'; hint.textContent='→ Drag across chart to draw a depth segment. Release to commit.'; }
+    if(canvas) canvas.style.cursor = 'crosshair';
+  } else {
+    if(btn){ btn.style.background=''; btn.textContent='✏ DRAW'; }
+    if(hint){ hint.style.display='none'; }
+    if(canvas) canvas.style.cursor = 'crosshair';
+  }
+}
+
+function undoLastStroke(){
+  if(!S.depthCfg.manualDepthStrokes.length) return;
+  S.depthCfg.manualDepthStrokes.pop();
+  updateDrawDepthCount();
+  refreshDepthModel();
+}
+
+function clearDepthStrokes(){
+  S.depthCfg.manualDepthStrokes = [];
+  S.depthCfg._drawingDepth = null;
+  updateDrawDepthCount();
+  refreshDepthModel();
+}
+
+function commitDrawingStroke(){
+  const pts = S.depthCfg._drawingDepth;
+  S.depthCfg._drawingDepth = null;
+  if(!pts || pts.length < 2){ redraw(); return; }
+  const sorted = [pts[0], pts[1]].sort((a,b) => a.unix - b.unix);
+  S.depthCfg.manualDepthStrokes.push({points: sorted});
+  updateDrawDepthCount();
+  refreshDepthModel();
+}
+
+// ══════════════════════════════════════════════════════════════
+// GRADIENT COPY
+// ══════════════════════════════════════════════════════════════
+function snapDepth(d){
+  const snap = parseFloat((document.getElementById('inp-draw-snap')||{}).value);
+  if(!snap || snap <= 0) return d;
+  return Math.round(d / snap) * snap;
+}
+
+function toggleEditEndpoints(){
+  if(!S.recs.length){ alert('Load a .dmp file first.'); return; }
+  S.depthCfg.editEpActive = !S.depthCfg.editEpActive;
+  // Turn off draw mode if switching to edit
+  if(S.depthCfg.editEpActive && S.depthCfg.depthDrawActive){
+    S.depthCfg.depthDrawActive = false;
+    const b = document.getElementById('btn-draw-depth');
+    if(b){ b.style.background=''; b.textContent='✏ DRAW'; }
+    document.getElementById('draw-depth-hint').style.display='none';
+  }
+  const btn = document.getElementById('btn-edit-eps');
+  const hint = document.getElementById('draw-depth-hint');
+  if(S.depthCfg.editEpActive){
+    if(btn){ btn.style.background='rgba(3,105,161,.15)'; btn.textContent='✎ EDITING…'; }
+    if(hint){ hint.style.display='block'; hint.style.color='#0369a1';
+              hint.textContent='→ Click & drag an endpoint circle to reposition it.'; }
+    if(canvas) canvas.style.cursor = 'default';
+  } else {
+    if(btn){ btn.style.background=''; btn.textContent='✎ EDIT'; }
+    if(hint){ hint.style.display='none'; }
+    if(canvas) canvas.style.cursor = 'crosshair';
+  }
+  redraw();
+}
+
+function setDbg(html, label){
+  const el = document.getElementById('depth-debug');
+  if(el){ el.style.display = 'block'; el.innerHTML = html; }
+  const sl = document.getElementById('sl-depth');
+  if(sl && label) sl.textContent = label;
+}
+
+function refreshDepthModel(){
+  readCfgFromForm();
+  if(!S.recs.length){ updateStatsAfterDepth(); redraw(); return; }
+  const cfg = S.depthCfg;
+  const recs = S.recs;
+
+  S.grad = (cfg.manualGrad ? cfg.manualGradKpaM : (S.sg * 9.81)) / 100;
+  document.getElementById('st-grad').textContent = S.grad.toFixed(4) + ' bar/m';
+
+  const A = cfg.refA, B = cfg.refB;
+  if(A.unix === null || B.unix === null || A.unix === B.unix){
+    setDbg('<b style="color:#fb923c">Set both A and B marks</b><br>' +
+           (A.unix === null ? '· A not set ' : '· A OK ') +
+           (B.unix === null ? '· B not set' : '· B OK') +
+           '<br>Click "Mark A @ chart" then click chart at start of pass; same for B.',
+           'Depth · need A/B');
+    // Until both set, use hydrostatic depth
+    const g = cfg.manualGrad ? cfg.manualGradKpaM : (S.sg * 9.81);
+    for(const r of recs) r.depth = (r.P_kPa - S.pRef) / g;
+    cfg._lastStands = [];
+    updateStatsAfterDepth(); redraw(); return;
+  }
+
+  const t0u = Math.min(A.unix, B.unix);
+  const t1u = Math.max(A.unix, B.unix);
+  const m0  = A.unix <= B.unix ? A.m : B.m;
+  const m1  = A.unix <= B.unix ? B.m : A.m;
+  const lenM = stationLenMeters();
+  const N    = Math.max(2, Math.round(Math.abs(m1 - m0) / lenM) + 1);
+  const lo   = nearestIndexForUnix(t0u);
+  const hi   = nearestIndexForUnix(t1u);
+
+  if(hi <= lo){
+    setDbg('TOP and BOTTOM markers are too close in time.', 'Depth · marks too close');
+    return;
+  }
+
+  // ─── PIPELINE (no auto-tuning to N) ──────────────────────
+  const pA = lerpPAtUnix(t0u);
+  const pB = lerpPAtUnix(t1u);
+  const { stands: autoStands, _dpTol, _cclMed, _cclMad, _cclThresh } = findStands(recs, lo, hi, cfg, pA, pB, N);
+  const nAutoRaw = autoStands.length;
+  const stands = applyManualEdits(autoStands, cfg.removedStands || [], cfg.addedStands || [], recs);
+  const nFinal = stands.length;
+  const { computedBottom, gEff, gEffSrc } = assignDepths(recs, stands, m0, m1, lo, hi, t0u, t1u, cfg, pA, pB);
+  cfg._lastStands = stands;
+  cfg._computedBottom = computedBottom;
+
+  // Stats
+  const cclAbsAll = [];
+  for(let i = lo; i <= hi; i++){
+    const c = recs[i].ccl;
+    if(c !== null && isFinite(c)) cclAbsAll.push(Math.abs(c));
+  }
+  cclAbsAll.sort((a,b)=>a-b);
+  const cclMaxDisp = cclAbsAll.length ? Math.round(cclAbsAll[cclAbsAll.length-1]) : 0;
+  const avgStandS = stands.length
+    ? Math.round(stands.reduce((s,r)=>s+(r.t1-r.t0),0) / stands.length / 1000)
+    : 0;
+  const standFracPct = stands.length
+    ? Math.round(stands.reduce((s,r)=>s+(r.t1-r.t0),0) / (t1u - t0u) * 100)
+    : 0;
+
+  const a_added = (cfg.addedStands||[]).length;
+  const r_removed = (cfg.removedStands||[]).length;
+  const diffN = nFinal - N;
+  const diffTxt = diffN === 0 ? '✓ matches expected'
+                : diffN > 0   ? `<span style="color:#c2410c">+${diffN} more than expected</span>`
+                              : `<span style="color:#c2410c">${diffN} less than expected</span>`;
+
+  // Determine which marker (TOP/BOTTOM) sits at the LATER time → that's what `computedBottom` actually computes.
+  //   POOH (typical): BOTTOM time is earlier, TOP time is later → computed = TOP depth
+  //   RIH:            TOP time is earlier, BOTTOM time is later → computed = BOTTOM depth
+  const aIsLater = A.unix > B.unix;
+  const computedSide = aIsLater ? 'TOP' : 'BOTTOM';
+  const userValAtComputed = aIsLater ? A.m : B.m;
+
+  const cbHint = document.getElementById('computed-bottom-hint');
+  if(cbHint){
+    if(nFinal >= 2){
+      const diff = computedBottom - userValAtComputed;
+      const diffStr = Math.abs(diff) < 0.1 ? `≈ ${computedSide}` : (diff > 0 ? `+${diff.toFixed(1)}m` : `${diff.toFixed(1)}m`);
+      cbHint.innerHTML = `Computed ${computedSide} from N×L: <b>${computedBottom.toFixed(1)}m</b> (Δ from input: ${diffStr})`;
+    } else {
+      cbHint.textContent = '';
+    }
+  }
+  // Stash the side for the Apply button.
+  cfg._computedSide = computedSide;
+
+  // Sanity warning if detector clearly failed
+  let warnLine = '';
+  if(nFinal <= 2 && standFracPct >= 80){
+    warnLine =
+      `<br><span style="background:#ffedd5;border:1px solid #c2410c;color:#9a3412;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px;font-weight:600">` +
+      `⚠ Only 1 "stand" found covering ${standFracPct}% of the interval — detector found no movement!<br>` +
+      `Try: <b>CCL × MAD</b> → 1.5 (or lower) · <b>P-flat × ΔP/stand</b> → 0.15 · verify that expected N = ${N} is realistic.</span>`;
+  }
+
+  // Trip direction label for human readers
+  const tripLbl = aIsLater ? 'POOH (uppass: BOT → TOP)' : 'RIH (downpass: TOP → BOT)';
+  const tTopStr = fmtTs(A.unix), tBotStr = fmtTs(B.unix);
+
+  setDbg(
+    `MODE: <b style="color:#0d9488">simple</b>` +
+    (cfg.signedDepth ? ' <span style="color:#7c3aed">[signed]</span>' : '') +
+    ` · <span style="color:#475569">${tripLbl}</span><br>` +
+    `TOP = ${A.m.toFixed(1)}m @ ${tTopStr}<br>` +
+    `BOT = ${B.m.toFixed(1)}m @ ${tBotStr}<br>` +
+    `Station = ${lenM.toFixed(2)}m · Expected N = ${N} · Found: <b>${nFinal}</b> ${diffTxt}<br>` +
+    `Auto: ${nAutoRaw} · manual: +${a_added} −${r_removed}<br>` +
+    `Avg stand: ${avgStandS}s · ${standFracPct}% stationary time<br>` +
+    `<span style="color:#7c3aed">Computed ${computedSide} = ${computedBottom.toFixed(1)}m (Δ from input = ${(computedBottom-userValAtComputed).toFixed(1)}m)</span><br>` +
+    `<span style="color:#1d4ed8">P-flat tol = ${_dpTol.toFixed(2)} kPa</span> · ` +
+    `<span style="color:#a21caf">CCL med=${Math.round(_cclMed)} MAD=${Math.round(_cclMad)} max=${cclMaxDisp} · spike thr=${Math.round(_cclThresh)}</span><br>` +
+    `<span style="color:#c2410c">Outside TOP-BOT: <b>P→D mirror</b> · grad=${gEff.toFixed(2)} kPa/m (${gEffSrc})</span>` +
+    warnLine,
+    `Depth N=${nFinal}${cfg.signedDepth?' signed':''}`
+  );
+
+  applyManualDepthStrokes();
+  updateStatsAfterDepth();
+  redraw();
+}
+
+function generateDepthFile(){
+  if(!S.recs.length){ alert('No data loaded.'); return; }
+  refreshDepthModel();
+  exportDepth();
+}
+
+function updateStatsAfterDepth(){
+  S.pRef = 101.325;
+  if(!S.recs.length) return;
+  const pArr = S.recs.map(r => r.P_kPa), dArr = S.recs.map(r => r.depth), tArr = S.recs.map(r => r.T_C);
+  const mn = a => Math.min(...a), mx = a => Math.max(...a);
+  document.getElementById('s-nrec').textContent = S.recs.length.toLocaleString();
+  const dur = (S.recs[S.recs.length - 1].unix - S.recs[0].unix) / 1000;
+  const h = Math.floor(dur / 3600), m2 = Math.floor((dur % 3600) / 60), s2 = Math.floor(dur % 60);
+  document.getElementById('s-dur').textContent = `${h}h ${m2}m ${s2}s`;
+  document.getElementById('s-t0').textContent = fmtTs(S.recs[0].unix);
+  document.getElementById('s-t1').textContent = fmtTs(S.recs[S.recs.length - 1].unix);
+  const pDelta = mx(pArr) - mn(pArr);
+  document.getElementById('s-prange').textContent = `${mn(pArr)} / ${mx(pArr)}  (Δ${pDelta.toFixed(0)})`;
+  document.getElementById('s-drange').textContent = `${mn(dArr).toFixed(1)} / ${mx(dArr).toFixed(1)} m`;
+  document.getElementById('s-trange').textContent = `${mn(tArr).toFixed(2)} / ${mx(tArr).toFixed(2)} °C`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// FLUID
+// ══════════════════════════════════════════════════════════════
+function updateFluid(){
+  const sel = document.getElementById('sel-depth-sg');
+  const v = sel && sel.value ? sel.value : 'b110';
+  S.sg = SG_MAP[v] || 1.10;
+  S.grad = S.sg * 0.0981;
+  document.getElementById('st-sg').textContent = S.sg.toFixed(3);
+  document.getElementById('st-grad').textContent = S.grad.toFixed(4) + ' bar/m';
+  const mg = document.getElementById('inp-man-grad');
+  const cb = document.getElementById('cb-man-grad');
+  if(mg && cb && !cb.checked){
+    mg.value = (S.sg * 9.81).toFixed(3);
+    S.depthCfg.manualGradKpaM = parseFloat(mg.value) || S.sg * 9.81;
+  }
+  refreshDepthModel();
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHANNEL TOGGLE
+// ══════════════════════════════════════════════════════════════
+const PILL_CLASS = {p:'p-on', pr:'pr-on', t:'t-on', c:'c-on', d:'d-on', b:'b-on'};
+function toggleCh(ch){
+  S.ch[ch] = !S.ch[ch];
+  const pill = document.getElementById('pill-'+ch);
+  if(!pill) return;
+  pill.className = 'pill' + (S.ch[ch] ? ' '+PILL_CLASS[ch] : '');
+  redraw();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ZOOM / CHART INTERACTION
+// ══════════════════════════════════════════════════════════════
+function resetZoom(){
+  S.view = {x0:0, x1:100};
+  document.getElementById('zoom-badge').style.display='none';
+  redraw();
+}
+
+/** Zoom in 2× around the centre of the current view. */
+function zoomIn(){
+  if(!S.recs.length) return;
+  const center = (S.view.x0 + S.view.x1) / 2;
+  const span = S.view.x1 - S.view.x0;
+  const newSpan = Math.max(0.2, span / 2);
+  let x0 = center - newSpan/2;
+  let x1 = center + newSpan/2;
+  if(x0 < 0){ x1 -= x0; x0 = 0; }
+  if(x1 > 100){ x0 -= (x1 - 100); x1 = 100; }
+  S.view = {x0: Math.max(0, x0), x1: Math.min(100, x1)};
+  document.getElementById('zoom-badge').style.display = (S.view.x1 - S.view.x0 < 99.9) ? 'block' : 'none';
+  redraw();
+}
+
+/** Zoom out 2× around the centre of the current view (capped at 100%). */
+function zoomOut(){
+  if(!S.recs.length) return;
+  const center = (S.view.x0 + S.view.x1) / 2;
+  const span = S.view.x1 - S.view.x0;
+  const newSpan = Math.min(100, span * 2);
+  let x0 = center - newSpan/2;
+  let x1 = center + newSpan/2;
+  if(x0 < 0){ x1 -= x0; x0 = 0; }
+  if(x1 > 100){ x0 -= (x1 - 100); x1 = 100; }
+  S.view = {x0: Math.max(0, x0), x1: Math.min(100, x1)};
+  document.getElementById('zoom-badge').style.display = (S.view.x1 - S.view.x0 < 99.9) ? 'block' : 'none';
+  redraw();
+}
+
+const canvas  = document.getElementById('chart');
+const ctx     = canvas ? canvas.getContext('2d') : null;
+const cwrap   = document.getElementById('cwrap');
+let _c = null;
+let drag = null;
+let zrStart = null;
+let shiftClickCand = null;  // { x, y, mode } — pending SHIFT+click that might be drag instead
+
+/**
+ * Add a stand at the given unix time using mode 'auto' or 'manual'.
+ * For 'manual' tracks start/end across two calls via _manualStartUnix.
+ * Returns true if a stand was added (or a manual-start was registered),
+ * false if nothing happened (degenerate click).
+ */
+function addStandAtUnix(ux, mode){
+  if(mode === 'auto'){
+    const widthSec = Math.max(3, parseFloat(document.getElementById('inp-add-width').value) || 15);
+    const halfMs = widthSec * 500;
+    S.depthCfg.addedStands.push({ t0: ux - halfMs, t1: ux + halfMs, src: 'auto-add' });
+    return true;
+  }
+  if(mode === 'manual'){
+    if(S.depthCfg._manualStartUnix === null){
+      S.depthCfg._manualStartUnix = ux;
+      // Show hint about waiting for end click
+      const h = document.getElementById('stand-edit-hint');
+      if(h){
+        h.style.display = 'block';
+        h.style.color = '#7c3aed';
+        h.textContent = '→ MANUAL: click END (started at ' + fmtTs(ux).slice(11) + '). Use ⇧SHIFT to repeat.';
+      }
+      return false; // start registered, no stand yet
+    }
+    const startU = S.depthCfg._manualStartUnix;
+    if(Math.abs(ux - startU) > 500){
+      S.depthCfg.addedStands.push({
+        t0: Math.min(startU, ux), t1: Math.max(startU, ux),
+        src: 'manual'
+      });
+    }
+    S.depthCfg._manualStartUnix = null;
+    const h = document.getElementById('stand-edit-hint');
+    if(h){
+      h.style.color = '#7c3aed';
+      h.textContent = '→ MANUAL armed. Click START of next stand (⇧SHIFT+click).';
+    }
+    return true;
+  }
+  return false;
+}
+
+if(canvas && ctx){
+canvas.addEventListener('wheel', e=>{
+  if(!S.recs.length||!_c) return;
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const curPct = _c.fromX(mx);
+  const visSpan = S.view.x1 - S.view.x0;
+  const curAbs = S.view.x0 + curPct/100*visSpan;
+  const factor = e.deltaY > 0 ? 1.35 : 1/1.35;
+  const newSpan = Math.max(0.5, Math.min(100, visSpan*factor));
+  const ratio = curPct/100;
+  let x0 = curAbs - ratio*newSpan;
+  let x1 = x0 + newSpan;
+  if(x0<0){x1-=x0;x0=0;}
+  if(x1>100){x0-=(x1-100);x1=100;}
+  S.view = {x0:Math.max(0,x0), x1:Math.min(100,x1)};
+  document.getElementById('zoom-badge').style.display = (newSpan<99.9)?'block':'none';
+  redraw();
+}, {passive:false});
+
+canvas.addEventListener('dblclick', ()=>resetZoom());
+
+// ── Global mouse handlers for draw-depth (active outside canvas bounds) ──
+function globalDrawMove(e){
+  if(!_c) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  // Endpoint drag
+  if(S.depthCfg._editDrag !== null){
+    const ux = unixFromMouseX(mx);
+    const depth = snapDepth(_c.fromYD(my));
+    if(ux !== null && isFinite(depth)){
+      const {strokeIdx, ptIdx} = S.depthCfg._editDrag;
+      const stroke = S.depthCfg.manualDepthStrokes[strokeIdx];
+      if(stroke) stroke.points[ptIdx] = {unix: ux, depth};
+      redraw();
+    }
+    return;
+  }
+
+  // Draw mode
+  if(!S.depthCfg._drawingDepth) return;
+  const ux = unixFromMouseX(mx);
+  const depth = snapDepth(_c.fromYD(my));
+  if(ux !== null && isFinite(depth)){
+    S.depthCfg._drawingDepth[1] = {unix: ux, depth};
+    redraw();
+  }
+}
+
+function globalDrawUp(){
+  window.removeEventListener('mousemove', globalDrawMove);
+  window.removeEventListener('mouseup',   globalDrawUp);
+  // Commit endpoint drag
+  if(S.depthCfg._editDrag !== null){
+    S.depthCfg._editDrag = null;
+    // Re-sort points so t0 < t1
+    for(const s of S.depthCfg.manualDepthStrokes){
+      if(s.points[0].unix > s.points[1].unix)
+        s.points = [s.points[1], s.points[0]];
+    }
+    refreshDepthModel();
+    return;
+  }
+  if(S.depthCfg._drawingDepth !== null) commitDrawingStroke();
+}
+canvas.addEventListener('mousedown', e=>{
+  if(!S.recs.length || !_c || e.button !== 0) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const inChart = mx >= _c.PAD.L && mx <= _c.PAD.L + _c.PW && my >= _c.PAD.T && my <= _c.PAD.T + _c.PH;
+
+  // ── Edit endpoint mode ──
+  if(S.depthCfg.editEpActive && !e.shiftKey){
+    const eps = _c.strokeEndpoints || [];
+    for(const ep of eps){
+      if(Math.hypot(mx - ep.x, my - ep.y) < 10){
+        S.depthCfg._editDrag = {strokeIdx: ep.strokeIdx, ptIdx: ep.ptIdx};
+        window.addEventListener('mousemove', globalDrawMove);
+        window.addEventListener('mouseup',   globalDrawUp);
+        return;
+      }
+    }
+    return;
+  }
+
+  // ── Draw-depth mode ──
+  if(S.depthCfg.depthDrawActive && !e.shiftKey){
+    const ux = unixFromMouseX(mx);
+    const depth = _c.fromYD ? snapDepth(_c.fromYD(my)) : 0;
+    if(ux !== null && isFinite(depth)){
+      S.depthCfg._drawingDepth = [{unix: ux, depth}];
+      canvas.style.cursor = 'crosshair';
+      window.addEventListener('mousemove', globalDrawMove);
+      window.addEventListener('mouseup',   globalDrawUp);
+    }
+    return;
+  }
+
+  // ── Click-to-mark handling ──
+  if(S.depthCfg.pendingMark && inChart){
+    const ux = unixFromMouseX(mx);
+    if(ux !== null){
+      const pm = S.depthCfg.pendingMark;
+      if(pm === 'a' || pm === 'b'){
+        readCfgFromForm();
+        // Auto-fill depth from chart ONLY if the field is empty/zero.
+        // If user already typed a depth (650), clicking "Set TIME" should NOT overwrite it.
+        const inpId = (pm === 'a') ? 'inp-ref-a-m' : 'inp-ref-b-m';
+        const inp = document.getElementById(inpId);
+        const cur = parseFloat(inp.value);
+        const isEmpty = !inp.value || inp.value === '' || Math.abs(cur) < 0.001;
+        const dm = isEmpty ? depthGuessAtChartUnix(ux) : cur;
+        if(pm === 'a'){
+          S.depthCfg.refA.unix = ux;
+          S.depthCfg.refA.m = dm;
+          if(isEmpty) inp.value = String(Math.round(dm*1000)/1000);
+          document.getElementById('lbl-ref-a').textContent = 'TOP time: ' + fmtTs(ux);
+        } else {
+          S.depthCfg.refB.unix = ux;
+          S.depthCfg.refB.m = dm;
+          if(isEmpty) inp.value = String(Math.round(dm*1000)/1000);
+          document.getElementById('lbl-ref-b').textContent = 'BOTTOM time: ' + fmtTs(ux);
+        }
+        S.depthCfg.pendingMark = null;
+        document.getElementById('depth-mark-hint').style.display = 'none';
+        refreshDepthModel();
+      } else if(pm === 'add-auto'){
+        addStandAtUnix(ux, 'auto');
+        S.depthCfg.pendingMark = null;
+        document.getElementById('stand-edit-hint').style.display = 'none';
+        updateManualStandCount();
+        refreshDepthModel();
+      } else if(pm === 'manual-start'){
+        // First click of MANUAL: register start, wait for end click
+        addStandAtUnix(ux, 'manual');           // sets _manualStartUnix
+        S.depthCfg.pendingMark = 'manual-end';  // chain to end-click on next mousedown
+        redraw();                                // show the purple start tick
+      } else if(pm === 'manual-end'){
+        // Second click of MANUAL: finalise stand
+        const added = addStandAtUnix(ux, 'manual');
+        S.depthCfg.pendingMark = null;
+        document.getElementById('stand-edit-hint').style.display = 'none';
+        updateManualStandCount();
+        if(added) refreshDepthModel();
+      } else if(pm === 'del-stand'){
+        // Find which rendered stand band the click hits
+        const bands = _c.bands || [];
+        let hit = null;
+        for(const b of bands){
+          if(mx >= b.x0 && mx <= b.x1){ hit = b; break; }
+        }
+        if(hit){
+          const isManual = (hit.src === 'manual' || hit.src === 'auto-add');
+          if(isManual){
+            // Remove from addedStands (match by approx time)
+            S.depthCfg.addedStands = S.depthCfg.addedStands.filter(a =>
+              !(Math.abs(a.t0 - hit.t0) < 500 && Math.abs(a.t1 - hit.t1) < 500)
+            );
+          } else {
+            // Mask out this auto stand
+            S.depthCfg.removedStands.push({ t0: hit.t0, t1: hit.t1 });
+          }
+        }
+        S.depthCfg.pendingMark = null;
+        document.getElementById('stand-edit-hint').style.display = 'none';
+        updateManualStandCount();
+        refreshDepthModel();
+      }
+    }
+    return;
+  }
+
+  // ── Normal pan / shift-zoom / shift+click-add ──
+  if(e.shiftKey){
+    // SHIFT+click might be: (a) add-stand if lastAddMode set & user doesn't drag, (b) zoom-select if user drags.
+    // Start BOTH candidates — decide on mouseup based on movement distance.
+    if(inChart && S.depthCfg.lastAddMode){
+      shiftClickCand = { x: mx, y: my, mode: S.depthCfg.lastAddMode };
+    }
+    zrStart = {x:mx, y:my};
+    const zr = document.getElementById('zoom-rect');
+    zr.style.left = mx+'px'; zr.style.top = my+'px';
+    zr.style.width = '0'; zr.style.height = '0'; zr.style.display = 'block';
+  } else {
+    drag = {startX:e.clientX, x0:S.view.x0, x1:S.view.x1};
+    canvas.style.cursor = 'grabbing';
+  }
+});
+
+canvas.addEventListener('mousemove', e=>{
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  if(zrStart){
+    const zr = document.getElementById('zoom-rect');
+    const x0 = Math.min(mx, zrStart.x), y0 = Math.min(my, zrStart.y);
+    zr.style.left = x0+'px'; zr.style.top = y0+'px';
+    zr.style.width = Math.abs(mx-zrStart.x)+'px'; zr.style.height = Math.abs(my-zrStart.y)+'px';
+    return;
+  }
+
+  if(drag && _c){
+    const dx = e.clientX - drag.startX;
+    const pctPerPx = 100/_c.PW;
+    const vis = drag.x1 - drag.x0;
+    let x0 = drag.x0 - dx*pctPerPx;
+    let x1 = x0 + vis;
+    if(x0<0){x0=0;x1=vis;} if(x1>100){x1=100;x0=100-vis;}
+    S.view = {x0, x1};
+    redraw(); return;
+  }
+
+  if(!_c || !S.recs.length) return;
+  // Hide tooltip while drawing or editing
+  if(S.depthCfg.depthDrawActive || S.depthCfg.editEpActive || S.depthCfg._drawingDepth !== null){
+    document.getElementById('tt').style.display = 'none';
+    document.getElementById('hline').style.display = 'none';
+    // Show grab cursor near endpoints in edit mode
+    if(S.depthCfg.editEpActive){
+      const eps = _c.strokeEndpoints || [];
+      const near = eps.some(ep => Math.hypot(mx-ep.x, my-ep.y) < 10);
+      canvas.style.cursor = near ? 'grab' : 'default';
+    }
+    return;
+  }
+  if(mx < _c.PAD.L || mx > _c.PAD.L+_c.PW || my < _c.PAD.T || my > _c.PAD.T+_c.PH){
+    document.getElementById('tt').style.display = 'none';
+    document.getElementById('hline').style.display = 'none';
+    return;
+  }
+  const xPct = _c.fromX(mx);
+  const dur = S.recs[S.recs.length-1].unix - S.recs[0].unix || 1;
+  const absUnix = S.recs[0].unix + (S.view.x0/100 + xPct/100*(S.view.x1-S.view.x0)/100)*dur;
+  let bi = 0, bd = Infinity;
+  for(let i = 0; i < S.recs.length; i++){
+    const d = Math.abs(S.recs[i].unix - absUnix);
+    if(d < bd){ bd = d; bi = i; }
+  }
+  const r = S.recs[bi];
+  const sm = parseInt(document.getElementById('inp-sm').value) || 1;
+  const dv = _c.smDepths[bi], tv = _c.smTemps[bi];
+
+  document.getElementById('tt-hd').textContent = fmtTs(r.unix);
+  document.getElementById('tt-d').textContent  = dv.toFixed(2) + ' m';
+  document.getElementById('tt-p').textContent  = r.P_kPa.toFixed(1) + ' kPa  (' + (r.P_kPa/100).toFixed(3) + ' bar)';
+  document.getElementById('tt-t').textContent  = tv.toFixed(2) + ' °C';
+
+  const ttCclRow = document.getElementById('tt-row-ccl');
+  if(S.ch.c && r.ccl !== null && isFinite(r.ccl)){
+    ttCclRow.style.display = 'flex';
+    document.getElementById('tt-ccl').textContent = Number(r.ccl.toFixed(0)).toLocaleString('en-US') + ' u.';
+  } else { ttCclRow.style.display = 'none'; }
+
+  document.getElementById('sv-depth').innerHTML = dv.toFixed(1) + '<span class="su">m</span>';
+  document.getElementById('sv-pres').innerHTML  = r.P_kPa.toFixed(1) + '<span class="su">kPa</span>';
+  document.getElementById('sv-temp').innerHTML  = tv.toFixed(2) + '<span class="su">°C</span>';
+  document.getElementById('sv-time').textContent = fmtTs(r.unix);
+
+  const tt = document.getElementById('tt');
+  tt.style.display = 'block';
+  tt.style.left = Math.min(e.clientX+16, window.innerWidth-230) + 'px';
+  tt.style.top  = Math.max(8, Math.min(e.clientY-14, window.innerHeight-230)) + 'px';
+  document.getElementById('hline').style.display = 'block';
+  document.getElementById('hline').style.left = (_c.PAD.L + xPct/100*_c.PW) + 'px';
+});
+
+canvas.addEventListener('mouseup', e=>{
+  canvas.style.cursor = 'crosshair';
+  if(drag){ drag = null; return; }
+  if(zrStart){
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    document.getElementById('zoom-rect').style.display = 'none';
+
+    // SHIFT+click discrimination: tiny movement → treat as add-stand, not zoom-select.
+    if(shiftClickCand){
+      const dist = Math.hypot(mx - shiftClickCand.x, my - shiftClickCand.y);
+      if(dist < 5 && _c){
+        const ux = unixFromMouseX(mx);
+        if(ux !== null){
+          const mode = shiftClickCand.mode;
+          const result = addStandAtUnix(ux, mode);
+          shiftClickCand = null;
+          zrStart = null;
+          updateManualStandCount();
+          // For manual: only refresh after end-click. For auto / manual-end: refresh.
+          if(mode === 'auto' || (mode === 'manual' && result)) refreshDepthModel();
+          else redraw();
+          return;
+        }
+      }
+      shiftClickCand = null;
+    }
+
+    // Otherwise: normal zoom-select
+    if(_c){
+      const x0pct = _c.fromX(Math.min(mx, zrStart.x));
+      const x1pct = _c.fromX(Math.max(mx, zrStart.x));
+      if(x1pct - x0pct > 0.5){
+        const vis = S.view.x1 - S.view.x0;
+        const na = S.view.x0 + x0pct/100*vis;
+        const nb = S.view.x0 + x1pct/100*vis;
+        S.view = {x0: Math.max(0, na), x1: Math.min(100, nb)};
+        document.getElementById('zoom-badge').style.display = 'block';
+        redraw();
+      }
+    }
+    zrStart = null;
+  }
+});
+
+canvas.addEventListener('mouseleave', ()=>{
+  document.getElementById('tt').style.display = 'none';
+  document.getElementById('hline').style.display = 'none';
+  if(zrStart){ document.getElementById('zoom-rect').style.display='none'; zrStart=null; }
+  if(drag){ drag=null; canvas.style.cursor='crosshair'; }
+  shiftClickCand = null;
+});
+
+canvas.addEventListener('contextmenu', e=>e.preventDefault());
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHART DRAW
+// ══════════════════════════════════════════════════════════════
+function smArr(arr, n){
+  if(n<=1) return [...arr];
+  const out=[];
+  const half=Math.floor(n/2);
+  for(let i=0;i<arr.length;i++){
+    let s=0,c=0;
+    for(let j=Math.max(0,i-half); j<Math.min(arr.length, i+half+1); j++){ s+=arr[j]; c++; }
+    out.push(s/c);
+  }
+  return out;
+}
+function ext(arr){ let a=Infinity,b=-Infinity; for(const v of arr){if(v<a)a=v;if(v>b)b=v;} return [a,b]; }
+
+function buildCclTimeDisp(vRecs){
+  const n = vRecs.length;
+  const out = new Array(n);
+  let g0 = 0;
+  while(g0 < n){
+    let g1 = g0 + 1;
+    while(g1 < n && vRecs[g1].unix === vRecs[g0].unix) g1++;
+    const u0 = vRecs[g0].unix;
+    const nextDt = g1 < n ? Math.max(1, vRecs[g1].unix - u0) : 1000;
+    const prevDt = g0 > 0 ? Math.max(1, u0 - vRecs[g0 - 1].unix) : 1000;
+    const span = Math.min(1000, Math.min(nextDt, prevDt));
+    const cnt = g1 - g0;
+    for(let k = 0; k < cnt; k++){
+      const frac = cnt <= 1 ? 0.5 : (k + 0.5) / cnt;
+      out[g0 + k] = u0 + frac * span * 0.999;
+    }
+    g0 = g1;
+  }
+  return out;
+}
+function cclFillShortGapsForDraw(vals, maxRun){
+  const a = vals.map(v => (v !== null && v !== undefined && isFinite(v)) ? v : NaN);
+  let i = 0;
+  while(i < a.length){
+    if(isFinite(a[i])){ i++; continue; }
+    let j = i;
+    while(j < a.length && !isFinite(a[j])) j++;
+    const left = i > 0 ? a[i - 1] : NaN;
+    const right = j < a.length ? a[j] : NaN;
+    const run = j - i;
+    if(isFinite(left) && isFinite(right) && run > 0 && run <= maxRun){
+      for(let k = 0; k < run; k++) a[i + k] = left + (right - left) * (k + 1) / (run + 1);
+    }
+    i = j;
+  }
+  return a;
+}
+
+function redraw(){
+  if(!canvas || !ctx || !cwrap) return;
+  if(!S.recs.length) return;
+
+  const W = cwrap.clientWidth, H = cwrap.clientHeight;
+  const dpr = devicePixelRatio || 1;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const PAD = {L:70, R:58, T:16, B:42};
+  const PW = W - PAD.L - PAD.R, PH = H - PAD.T - PAD.B;
+
+  const n = S.recs.length;
+  const t0 = S.recs[0].unix, t1 = S.recs[n-1].unix;
+  const fullDur = t1 - t0 || 1;
+  const vt0 = t0 + S.view.x0/100 * fullDur;
+  const vt1 = t0 + S.view.x1/100 * fullDur;
+  const vDur = vt1 - vt0 || 1;
+
+  let vi0 = 0, vi1 = n-1;
+  for(let i=0;i<n;i++){ if(S.recs[i].unix>=vt0){vi0=i;break;} }
+  for(let i=n-1;i>=0;i--){ if(S.recs[i].unix<=vt1){vi1=i;break;} }
+  const vRecs = S.recs.slice(vi0, vi1+1);
+  if(!vRecs.length) return;
+
+  const sm = parseInt(document.getElementById('inp-sm').value) || 1;
+  const invD = document.getElementById('cb-inv').checked;
+
+  const fullSm = {
+    depths: smArr(S.recs.map(r => r.depth), sm),
+    temps:  smArr(S.recs.map(r => r.T_C), sm),
+    pres:   S.recs.map(r => r.P_kPa),
+  };
+  const smD = smArr(vRecs.map(r => r.depth), sm);
+  const smT = smArr(vRecs.map(r => r.T_C), sm);
+  const smP = vRecs.map(r => r.P_kPa);
+
+  function padRange(mn, mx, minR){
+    const r = mx - mn; if(r >= minR) return [mn, mx];
+    const mid = (mn+mx)/2; return [mid-minR/2, mid+minR/2];
+  }
+  let [dMin, dMax] = padRange(...ext(smD), 10);
+
+  // Extend depth axis to show live draw endpoint so the chart follows the mouse
+  const _drawEnd = S.depthCfg._drawingDepth && S.depthCfg._drawingDepth.length >= 1
+    ? S.depthCfg._drawingDepth[S.depthCfg._drawingDepth.length - 1] : null;
+  if(_drawEnd && isFinite(_drawEnd.depth)){
+    const pad10 = (dMax - dMin) * 0.08 + 5;
+    dMin = Math.min(dMin, _drawEnd.depth - pad10);
+    dMax = Math.max(dMax, _drawEnd.depth + pad10);
+  }
+
+  const [pRawMin, pRawMax] = ext(smP);
+  const pIsStatic = (pRawMax - pRawMin) < 10;
+  const pMean = (pRawMin + pRawMax)/2;
+  const pMinRange = Math.max(500, pMean * 0.02);
+  let [pMin, pMax] = padRange(pRawMin, pRawMax, pMinRange);
+
+  let [tMin, tMax] = padRange(...ext(smT), 5);
+  const dR = dMax-dMin, tR = tMax-tMin, pR = pMax-pMin;
+
+  const toX  = unix => PAD.L + (unix-vt0)/vDur*PW;
+  const fromX = px => (px-PAD.L)/PW*100;
+  const toYD = v => { const f=(v-dMin)/dR; return invD ? PAD.T+f*PH : PAD.T+(1-f)*PH; };
+  const toYT = v => PAD.T+(1-(v-tMin)/tR)*PH;
+  const toYP = v => PAD.T+(1-(v-pMin)/pR)*PH;
+
+  const fromYD = py => invD ? dMin + (py - PAD.T) / PH * dR : dMax - (py - PAD.T) / PH * dR;
+  _c = {fromX, fromYD, toYD, PAD, PW, PH, smDepths:fullSm.depths, smTemps:fullSm.temps, smPres:fullSm.pres, bands:[], strokeEndpoints:[]};
+
+  // ── Background grid ──
+  ctx.fillStyle = '#fafbfc';
+  ctx.fillRect(PAD.L, PAD.T, PW, PH);
+  ctx.strokeStyle = 'rgba(203,213,225,.85)'; ctx.lineWidth = 1;
+  for(let g=0;g<=4;g++){ const y=PAD.T+g/4*PH; ctx.beginPath(); ctx.moveTo(PAD.L,y); ctx.lineTo(PAD.L+PW,y); ctx.stroke(); }
+  for(let g=0;g<=6;g++){ const x=PAD.L+g/6*PW; ctx.beginPath(); ctx.moveTo(x,PAD.T); ctx.lineTo(x,PAD.T+PH); ctx.stroke(); }
+
+  // ── STAND BANDS (drawn early so curves are on top) ──
+  if(S.ch.b){
+    const stands = S.depthCfg._lastStands || [];
+    const removed = S.depthCfg.removedStands || [];
+    const bandRecords = [];
+    for(const s of stands){
+      const x0 = toX(s.t0), x1 = toX(s.t1);
+      if(x1 < PAD.L || x0 > PAD.L+PW) continue;
+      const xc0 = Math.max(PAD.L, x0), xc1 = Math.min(PAD.L+PW, x1);
+      const w = Math.max(1, xc1-xc0);
+      let fill, edge;
+      if(s.src === 'manual'){ fill='rgba(124,58,237,.18)'; edge='rgba(124,58,237,.7)'; }
+      else if(s.src === 'auto-add'){ fill='rgba(180,83,9,.16)'; edge='rgba(180,83,9,.6)'; }
+      else { fill='rgba(13,148,136,.12)'; edge='rgba(13,148,136,.4)'; }
+      ctx.fillStyle = fill;
+      ctx.fillRect(xc0, PAD.T, w, PH);
+      ctx.strokeStyle = edge; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(xc0, PAD.T); ctx.lineTo(xc0, PAD.T+PH);
+      ctx.moveTo(xc1, PAD.T); ctx.lineTo(xc1, PAD.T+PH);
+      ctx.stroke();
+      bandRecords.push({ t0:s.t0, t1:s.t1, src:s.src, x0:xc0, x1:xc1 });
+    }
+    // Show removed bands with diagonal stripe
+    ctx.save();
+    for(const r of removed){
+      const x0 = toX(r.t0), x1 = toX(r.t1);
+      if(x1 < PAD.L || x0 > PAD.L+PW) continue;
+      const xc0 = Math.max(PAD.L, x0), xc1 = Math.min(PAD.L+PW, x1);
+      const w = Math.max(1, xc1-xc0);
+      ctx.fillStyle = 'rgba(194,65,12,.08)';
+      ctx.fillRect(xc0, PAD.T, w, PH);
+      ctx.strokeStyle = 'rgba(194,65,12,.7)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+      ctx.beginPath();
+      ctx.moveTo(xc0, PAD.T); ctx.lineTo(xc0, PAD.T+PH);
+      ctx.moveTo(xc1, PAD.T); ctx.lineTo(xc1, PAD.T+PH);
+      ctx.moveTo(xc0, PAD.T); ctx.lineTo(xc1, PAD.T+PH);
+      ctx.moveTo(xc1, PAD.T); ctx.lineTo(xc0, PAD.T+PH);
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.restore();
+    _c.bands = bandRecords;
+  }
+
+  // ── Y-axis labels ──
+  ctx.font='bold 12px JetBrains Mono'; ctx.textAlign='right'; ctx.fillStyle='rgba(13,148,136,1)';
+  for(let g=0;g<=4;g++){
+    const v = invD ? dMin+g/4*dR : dMax-g/4*dR;
+    ctx.fillText(v.toFixed(0)+'m', PAD.L-7, PAD.T+g/4*PH+4);
+  }
+  if(S.ch.t){
+    ctx.textAlign='left'; ctx.fillStyle='rgba(194,65,12,1)';
+    for(let g=0;g<=4;g++){
+      const v = tMin+(1-g/4)*tR;
+      ctx.fillText(v.toFixed(1)+'°', PAD.L+PW+6, PAD.T+g/4*PH+4);
+    }
+  }
+
+  // ── X-axis labels ──
+  ctx.fillStyle='rgba(71,85,105,1)'; ctx.font='12px JetBrains Mono'; ctx.textAlign='center';
+  for(let g=0;g<=6;g++){
+    const unix = vt0+g/6*vDur;
+    const d = new Date(unix);
+    const lbl = pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+':'+pad(d.getUTCSeconds());
+    ctx.fillText(lbl, PAD.L+g/6*PW, H-PAD.B+18);
+  }
+  if(vRecs.length){
+    const d0 = new Date(vt0);
+    ctx.textAlign='left'; ctx.fillStyle='rgba(100,116,139,1)'; ctx.font='11px JetBrains Mono';
+    ctx.fillText(`${d0.getUTCDate()}/${d0.getUTCMonth()+1}/${d0.getUTCFullYear()}`, PAD.L, H-PAD.B+33);
+  }
+
+  // ── Pressure ──
+  if(S.ch.pr){
+    ctx.strokeStyle = pIsStatic ? 'rgba(29,78,216,.55)' : 'rgba(29,78,216,.95)';
+    ctx.lineWidth = pIsStatic ? 1.5 : 2.5;
+    if(pIsStatic) ctx.setLineDash([8,5]);
+    ctx.beginPath(); let mv=false;
+    for(let i=0;i<vRecs.length;i++){
+      const x = toX(vRecs[i].unix), y = toYP(smP[i]);
+      if(x<PAD.L-2||x>PAD.L+PW+2){mv=false;continue;}
+      mv ? ctx.lineTo(x,y) : ctx.moveTo(x,y); mv=true;
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.textAlign='right';
+    ctx.fillStyle = 'rgba(29,78,216,.85)';
+    ctx.font='bold 11px JetBrains Mono';
+    ctx.fillText(pMax.toFixed(0)+' kPa', PAD.L+PW-4, PAD.T+14);
+    ctx.fillText(pMin.toFixed(0)+' kPa', PAD.L+PW-4, PAD.T+PH-4);
+  }
+
+  // ── Temperature ──
+  if(S.ch.t){
+    ctx.strokeStyle='rgba(194,65,12,.95)'; ctx.lineWidth=2;
+    ctx.beginPath(); let mv=false;
+    for(let i=0;i<vRecs.length;i++){
+      const x = toX(vRecs[i].unix), y = toYT(smT[i]);
+      if(x<PAD.L-2||x>PAD.L+PW+2){mv=false;continue;}
+      mv ? ctx.lineTo(x,y) : ctx.moveTo(x,y); mv=true;
+    }
+    ctx.stroke();
+  }
+
+  // ── Depth ──
+  if(S.ch.p){
+    ctx.strokeStyle='rgba(13,148,136,1)'; ctx.lineWidth=2.5;
+    ctx.beginPath(); let mv=false, pyS=0;
+    for(let i=0;i<vRecs.length;i++){
+      const x = toX(vRecs[i].unix);
+      const y = toYD(smD[i]);
+      if(x<PAD.L-2||x>PAD.L+PW+2){mv=false;continue;}
+      if(!mv){ ctx.moveTo(x,y); mv=true; }
+      else if(i>0 && Math.abs(smD[i]-smD[i-1])<0.001){ ctx.lineTo(x,pyS); }
+      else { ctx.lineTo(x,y); }
+      pyS = y;
+    }
+    ctx.stroke();
+  }
+
+  // ── CCL ──
+  if(S.ch.c){
+    const rawC = vRecs.map(r => r.ccl);
+    const finite = rawC.filter(v => v !== null && v !== undefined && isFinite(v));
+    if(finite.length){
+      function pctIxC(sorted, p){
+        if(!sorted.length) return 0;
+        const ix = Math.max(0, Math.min(sorted.length-1, Math.round(p*(sorted.length-1))));
+        return sorted[ix];
+      }
+      const sortedF = [...finite].sort((a,b)=>a-b);
+      const pLo = pctIxC(sortedF, 0.01), pHi = pctIxC(sortedF, 0.99);
+      const pad2 = Math.max(100, (pHi-pLo)*0.06);
+      let cLo = pLo-pad2/2, cHi = pHi+pad2/2;
+      if(cHi-cLo < 1e-6){ cLo -= 1; cHi += 1; }
+      const cSpan = cHi - cLo || 1;
+      const toYCcl = v => PAD.T+(1-(Math.min(cHi, Math.max(cLo, v))-cLo)/cSpan)*PH;
+      const cDraw = cclFillShortGapsForDraw(rawC, 80);
+      const tDisp = buildCclTimeDisp(vRecs);
+
+      if(cLo < 0 && cHi > 0){
+        ctx.strokeStyle = 'rgba(162,28,175,.25)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const yz = toYCcl(0);
+        ctx.moveTo(PAD.L, yz); ctx.lineTo(PAD.L+PW, yz); ctx.stroke();
+      }
+
+      ctx.strokeStyle = 'rgba(162,28,175,.8)';
+      ctx.lineWidth = 1.3; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      let lastIx = -2;
+      for(let i = 0; i < vRecs.length; i++){
+        const cv = cDraw[i];
+        if(!isFinite(cv)) continue;
+        const x = PAD.L + (tDisp[i]-vt0)/vDur*PW;
+        const y = toYCcl(cv);
+        if(x < PAD.L-2 || x > PAD.L+PW+2){ lastIx = -2; continue; }
+        if(lastIx !== i-1) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        lastIx = i;
+      }
+      ctx.stroke();
+
+      ctx.font='bold 11px JetBrains Mono'; ctx.textAlign='right';
+      ctx.fillStyle='rgba(162,28,175,1)';
+      ctx.fillText(cHi.toFixed(0), PAD.L+PW-4, PAD.T+28);
+      ctx.fillStyle='rgba(162,28,175,.7)';
+      ctx.fillText(cLo.toFixed(0), PAD.L+PW-4, PAD.T+PH-10);
+    }
+  }
+
+  // ── TOP/BOTTOM markers ──
+  const dcfg = S.depthCfg;
+  if(dcfg.refA.unix !== null || dcfg.refB.unix !== null){
+    ctx.save(); ctx.setLineDash([6,5]); ctx.lineWidth=1.5;
+    for(const [u, col, lab] of [[dcfg.refA.unix, 'rgba(13,148,136,.9)', 'TOP'], [dcfg.refB.unix, 'rgba(217,119,6,.95)', 'BOT']]){
+      if(u === null || u < vt0 || u > vt1) continue;
+      const x = toX(u);
+      ctx.strokeStyle = col;
+      ctx.beginPath(); ctx.moveTo(x, PAD.T); ctx.lineTo(x, PAD.T+PH); ctx.stroke();
+      // White background for label
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x-18, PAD.T+1, 36, 16);
+      ctx.strokeStyle = col; ctx.lineWidth = 1;
+      ctx.strokeRect(x-18, PAD.T+1, 36, 16);
+      ctx.fillStyle = col; ctx.font='bold 11px JetBrains Mono'; ctx.textAlign='center';
+      ctx.fillText(lab, x, PAD.T+13);
+      ctx.setLineDash([6,5]); ctx.lineWidth=1.5;
+    }
+    ctx.restore();
+  }
+
+  // ── MANUAL stand start-tick ──
+  if(dcfg._manualStartUnix !== null){
+    const u = dcfg._manualStartUnix;
+    if(u >= vt0 && u <= vt1){
+      const x = toX(u);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(124,58,237,1)';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(x, PAD.T); ctx.lineTo(x, PAD.T+PH); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = 'bold 12px JetBrains Mono';
+      ctx.textAlign = 'center';
+      const label = 'MAN start';
+      const tw = ctx.measureText(label).width + 10;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x - tw/2, PAD.T + 2, tw, 18);
+      ctx.strokeStyle = 'rgba(124,58,237,1)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x - tw/2, PAD.T + 2, tw, 18);
+      ctx.fillStyle = 'rgba(124,58,237,1)';
+      ctx.fillText(label, x, PAD.T + 15);
+      ctx.restore();
+    }
+  }
+
+  // ── Draw-depth strokes overlay ──
+  const allStrokes = [...(S.depthCfg.manualDepthStrokes||[])];
+  const liveStroke = S.depthCfg._drawingDepth;
+  if(liveStroke && liveStroke.length >= 2) allStrokes.push({points: liveStroke, live: true});
+  for(const stroke of allStrokes){
+    const pts = stroke.points;
+    if(!pts || pts.length < 2) continue;
+    ctx.save();
+    ctx.strokeStyle = stroke.live ? 'rgba(180,83,9,.9)' : 'rgba(180,83,9,.75)';
+    ctx.lineWidth = stroke.live ? 2.5 : 2;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath();
+    let mv = false;
+    for(const pt of pts){
+      const x = toX(pt.unix);
+      const y = toYD(pt.depth);
+      mv ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      mv = true;
+    }
+    ctx.stroke();
+    const editMode = S.depthCfg.editEpActive && !stroke.live;
+    const epR = editMode ? 7 : 4;
+    // Start dot
+    const xs = toX(pts[0].unix), ys = toYD(pts[0].depth);
+    ctx.fillStyle = editMode ? '#0369a1' : (stroke.live ? 'rgba(180,83,9,.9)' : 'rgba(180,83,9,.6)');
+    ctx.beginPath(); ctx.arc(xs, ys, epR, 0, Math.PI*2); ctx.fill();
+    if(editMode){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(xs, ys, epR, 0, Math.PI*2); ctx.stroke(); }
+    // End dot
+    const xe = toX(pts[pts.length-1].unix), ye = toYD(pts[pts.length-1].depth);
+    ctx.fillStyle = editMode ? '#0369a1' : (stroke.live ? '#b45309' : 'rgba(180,83,9,.6)');
+    ctx.beginPath(); ctx.arc(xe, ye, epR, 0, Math.PI*2); ctx.fill();
+    if(editMode){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(xe, ye, epR, 0, Math.PI*2); ctx.stroke(); }
+    ctx.restore();
+    // Register endpoints for hit-testing
+    if(!stroke.live && _c.strokeEndpoints){
+      const si = S.depthCfg.manualDepthStrokes.indexOf(stroke);
+      if(si >= 0){
+        _c.strokeEndpoints.push({strokeIdx:si, ptIdx:0, x:xs, y:ys, depth:pts[0].depth});
+        _c.strokeEndpoints.push({strokeIdx:si, ptIdx:pts.length-1, x:xe, y:ye, depth:pts[pts.length-1].depth});
+      }
+    }
+
+    // Live endpoint: horizontal depth guide + depth label
+    if(stroke.live){
+      const endPt = pts[pts.length-1];
+      const yE = toYD(endPt.depth);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(180,83,9,.5)'; ctx.lineWidth = 1; ctx.setLineDash([6,4]);
+      ctx.beginPath(); ctx.moveTo(PAD.L, yE); ctx.lineTo(PAD.L+PW, yE); ctx.stroke();
+      ctx.setLineDash([]);
+      // Depth badge on the left axis
+      const depthLbl = endPt.depth.toFixed(1) + 'm';
+      ctx.font = 'bold 12px JetBrains Mono'; ctx.textAlign = 'right';
+      const tw = ctx.measureText(depthLbl).width + 10;
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(PAD.L - tw - 2, yE - 9, tw + 2, 18);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(depthLbl, PAD.L - 4, yE + 4);
+      ctx.restore();
+    }
+  }
+
+  // ── Border ──
+  ctx.strokeStyle='rgba(148,163,184,1)'; ctx.lineWidth=1;
+  ctx.strokeRect(PAD.L, PAD.T, PW, PH);
+
+  if(S.view.x0>0.1 || S.view.x1<99.9){
+    ctx.font='bold 11px JetBrains Mono'; ctx.textAlign='center'; ctx.fillStyle='rgba(13,148,136,.85)';
+    ctx.fillText(`Zoom: ${(S.view.x1-S.view.x0).toFixed(1)}% | wheel=zoom · shift+drag=select · dbl=reset`, PAD.L+PW/2, PAD.T+13);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════════════════════
+function exportDepth(){
+  if(!S.recs.length){alert('No data loaded.');return;}
+  const lines=['DATE_TIME_LT\tLineDepth[m]'];
+  for(const r of S.recs){
+    const d=new Date(r.unix);
+    const dt=`${d.getUTCDate()}/${d.getUTCMonth()+1}/${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+    lines.push(`${dt}\t${r.depth.toFixed(2)}`);
+  }
+  dl(lines.join('\n'), S.fname.replace(/\.(dmp|mcs32ja|mcs32j)$/i,'')+'_depth.txt', 'text/plain');
+}
+function exportCSV(){
+  if(!S.recs.length){alert('No data loaded.');return;}
+  const lines=['datetime_local,unix_ms,P_kPa,P_bar,depth_m,T_C,CCL_u'];
+  for(const r of S.recs){
+    const d=new Date(r.unix);
+    const dt=`${d.getUTCDate()}/${d.getUTCMonth()+1}/${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+    const cc = (r.ccl===null||r.ccl===undefined) ? '' : String(r.ccl);
+    lines.push(`${dt},${r.unix},${r.P_kPa},${(r.P_kPa/100).toFixed(3)},${r.depth.toFixed(3)},${r.T_C.toFixed(2)},${cc}`);
+  }
+  dl(lines.join('\n'), S.fname.replace(/\.(dmp|mcs32ja|mcs32j)$/i,'')+'_full.csv', 'text/csv');
+}
+function dl(content, name, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = name; a.click();
+}
+
+// ══════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════
+function pad(n){return String(n).padStart(2,'0');}
+function fmtTs(unix){
+  const d = new Date(unix);
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+}
+
+if(typeof ResizeObserver !== 'undefined' && cwrap){
+  const ro = ()=>{ if(S.recs.length) redraw(); };
+  new ResizeObserver(ro).observe(cwrap);
+  const cm = document.querySelector('.chart-main');
+  if(cm) new ResizeObserver(ro).observe(cm);
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.target && (e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA')) return;
+  if(e.key === 'Escape'){
+    S.depthCfg.pendingMark = null;
+    S.depthCfg._manualStartUnix = null;
+    S.depthCfg.lastAddMode = null;   // Esc fully disarms SHIFT+click mode too
+    shiftClickCand = null;
+    document.getElementById('depth-mark-hint').style.display = 'none';
+    document.getElementById('stand-edit-hint').style.display = 'none';
+    redraw();
+  }
+});
+
+updateFluid();
+</script>
+</body>
+</html>
