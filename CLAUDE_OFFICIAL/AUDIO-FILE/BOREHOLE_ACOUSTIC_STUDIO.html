@@ -1079,10 +1079,10 @@ input[type=file]{display:none;}
       <input type="checkbox" id="nf2-auto" checked> auto dB
     </label>
     <label style="display:flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#43494e;white-space:nowrap">
-      min <input id="nf2-cmin" type="range" min="-130" max="0" step="1" value="-60" style="width:72px;cursor:pointer;accent-color:#CC0000;vertical-align:middle" oninput="document.getElementById('nf2-cmin-v').textContent=Math.round(this.value);nf2Draw()"><span id="nf2-cmin-v" style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:#43494e;min-width:26px;text-align:right;display:inline-block">-60</span>
+      min <input id="nf2-cmin" type="range" min="-200" max="50" step="1" value="-60" style="width:66px;cursor:pointer;accent-color:#CC0000;vertical-align:middle" oninput="document.getElementById('nf2-cmin-v').value=Math.round(this.value);nf2Draw()"><input id="nf2-cmin-v" type="number" value="-60" step="1" style="width:46px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:#43494e;border:1px solid #ccd0d4;border-radius:2px;padding:1px 3px;text-align:right;background:#fff" oninput="nf2SetDbNum('min',+this.value)" onkeydown="if(event.key==='Enter')nf2Draw()">
     </label>
     <label style="display:flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#43494e;white-space:nowrap">
-      max <input id="nf2-cmax" type="range" min="-130" max="0" step="1" value="-30" style="width:72px;cursor:pointer;accent-color:#CC0000;vertical-align:middle" oninput="document.getElementById('nf2-cmax-v').textContent=Math.round(this.value);nf2Draw()"><span id="nf2-cmax-v" style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:#43494e;min-width:26px;text-align:right;display:inline-block">-30</span>
+      max <input id="nf2-cmax" type="range" min="-200" max="50" step="1" value="-30" style="width:66px;cursor:pointer;accent-color:#CC0000;vertical-align:middle" oninput="document.getElementById('nf2-cmax-v').value=Math.round(this.value);nf2Draw()"><input id="nf2-cmax-v" type="number" value="-30" step="1" style="width:46px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:#43494e;border:1px solid #ccd0d4;border-radius:2px;padding:1px 3px;text-align:right;background:#fff" oninput="nf2SetDbNum('max',+this.value)" onkeydown="if(event.key==='Enter')nf2Draw()">
     </label>
     <label style="display:flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#43494e;cursor:pointer;white-space:nowrap">
       <input type="checkbox" id="nf2-energy" checked onchange="nf2Draw()"> energy
@@ -4270,6 +4270,17 @@ function parseNF2CSV(text, fname) {
   nf2DrawChannelCanvas();
 }
 
+/* Sync slider + number-input together, expanding slider range if value is outside [-200,50] */
+function nf2SetDbNum(which, val) {
+  if(!isFinite(val)) return;
+  val = Math.round(val);
+  const sld = document.getElementById('nf2-c' + which);          // nf2-cmin | nf2-cmax
+  if(val < +sld.min) sld.min = val;
+  if(val > +sld.max) sld.max = val;
+  sld.value = val;
+  nf2Draw();
+}
+
 function nf2AutoScale(redraw) {
   if(!NF2.rows) return;
   const { d0, d1 } = NF2.zoom;
@@ -4282,12 +4293,17 @@ function nf2AutoScale(redraw) {
   allVals.sort((a,b) => a-b);
   const cmin = Math.round(allVals[Math.floor(allVals.length*0.02)]);
   const cmax = Math.round(allVals[Math.floor(allVals.length*0.98)]);
-  document.getElementById('nf2-cmin').value = cmin;
-  document.getElementById('nf2-cmax').value = cmax;
+  // Expand slider range to cover data, then set both controls
+  const sld1 = document.getElementById('nf2-cmin');
+  const sld2 = document.getElementById('nf2-cmax');
+  if(cmin < +sld1.min) sld1.min = cmin;
+  if(cmax > +sld2.max) sld2.max = cmax;
+  sld1.value = cmin;
+  sld2.value = cmax;
   const sv  = document.getElementById('nf2-cmin-v');
   const sv2 = document.getElementById('nf2-cmax-v');
-  if(sv)  sv.textContent  = cmin;
-  if(sv2) sv2.textContent = cmax;
+  if(sv)  sv.value = cmin;
+  if(sv2) sv2.value = cmax;
   if(redraw !== false) nf2Draw();
 }
 
@@ -5217,12 +5233,16 @@ function nf2ResetZoom() {
     if(my < PAD.top || my > PAD.top+PH) return;
     const frac = (my - PAD.top) / PH;
     const pivot = d0 + frac * dSpan;
-    const factor = e.deltaY > 0 ? 1.28 : 0.78;
-    const newSpan = Math.max(5, Math.min(NF2.depMax-NF2.depMin, dSpan*factor));
-    let nd0 = pivot - frac*newSpan, nd1 = nd0 + newSpan;
-    if(nd0 < NF2.depMin){ nd0=NF2.depMin; nd1=nd0+newSpan; }
-    if(nd1 > NF2.depMax){ nd1=NF2.depMax; nd0=nd1-newSpan; }
-    NF2.zoom = { d0: Math.max(NF2.depMin,nd0), d1: Math.min(NF2.depMax,nd1) };
+    const factor  = e.deltaY > 0 ? 1.28 : 0.78;
+    const totSpan = NF2.depMax - NF2.depMin || 1;
+    const newSpan = Math.max(totSpan * 0.001, Math.min(totSpan, dSpan * factor));
+    let nd0 = pivot - frac * newSpan, nd1 = nd0 + newSpan;
+    if(nd0 < NF2.depMin){ nd0 = NF2.depMin; nd1 = nd0 + newSpan; }
+    if(nd1 > NF2.depMax){ nd1 = NF2.depMax; nd0 = nd1 - newSpan; }
+    nd0 = Math.max(NF2.depMin, nd0);
+    nd1 = Math.min(NF2.depMax, nd1);
+    if(nd0 >= nd1) { nd0 = NF2.depMin; nd1 = NF2.depMax; }  // safety fallback
+    NF2.zoom = { d0: nd0, d1: nd1 };
     if(document.getElementById('nf2-auto').checked) nf2AutoScale(false);
     nf2Draw();
   }, {passive:false});
@@ -5320,12 +5340,16 @@ function nf2ResetZoom() {
     // pan drag (left button, only when not in draw mode)
     if(dragState && NF2._rc && !NF2.drawMode) {
       const { PAD, PH, dSpan } = NF2._rc;
-      const dy = (my - dragState.startY) / PH * dSpan;
-      let nd0 = dragState.d0 + dy, nd1 = dragState.d1 + dy;
-      const span = nd1 - nd0;
-      if(nd0 < NF2.depMin){ nd0=NF2.depMin; nd1=nd0+span; }
-      if(nd1 > NF2.depMax){ nd1=NF2.depMax; nd0=nd1-span; }
-      NF2.zoom = { d0:nd0, d1:nd1 };
+      const dy    = (my - dragState.startY) / PH * dSpan;
+      const span  = dragState.d1 - dragState.d0;   // preserve original span
+      let nd0 = dragState.d0 + dy;
+      let nd1 = nd0 + span;
+      if(nd0 < NF2.depMin){ nd0 = NF2.depMin; nd1 = nd0 + span; }
+      if(nd1 > NF2.depMax){ nd1 = NF2.depMax; nd0 = nd1 - span; }
+      nd0 = Math.max(NF2.depMin, nd0);
+      nd1 = Math.min(NF2.depMax, nd1);
+      if(nd0 >= nd1) { nd0 = NF2.depMin; nd1 = NF2.depMax; }  // safety fallback
+      NF2.zoom = { d0: nd0, d1: nd1 };
       nf2Draw();
     }
   });
