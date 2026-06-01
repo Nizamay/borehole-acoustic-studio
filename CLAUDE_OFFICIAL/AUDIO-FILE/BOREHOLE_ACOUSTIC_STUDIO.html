@@ -1096,6 +1096,7 @@ input[type=file]{display:none;}
       <option value="viridis">Viridis</option>
       <option value="grays">Grays</option>
     </select>
+    <button id="nf2-dl-filtered" onclick="nfDownloadFilteredCsv()" title="Save CSV with all active filters applied (muted channels, anomaly filter, ridges — all interpolated)" style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 10px;border:1px solid #CC0000;color:#fff;background:#CC0000;cursor:pointer;border-radius:2px;font-weight:700;letter-spacing:.04em">⬇ SAVE FILTERED CSV</button>
     <button onclick="nf2ResetZoom()" style="font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 9px;border:1px solid #CC0000;color:#CC0000;background:#fff;cursor:pointer;border-radius:2px">↺ ZOOM</button>
   </div>
 
@@ -4007,6 +4008,70 @@ function nfDownloadCsv() {
   const base = NF2.filename ? NF2.filename.replace(/\.[^.]+$/, '') : 'spectrogram';
   a.href = url; a.download = base + '_emeraude.csv';
   a.click(); URL.revokeObjectURL(url);
+}
+
+// ── NF Download FILTERED CSV ──────────────────────────────
+// Applies all active filters via nf2GetSpec():
+//   • mutedBins  — manually muted channels
+//   • anomalyBins (if filterApplied) — auto-detected electronic noise
+//   • ridges      — freehand ridge masks
+// Masked bins are replaced by linear interpolation from neighbours.
+function nfDownloadFilteredCsv() {
+  if (!NF2.rows || !NF2.rows.length) { alert('No data loaded.'); return; }
+  const rows  = NF2.rows;
+  const nBins = NF2.nBins;
+  const depUnit = NF2.depUnit || 'm';
+
+  // Summarise what's active for the filename/log
+  const muted  = nf2ActiveMuted();
+  const ridgeN = NF2.ridges.filter(r => r.active && r.mask).length;
+  const parts  = [];
+  if (NF2.mutedBins.size)     parts.push(NF2.mutedBins.size + ' muted');
+  if (NF2.filterApplied && NF2.anomalyBins.size)
+    parts.push((NF2.anomalyBins.size - (NF2.anomalyExcluded ? NF2.anomalyExcluded.size : 0)) + ' anomaly');
+  if (ridgeN) parts.push(ridgeN + ' ridge(s)');
+
+  // Header row
+  const binNames = NF2.binNames
+    ? NF2.binNames
+    : Array.from({length: nBins}, (_, i) => 'CH' + (i + 1));
+  const hdrCols = ['Depth', ...binNames];
+  if (NF2.hasEnergy)   hdrCols.push('ENERGY');
+  if (NF2.hasCentroid) hdrCols.push('CENTROID');
+
+  // Units row (Emeraude format)
+  const unitCols = [depUnit];
+  for (let b = 0; b < nBins; b++) unitCols.push('dB');
+  if (NF2.hasEnergy)   unitCols.push('');
+  if (NF2.hasCentroid) unitCols.push('');
+
+  // Data rows — nf2GetSpec applies all active filters with linear interpolation
+  const lines = [hdrCols.join(','), unitCols.join(',')];
+  rows.forEach((r, i) => {
+    const spec = nf2GetSpec(i);
+    const cols = [r.depth.toFixed(3)];
+    for (let b = 0; b < nBins; b++)
+      cols.push(spec[b] !== undefined ? (+spec[b]).toFixed(4) : '');
+    if (NF2.hasEnergy)   cols.push(r.energy   !== undefined ? r.energy.toFixed(4)   : '');
+    if (NF2.hasCentroid) cols.push(r.centroid  !== undefined ? r.centroid.toFixed(4) : '');
+    lines.push(cols.join(','));
+  });
+
+  const blob = new Blob([lines.join('\r\n')], {type: 'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const base = NF2.filename ? NF2.filename.replace(/\.[^.]+$/, '') : 'spectrogram';
+  a.href = url; a.download = base + '_filtered.csv';
+  a.click(); URL.revokeObjectURL(url);
+
+  // Update button label briefly
+  const btn = document.getElementById('nf2-dl-filtered');
+  if (btn) {
+    const label = parts.length ? '✓ ' + parts.join(', ') : '✓ no filters (raw)';
+    const orig  = btn.textContent;
+    btn.textContent = label;
+    setTimeout(() => { btn.textContent = orig; }, 2500);
+  }
 }
 
 // ══════════════════════════════════════════════════════════
