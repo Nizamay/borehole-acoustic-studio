@@ -1,0 +1,3268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DMP → CSV Converter (Emeraude)</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Barlow+Condensed:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef2f6;--panel:#ffffff;--panel2:#f6f9fc;
+  --border:#d1d9e3;--border2:#a8b3c4;
+  --c-p:#0d9488;--c-t:#dc2626;--c-d:#d97706;--c-ccl:#1d4ed8;--c-snl:#7c3aed;
+  --text:#1f2937;--muted:#6b7280;--muted2:#9ca3af;
+  --mono:'JetBrains Mono',monospace;--display:'Barlow Condensed',sans-serif;--r:4px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:11px;display:flex;flex-direction:column;}
+
+.topbar{display:flex;align-items:center;padding:0 14px;height:42px;border-bottom:1px solid var(--border);background:var(--panel);gap:12px;flex-shrink:0;position:relative;}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--c-p),var(--c-ccl),var(--c-snl),transparent 85%);opacity:.4;}
+.logo{font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:.06em;white-space:nowrap;}
+.logo em{color:var(--c-p);font-style:normal;}
+.logo-sub{font-size:7px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;margin-top:1px;}
+.tsep{width:1px;height:26px;background:var(--border);flex-shrink:0;}
+.crumbs{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+
+main{flex:1;min-height:0;display:flex;gap:14px;padding:14px;overflow:hidden;}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0;}
+.col-l{flex:0 0 400px;overflow-y:auto;}
+.col-l::-webkit-scrollbar{width:6px;}
+.col-l::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.col-r{flex:1;}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;}
+.card-title{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.card-title::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--c-p);}
+.card-title.t-snl::before{background:var(--c-snl);}
+.card-title.t-ccl::before{background:var(--c-ccl);}
+.card-title.t-d::before{background:var(--c-d);}
+
+.dz{border:1.5px dashed var(--border2);border-radius:var(--r);padding:22px 14px;text-align:center;cursor:pointer;transition:all .15s;background:var(--panel2);}
+.dz:hover{border-color:var(--c-p);background:rgba(0,229,180,.04);}
+.dz.drag{border-color:var(--c-p);background:rgba(0,229,180,.08);}
+.dz.loaded{border-style:solid;border-color:var(--c-p);background:rgba(0,229,180,.05);}
+.dz.loaded.d{border-color:var(--c-d);background:rgba(251,191,36,.05);}
+.dz-icon{font-size:18px;color:var(--muted);margin-bottom:4px;font-family:var(--display);font-weight:700;letter-spacing:.1em;}
+.dz.loaded .dz-icon{color:var(--c-p);}
+.dz.loaded.d .dz-icon{color:var(--c-d);}
+.dz-name{font-size:10px;color:var(--text);word-break:break-all;}
+.dz-hint{font-size:8px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:2px;}
+
+.field{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.field-label{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+.field input[type=text]{background:var(--panel2);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;transition:border-color .15s;}
+.field input[type=text]:focus{border-color:var(--c-p);}
+.field select{background:var(--panel2);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;color:var(--text);font-family:var(--mono);font-size:10.5px;outline:none;cursor:pointer;}
+.field select:focus{border-color:var(--c-p);}
+
+.toggle{display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:var(--r);padding:2px;gap:2px;}
+.toggle button{flex:1;padding:6px 10px;background:transparent;border:none;color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:3px;transition:all .15s;}
+.toggle button.on{background:var(--c-p);color:#ffffff;font-weight:600;}
+
+.fname{background:var(--panel2);border:1px dashed var(--border2);border-radius:var(--r);padding:8px 10px;font-size:10px;color:var(--c-p);word-break:break-all;margin-top:6px;font-family:var(--mono);}
+.fname-multi{display:flex;flex-direction:column;gap:3px;}
+.fname .lbl{font-size:7.5px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-right:6px;}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:8px;}
+.stat{display:flex;flex-direction:column;gap:2px;}
+.stat-k{font-size:7.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+.stat-v{font-size:12px;color:var(--text);font-weight:500;}
+.stat-v.p{color:var(--c-p);}
+.stat-v.snl{color:var(--c-snl);}
+.stat-v.ccl{color:var(--c-ccl);}
+.stat-v.d{color:var(--c-d);}
+
+.btns{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.btn{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer;transition:all .15s;text-align:left;}
+.btn:hover:not(:disabled){border-color:var(--c-p);background:rgba(0,229,180,.06);}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.btn .ico{font-family:var(--display);font-weight:800;color:var(--c-p);letter-spacing:.1em;font-size:9px;}
+.btn .sz{font-size:8px;color:var(--muted);letter-spacing:.12em;}
+.btn.snl .ico{color:var(--c-snl);}
+.btn.snl:hover:not(:disabled){border-color:var(--c-snl);background:rgba(167,139,250,.06);}
+.btn.primary{background:rgba(0,229,180,.1);border-color:var(--c-p);color:var(--c-p);font-weight:600;justify-content:center;padding:10px;}
+.btn.primary:hover:not(:disabled){background:rgba(0,229,180,.18);}
+
+.kind-tag{display:inline-block;padding:2px 8px;border-radius:2px;font-size:8px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;}
+.kind-tag.bm{background:rgba(0,229,180,.12);color:var(--c-p);border:1px solid var(--c-p);}
+.kind-tag.alf{background:rgba(167,139,250,.12);color:var(--c-snl);border:1px solid var(--c-snl);}
+.kind-tag.none{background:var(--panel2);color:var(--muted);border:1px solid var(--border);}
+
+.log{flex:1;min-height:120px;background:#fafbfc;border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;overflow-y:auto;font-size:10px;line-height:1.55;color:var(--muted);}
+.log .ln{white-space:pre-wrap;}
+.log .ln.ok{color:var(--c-p);}
+.log .ln.err{color:var(--c-t);}
+.log .ln.warn{color:var(--c-d);}
+.log .ln.info{color:var(--text);}
+.log::-webkit-scrollbar{width:6px;}
+.log::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+.preview-wrap{flex:1;min-height:0;display:flex;flex-direction:column;}
+.preview{flex:1;min-height:0;overflow:auto;background:#fafbfc;border:1px solid var(--border);border-radius:var(--r);}
+.preview table{border-collapse:collapse;font-size:9.5px;width:100%;font-variant-numeric:tabular-nums;}
+.preview th{position:sticky;top:0;background:var(--panel);color:var(--muted);font-weight:500;letter-spacing:.1em;text-transform:uppercase;font-size:8px;padding:6px 9px;text-align:left;border-bottom:1px solid var(--border2);white-space:nowrap;z-index:1;}
+.preview td{padding:3px 9px;border-bottom:1px solid #e5e9ee;color:var(--text);white-space:nowrap;}
+.preview tr.units td{color:var(--c-d);font-size:9px;letter-spacing:.04em;background:rgba(251,191,36,.04);}
+.preview tr:hover td{background:rgba(0,229,180,.04);}
+.preview-empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;letter-spacing:.18em;text-transform:uppercase;}
+
+.busy{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--c-p),transparent);background-size:200% 100%;animation:slide 1.1s linear infinite;display:none;}
+.busy.on{display:block;}
+@keyframes slide{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+.pv-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;border-bottom:none;background:var(--panel);overflow:hidden;}
+.pv-tabs.hidden{display:none;}
+.pv-tab{padding:6px 14px;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:transparent;border:none;cursor:pointer;border-bottom:2px solid transparent;}
+.pv-tab:hover{color:var(--text);}
+.pv-tab.active{color:var(--text);border-bottom-color:var(--c-p);}
+.preview.tabbed{border-radius:0 0 var(--r) var(--r);}
+
+.opt-row{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--text);cursor:pointer;user-select:none;margin-top:6px;}
+.opt-row input{accent-color:var(--c-p);cursor:pointer;}
+.opt-row .h{color:var(--muted);font-size:8px;letter-spacing:.14em;text-transform:uppercase;margin-left:auto;}
+
+/* ── Depth-mapping modal ─────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(31,41,55,.55);display:none;z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.modal-overlay.on{display:flex;}
+.modal{background:var(--panel);border:1px solid var(--border);border-radius:6px;width:min(760px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.6);}
+.modal-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.modal-hdr .ttl{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--text);}
+.modal-hdr .ttl em{color:var(--c-d);font-style:normal;}
+.modal-hdr .fname-tag{font-size:9px;color:var(--muted);letter-spacing:.08em;}
+.modal-hdr .x{margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 6px;line-height:1;}
+.modal-hdr .x:hover{color:var(--c-t);}
+.modal-body{padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;flex:1;}
+.modal-ftr{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;}
+.raw-preview{background:#fafbfc;border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:10px;line-height:1.55;max-height:160px;overflow-y:auto;color:var(--text);font-family:var(--mono);}
+.raw-preview .l{display:flex;gap:10px;white-space:pre;}
+.raw-preview .ln-no{color:var(--muted2);min-width:22px;text-align:right;flex-shrink:0;}
+.raw-preview .l.h{color:var(--c-p);}
+.raw-preview .l.h .ln-no{color:var(--c-p);}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;}
+.cfg-grid .field{margin:0;}
+.parsed-preview{border:1px solid var(--border);border-radius:4px;overflow:auto;max-height:200px;background:#fafbfc;}
+.parsed-preview table{width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums;}
+.parsed-preview th{position:sticky;top:0;background:var(--panel);color:var(--muted);padding:6px 9px;text-align:left;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;border-bottom:1px solid var(--border2);}
+.parsed-preview td{padding:3px 9px;border-top:1px solid #e5e9ee;color:var(--text);}
+.parsed-msg{font-size:9.5px;padding:7px 10px;border-radius:4px;border:1px solid;}
+.parsed-msg.ok{color:var(--c-p);background:rgba(0,229,180,.06);border-color:var(--c-p);}
+.parsed-msg.err{color:var(--c-t);background:rgba(255,107,74,.06);border-color:var(--c-t);}
+.parsed-msg.warn{color:var(--c-d);background:rgba(251,191,36,.06);border-color:var(--c-d);}
+.btn-modal{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:4px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+.btn-modal:hover{border-color:var(--c-p);color:var(--c-p);}
+.btn-modal.primary{background:rgba(0,229,180,.12);border-color:var(--c-p);color:var(--c-p);font-weight:600;}
+.btn-modal.primary:hover{background:rgba(0,229,180,.22);}
+.btn-modal:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── Alignment controls ─────────────────────────────────────── */
+.adj-row{display:flex;gap:3px;align-items:center;margin-top:4px;}
+.adj-row input[type=number]{flex:1;min-width:50px;background:var(--panel2);border:1px solid var(--border);border-radius:var(--r);padding:6px 6px;color:var(--text);font-family:var(--mono);font-size:10.5px;outline:none;text-align:center;-moz-appearance:textfield;}
+.adj-row input[type=number]::-webkit-outer-spin-button,.adj-row input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.adj-row input[type=number]:focus{border-color:var(--c-d);}
+.adj-btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:5px 6px;border-radius:3px;font-family:var(--mono);font-size:9.5px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.adj-btn:hover{border-color:var(--c-d);color:var(--c-d);}
+.adj-btn:disabled{opacity:.35;cursor:not-allowed;}
+
+.log-btn{background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:3px;font-family:var(--mono);font-size:8.5px;cursor:pointer;text-transform:uppercase;letter-spacing:.08em;margin-left:4px;}
+.log-btn:hover{border-color:var(--c-p);color:var(--c-p);}
+.log-btn.muted{background:rgba(220,38,38,.1);border-color:var(--c-t);color:var(--c-t);}
+
+/* DMP slots — show loaded BM and ALF files */
+.dmp-slots{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.slot{display:flex;align-items:center;gap:8px;padding:5px 9px;background:var(--panel2);border:1px solid var(--border);border-radius:3px;font-size:9.5px;color:var(--muted);}
+.slot.filled{color:var(--text);border-color:var(--c-p);background:rgba(13,148,136,.05);}
+.slot-label{font-weight:700;min-width:34px;font-family:var(--display);letter-spacing:.14em;font-size:9.5px;color:var(--muted);}
+.slot.filled .slot-label{color:var(--c-p);}
+.slot-name{flex:1;word-break:break-all;font-size:9px;}
+.slot-rm{cursor:pointer;color:var(--muted);font-size:14px;line-height:1;padding:0 4px;visibility:hidden;}
+.slot.filled .slot-rm{visibility:visible;}
+.slot-rm:hover{color:var(--c-t);}
+
+/* ── Plot (light theme inside card) ──────────────────────────── */
+.plot-card{padding:0;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.plot-card .card-title{padding:12px 14px 6px;margin:0;}
+.plot-canvas-wrap{position:relative;flex:1;min-height:0;background:#f5f7fa;}
+.plot-canvas{display:block;width:100%;height:100%;background:#f5f7fa;cursor:grab;}
+.plot-canvas.pick{cursor:crosshair;}
+.plot-canvas.panning{cursor:grabbing;}
+.plot-legend{display:flex;gap:14px;padding:6px 14px;border-top:1px solid var(--border);font-size:9.5px;color:var(--muted);flex-wrap:wrap;flex-shrink:0;background:var(--panel);}
+.legend-item{display:flex;align-items:center;gap:5px;user-select:none;padding:2px 4px;border-radius:3px;transition:background .12s;}
+.legend-item:hover{background:rgba(0,0,0,.05);}
+.legend-item.off{opacity:.4;}
+.legend-item.off .legend-line{background:#aaa !important;}
+.legend-item.off .legend-name{text-decoration:line-through;}
+.legend-line{width:14px;height:2px;flex-shrink:0;}
+.legend-name{color:var(--text);font-weight:600;}
+.legend-rng{color:var(--muted);}
+.plot-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#f5f7fa;}
+.plot-tooltip{position:absolute;background:rgba(12,15,20,.94);border:1px solid #232d3f;border-radius:3px;padding:5px 8px;font-size:9.5px;color:#dde6f0;pointer-events:none;white-space:nowrap;display:none;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.plot-tooltip.on{display:block;}
+
+/* Pick mode controls */
+.pick-row{display:flex;gap:6px;margin-top:8px;}
+.pick-btn{flex:1;background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:7px 8px;border-radius:3px;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
+.pick-btn:hover{border-color:var(--c-d);color:var(--c-d);}
+.pick-btn.active{background:rgba(220,38,38,.12);border-color:#dc2626;color:#b91c1c;}
+.pick-status{font-size:9.5px;color:var(--c-d);margin-top:7px;min-height:14px;letter-spacing:.02em;line-height:1.4;}
+.pick-status.err{color:var(--c-t);}
+.pick-status.ok {color:var(--c-p);}
+
+/* Pick target toggle */
+#pick-target-toggle button{flex:1;padding:6px 10px;font-size:10px;letter-spacing:.1em;}
+#pt-depth.on{background:var(--c-d);color:#fff;font-weight:700;}
+#pt-alf.on  {background:var(--c-snl);color:#fff;font-weight:700;}
+#pick-target-toggle button:not(.on){color:var(--muted);}
+
+/* Zoom controls in plot card title */
+.zoom-controls{display:flex;gap:3px;margin-left:auto;}
+.zoom-btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);min-width:26px;height:22px;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;font-family:var(--mono);}
+.zoom-btn:hover{border-color:var(--c-p);color:var(--c-p);}
+.zoom-btn:active{background:var(--panel);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="busy" id="busy"></div>
+  <div style="display:flex;flex-direction:column;justify-content:center;">
+    <div class="logo"><em>DMP</em>→CSV</div>
+    <div class="logo-sub">Emeraude format</div>
+  </div>
+  <div class="tsep" style="margin-left:auto;"></div>
+  <div class="crumbs"><span class="kind-tag none" id="kind-tag">no file</span></div>
+</div>
+
+<main>
+  <div class="col col-l">
+
+    <div class="card">
+      <div class="card-title">Input · .dmp <span style="color:var(--muted);font-weight:400;letter-spacing:.06em;text-transform:none;font-size:9px;">— BM + ALF can be loaded together</span></div>
+      <div class="dz" id="dz-dmp" tabindex="0">
+        <div class="dz-icon">DMP</div>
+        <div class="dz-name" id="dz-dmp-name">drop .dmp file(s) — auto-detect BM/ALF</div>
+        <div class="dz-hint">drag both, or one at a time</div>
+      </div>
+      <input type="file" id="file-dmp" accept=".dmp" multiple style="display:none;">
+      <div class="dmp-slots">
+        <div class="slot" id="slot-bm">
+          <span class="slot-label">BM</span>
+          <span class="slot-name" id="slot-bm-name">—</span>
+          <span class="slot-rm" id="slot-bm-rm" title="Remove BM">×</span>
+        </div>
+        <div class="slot" id="slot-alf">
+          <span class="slot-label">ALF</span>
+          <span class="slot-name" id="slot-alf-name">—</span>
+          <span class="slot-rm" id="slot-alf-rm" title="Remove ALF">×</span>
+        </div>
+      </div>
+      <label class="opt-row"><input type="checkbox" id="opt-strip100"> BM: strip 100-byte header <span class="h">--strip100</span></label>
+    </div>
+
+    <div class="card">
+      <div class="card-title t-d">Input · depth</div>
+      <div class="dz" id="dz-dep" tabindex="0">
+        <div class="dz-icon">DEPTH</div>
+        <div class="dz-name" id="dz-dep-name">drop depth file (.txt / .csv)</div>
+        <div class="dz-hint">tab-sep: DATE_TIME_LT, LineDepth[m|ft]</div>
+      </div>
+      <input type="file" id="file-dep" accept=".txt,.csv,.tsv" style="display:none;">
+    </div>
+
+    <div class="card">
+      <div class="card-title t-ccl">Settings</div>
+
+      <div class="field">
+        <div class="field-label">Well Name</div>
+        <input type="text" id="well" placeholder="e.g. DKG-0008" value="">
+      </div>
+
+      <div class="field">
+        <div class="field-label">Depth Unit</div>
+        <div class="toggle">
+          <button id="u-m" class="on">m</button>
+          <button id="u-ft">ft</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">ALF Mode</div>
+        <select id="alf-mode">
+          <option value="lfp-hfp-512">LFP + HFP — 512 + 512 channels (2 CSVs)</option>
+          <option value="hfp-1024">HFP only — 1024 channels (1 CSV)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <div class="field-label">ALF Sample Rate (Hz)</div>
+        <div class="adj-row">
+          <button class="adj-btn" data-sr="1800">1800</button>
+          <button class="adj-btn" data-sr="3600">3600</button>
+          <input type="number" id="alf-sr" value="1800" step="50" min="100" style="flex:1.5;background:var(--panel2);border:1px solid var(--border);border-radius:var(--r);padding:6px 8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;text-align:center;">
+          <button class="adj-btn" id="alf-sr-fit" title="Compute SR so ALF duration matches depth file duration">⇄ FIT</button>
+        </div>
+        <div id="alf-sr-info" style="font-size:8.5px;color:var(--muted);margin-top:4px;letter-spacing:.04em;"></div>
+      </div>
+
+      <div class="field" id="start-field">
+        <div class="field-label">ALF Start (UTC) <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:8.5px;">— editable; BM start is fixed by records</span></div>
+        <input type="text" id="start-time" placeholder="YYYY-MM-DD HH:MM:SS" value="">
+      </div>
+
+      <div class="field">
+        <div class="field-label">Output Filenames</div>
+        <div class="fname fname-multi" id="fname-preview"><span class="lbl">load .dmp to preview</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Convert</div>
+      <button class="btn primary" id="btn-convert" disabled>SYNC</button>
+      <div id="results-block" style="display:none;">
+        <div class="stats" id="stats"></div>
+        <div class="btns" id="btns"></div>
+        <button class="btn" id="btn-apply-depth" style="margin-top:8px;background:rgba(217,119,6,.1);border-color:var(--c-d);color:var(--c-d);font-weight:600;">
+          <span><span class="ico" style="color:var(--c-d);">⟳ APPLY DEPTH to all CSVs</span></span>
+          <span class="sz" id="apply-depth-sz"></span>
+        </button>
+        <button class="btn" id="btn-save-las" style="margin-top:4px;border-color:var(--c-d);color:var(--c-d);">
+          <span><span class="ico" style="color:var(--c-d);">⬇ Save aligned depth as LAS</span></span>
+          <span class="sz">.las</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:6px;">Project</div>
+      <div style="display:flex;gap:6px;">
+        <button type="button" class="btn" id="btn-save-project" style="flex:1;border-color:var(--c-snl);color:var(--c-snl);">
+          <span class="ico" style="color:var(--c-snl);">⬇ Save</span>
+        </button>
+        <button type="button" class="btn" id="btn-load-project" style="flex:1;">
+          <span class="ico">⬆ Load</span>
+        </button>
+      </div>
+      <input type="file" id="file-project" accept=".json" style="display:none;">
+    </div>
+
+    <div class="card">
+      <div class="card-title t-d">Depth Alignment</div>
+      <div class="field">
+        <div class="field-label">Shift (seconds) <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:8.5px;">— positive = move depth later</span></div>
+        <div class="adj-row">
+          <button class="adj-btn" data-adj="shift" data-d="-10">−10</button>
+          <button class="adj-btn" data-adj="shift" data-d="-1">−1</button>
+          <input type="number" id="shift" value="0" step="1">
+          <button class="adj-btn" data-adj="shift" data-d="1">+1</button>
+          <button class="adj-btn" data-adj="shift" data-d="10">+10</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Stretch factor <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:8.5px;">— 1.0 = no change</span></div>
+        <div class="adj-row">
+          <button class="adj-btn" data-adj="stretch" data-d="-0.01">−.01</button>
+          <button class="adj-btn" data-adj="stretch" data-d="-0.001">−.001</button>
+          <input type="number" id="stretch" value="1.0" step="0.001">
+          <button class="adj-btn" data-adj="stretch" data-d="0.001">+.001</button>
+          <button class="adj-btn" data-adj="stretch" data-d="0.01">+.01</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <div class="field-label">Pick target — which curve to move</div>
+        <div class="toggle" id="pick-target-toggle">
+          <button id="pt-depth" class="on" style="border-color:var(--c-d);">DEPTH</button>
+          <button id="pt-alf"   style="border-color:var(--c-snl);">ALF</button>
+        </div>
+      </div>
+      <div class="pick-row">
+        <button class="pick-btn" id="btn-pick-shift">⊙ Pick Shift</button>
+        <button class="pick-btn" id="btn-pick-stretch">↔ Pick Stretch</button>
+      </div>
+      <div class="pick-status" id="pick-status">Choose target (DEPTH / ALF), then Pick Shift (drag) or Pick Stretch (sticks).</div>
+      <div class="adj-row" style="margin-top:6px;gap:4px;">
+        <button class="adj-btn" id="btn-undo" style="flex:1;padding:7px;" title="Ctrl+Z">↶ UNDO</button>
+        <button class="adj-btn" id="btn-redo" style="flex:1;padding:7px;" title="Ctrl+Y / Ctrl+Shift+Z">↷ REDO</button>
+        <button class="adj-btn" id="btn-reset-align" style="flex:1;padding:7px;">RESET</button>
+      </div>
+    </div>
+
+    <div class="card" style="flex:1;min-height:0;display:flex;flex-direction:column;">
+      <div class="card-title" style="display:flex;align-items:center;">
+        <span>Log</span>
+        <button id="log-mute" class="log-btn" style="margin-left:auto;">⊙ viz logs ON</button>
+        <button id="log-clear" class="log-btn">CLEAR</button>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+
+  </div>
+
+  <div class="col col-r">
+    <div class="card plot-card" style="height:340px;">
+      <div class="card-title">
+        <span>Visualization</span>
+        <span style="color:var(--muted);font-weight:400;letter-spacing:.06em;text-transform:none;font-size:9px;" id="plot-sub">— wheel = zoom, dblclick = reset</span>
+        <div class="zoom-controls">
+          <button class="zoom-btn" id="zoom-out" title="Zoom out (or scroll wheel down)">−</button>
+          <button class="zoom-btn" id="zoom-in"  title="Zoom in (or scroll wheel up)">+</button>
+          <button class="zoom-btn" id="zoom-reset" title="Reset zoom (or double-click plot)" style="font-size:10px;">⊞</button>
+        </div>
+      </div>
+      <div class="plot-canvas-wrap">
+        <canvas id="plot" class="plot-canvas"></canvas>
+        <div class="plot-empty" id="plot-empty">run conversion to see plot</div>
+        <div class="plot-tooltip" id="plot-tt"></div>
+      </div>
+      <div id="plot-status" style="padding:2px 10px 4px;font-size:8.5px;color:var(--muted);font-family:var(--mono);letter-spacing:.06em;background:var(--panel);border-top:1px solid var(--border);"></div>
+      <div class="plot-legend" id="plot-legend"></div>
+    </div>
+
+    <div class="card" style="flex:1;min-height:0;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+      <div style="padding:12px 14px 6px;">
+        <div class="card-title" style="margin-bottom:0;">CSV Preview <span id="pv-sub" style="color:var(--muted);font-weight:400;letter-spacing:.06em;text-transform:none;font-size:9px;margin-left:8px;">header + units + first 100 rows</span></div>
+      </div>
+      <div class="preview-wrap" style="padding:0 14px 14px;">
+        <div class="pv-tabs hidden" id="pv-tabs"></div>
+        <div class="preview" id="preview"><div class="preview-empty">load .dmp + depth → press RUN</div></div>
+        <div id="pv-status" style="font-size:8.5px;color:var(--muted);padding:4px 2px 0;letter-spacing:.04em;min-height:14px;"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ─── Depth file mapping modal ─────────────────────────────── -->
+<div class="modal-overlay" id="dmod">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="ttl"><em>Depth</em> File Mapping</div>
+      <div class="fname-tag" id="dmod-fname"></div>
+      <button class="x" id="dmod-x" title="Cancel">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div>
+        <div class="field-label" style="margin-bottom:4px;">Raw preview · first 12 lines</div>
+        <div class="raw-preview" id="dmod-raw"></div>
+      </div>
+
+      <div class="cfg-grid">
+        <div class="field">
+          <div class="field-label">Delimiter</div>
+          <select id="dmod-delim">
+            <option value="auto">Auto-detect</option>
+            <option value="tab">Tab</option>
+            <option value="comma">Comma ,</option>
+            <option value="semi">Semicolon ;</option>
+            <option value="ws">Whitespace</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="field-label">Header row</div>
+          <select id="dmod-hdr">
+            <option value="1">First row is header</option>
+            <option value="0">No header — data from row 1</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="field-label">Date column</div>
+          <select id="dmod-cdate"></select>
+        </div>
+        <div class="field">
+          <div class="field-label">Time column</div>
+          <select id="dmod-ctime">
+            <option value="-1">(same as date column — combined)</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="field-label">Depth column</div>
+          <select id="dmod-cdep"></select>
+        </div>
+        <div class="field">
+          <div class="field-label">Date format</div>
+          <select id="dmod-fmt">
+            <option value="auto">Auto-detect</option>
+            <option value="MDY">M/D/YYYY · US</option>
+            <option value="DMY">D/M/YYYY · EU</option>
+            <option value="YMD">YYYY-MM-DD · ISO</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="field-label">Source unit</div>
+          <select id="dmod-unit">
+            <option value="m">meters (m)</option>
+            <option value="ft">feet (ft)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <div class="field-label" style="margin-bottom:4px;">Parsed preview</div>
+        <div class="parsed-preview" id="dmod-parsed"></div>
+        <div class="parsed-msg" id="dmod-msg" style="margin-top:6px;"></div>
+      </div>
+
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-modal" id="dmod-cancel">Cancel</button>
+      <button class="btn-modal primary" id="dmod-ok" disabled>Use this configuration</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   DMP → Emeraude CSV  — plugin for Borehole Acoustic Studio
+   BM math: 1:1 port of parseDmp from BOREHOLE_ACOUSTIC_STUDIO.html
+   ALF math: 1:1 port of _parseDmpRaw (Hann window, Cooley-Tukey FFT)
+═══════════════════════════════════════════════════════════════════ */
+
+const REC = 260;
+const P_DYN_K = 2.354;
+const CCL_CAND = [76, 78, 80, 82, 84, 86, 88];
+const ALF_MAX_FRAMES = 20000;
+const PREVIEW_ROWS = 100;
+const M_PER_FT = 0.3048;
+
+/* ── UI refs ─────────────────────────────────────────────────── */
+const dzDmp     = document.getElementById('dz-dmp');
+const dzDep     = document.getElementById('dz-dep');
+const fileDmp   = document.getElementById('file-dmp');
+const fileDep   = document.getElementById('file-dep');
+const dzDmpName = document.getElementById('dz-dmp-name');
+const dzDepName = document.getElementById('dz-dep-name');
+const logEl     = document.getElementById('log');
+const wellEl    = document.getElementById('well');
+const alfModeEl = document.getElementById('alf-mode');
+const btnUm     = document.getElementById('u-m');
+const btnUft    = document.getElementById('u-ft');
+const fnamePrev = document.getElementById('fname-preview');
+const btnConv   = document.getElementById('btn-convert');
+const resultsBlock = document.getElementById('results-block');
+const statsEl   = document.getElementById('stats');
+const btnsEl    = document.getElementById('btns');
+const previewEl = document.getElementById('preview');
+const pvTabsEl  = document.getElementById('pv-tabs');
+const kindTag   = document.getElementById('kind-tag');
+const busy      = document.getElementById('busy');
+const optStrip  = document.getElementById('opt-strip100');
+const startEl   = document.getElementById('start-time');
+const shiftEl   = document.getElementById('shift');
+const stretchEl = document.getElementById('stretch');
+const btnResetAlign = document.getElementById('btn-reset-align');
+const plotCanvas = document.getElementById('plot');
+const plotEmpty  = document.getElementById('plot-empty');
+const plotLegend = document.getElementById('plot-legend');
+const plotTT     = document.getElementById('plot-tt');
+
+let depthShift = 0;        // seconds; positive = move depth points later
+let depthStretch = 1.0;    // 1.0 = no scale change
+// ALF → BM time alignment (applied when both are loaded; lets you move/scale
+// the ALF noise series onto BM's timeline before adding depth)
+let _alfCache = null;      // {bands, header, mode, noisePower, durSec}
+let _bmCache  = null;      // bm result (also held as window._bm for legacy)
+
+// Pick state — interactive alignment via plot
+let pickMode   = null;       // null | 'shift' | 'stretch'
+let pickTarget = 'depth';    // 'depth' | 'alf' — which curve the picks move
+let sticks     = [];         // depth stretch sticks: [{src_s, tgt_s}]
+let alfSticks  = [];         // ALF  stretch sticks: [{src_s, tgt_s}]  (in ALF-elapsed space)
+let activeStick    = null;   // currently dragged depth stick
+let activeAlfStick = null;   // currently dragged ALF stick
+let dragSnapshot   = null;   // shift drag state {mouseT_start, shift_start, target}
+let mouseT_current = null;   // tracked cursor t for live visual feedback
+
+/* Return sticks array for the active target */
+function activeSticks(){ return pickTarget === 'alf' ? alfSticks : sticks; }
+/* Marker colour for the active pick target */
+function pickColor(){ return pickTarget === 'alf' ? getComputedStyle(document.documentElement).getPropertyValue('--c-snl').trim() || '#7c3aed' : '#d97706'; }
+
+// Zoom & pan state — null view = "auto from data"
+let viewTMin = null;
+let viewTMax = null;
+let panSnapshot = null;        // {mouseX, viewTMin, viewTMax}
+
+// ALF shift — set only via drag (no numeric input); removed card but keep variable
+let alfShift = 0;   // seconds; moves ALF noise curve relative to BM/primary axis
+// Last loaded project — reapplied automatically when new files are loaded
+let _lastProject = null;
+
+// Undo/redo for alignment (shift/stretch/sticks)
+let alignHistory = [];
+let alignFuture = [];
+let _preChangeSnapshot = null;
+const pickStatusEl   = document.getElementById('pick-status');
+const btnPickShift   = document.getElementById('btn-pick-shift');
+const btnPickStretch = document.getElementById('btn-pick-stretch');
+const ptDepthBtn     = document.getElementById('pt-depth');
+const ptAlfBtn       = document.getElementById('pt-alf');
+
+function setPickTarget(t){
+  pickTarget = t;
+  ptDepthBtn.classList.toggle('on', t === 'depth');
+  ptAlfBtn.classList.toggle('on',   t === 'alf');
+  // Exit pick mode when switching target to avoid confusion
+  if (pickMode) exitPickMode();
+  setPickStatus(`Target: ${t.toUpperCase()}. Pick Shift (drag) or Pick Stretch (sticks).`);
+}
+ptDepthBtn.addEventListener('click', ()=> setPickTarget('depth'));
+ptAlfBtn.addEventListener('click',   ()=> setPickTarget('alf'));
+
+// Independent BM and ALF state — both can be loaded simultaneously
+let bmFile = null,  bmBuf = null,  bmSN = '',  bmStartUnixMs = null;
+let alfFile = null, alfBuf = null, alfSN = '', alfStartUnixMs = null;
+// Legacy aliases for back-compat with existing code; kept in sync below.
+let dmpFile = null, dmpBuf = null, dmpKind = null, dmpSN = '', dmpStartUnixMs = null;
+let depthFile = null;
+let depthData = null;     // {points:[{t,d}], srcUnit:'m'|'ft'}
+let depthUnit = 'm';      // output unit
+let csvBlobs = {};
+let csvPreview = {};
+
+// Pick the primary time anchor — BM if loaded, else ALF
+function primaryDataStart(){
+  if (bmStartUnixMs) return bmStartUnixMs;
+  if (alfStartUnixMs) return alfStartUnixMs;
+  return null;
+}
+/* ── ALF sticks operate in PRIMARY-ELAPSED time (same coordinate space as
+   the plot X axis). A stick says: "the noise sample whose BASE position is
+   src_s should appear at tgt_s on the plot."
+
+   base_position(et) = alf_offset + et
+   where alf_offset = (alfStartUnixMs - primaryDataStart()) / 1000
+
+   Forward warp: base_pos → display_pos  (src → tgt  direction)
+   Inverse warp: display_pos → base_pos  (tgt → src  direction, for placement)
+   ──────────────────────────────────────────────────────────────────────── */
+
+function _piecewiseInterp(sorted_pairs, t, srcKey, tgtKey){
+  /* sorted by srcKey; maps from srcKey-space to tgtKey-space */
+  const n = sorted_pairs.length;
+  if (!n) return t;
+  if (t <= sorted_pairs[0][srcKey]){
+    if (n >= 2){
+      const denom = (sorted_pairs[1][srcKey] - sorted_pairs[0][srcKey]) || 1;
+      const slope = (sorted_pairs[1][tgtKey] - sorted_pairs[0][tgtKey]) / denom;
+      return sorted_pairs[0][tgtKey] + slope * (t - sorted_pairs[0][srcKey]);
+    }
+    return sorted_pairs[0][tgtKey] + (t - sorted_pairs[0][srcKey]);
+  }
+  if (t >= sorted_pairs[n-1][srcKey]){
+    if (n >= 2){
+      const a = sorted_pairs[n-2], b = sorted_pairs[n-1];
+      const denom = (b[srcKey] - a[srcKey]) || 1;
+      const slope = (b[tgtKey] - a[tgtKey]) / denom;
+      return b[tgtKey] + slope * (t - b[srcKey]);
+    }
+    return sorted_pairs[0][tgtKey] + (t - sorted_pairs[0][srcKey]);
+  }
+  for (let i=0;i<n-1;i++){
+    const a=sorted_pairs[i], b=sorted_pairs[i+1];
+    if (t >= a[srcKey] && t <= b[srcKey]){
+      const r = (t - a[srcKey]) / ((b[srcKey] - a[srcKey]) || 1);
+      return a[tgtKey] + r * (b[tgtKey] - a[tgtKey]);
+    }
+  }
+  return t;
+}
+
+/* Forward: base_pos (primary-elapsed) → display_pos */
+function alfForwardWarp(t_base){
+  if (!alfSticks.length) return t_base;
+  const sorted = [...alfSticks].sort((a,b)=>a.src_s - b.src_s);
+  return _piecewiseInterp(sorted, t_base, 'src_s', 'tgt_s');
+}
+/* Inverse: display_pos → base_pos (for placing a new stick) */
+function alfInverseWarp(t_display){
+  if (!alfSticks.length) return t_display;
+  const sorted = [...alfSticks].sort((a,b)=>a.tgt_s - b.tgt_s);
+  return _piecewiseInterp(sorted, t_display, 'tgt_s', 'src_s');
+}
+
+/* Corrected absolute time of an ALF frame at raw elapsed et seconds.
+   Pipeline: et → base_pos (alf_offset + et) → display_pos (via sticks forward warp) */
+function alfCorrectedAbsMs(et){
+  const primary = primaryDataStart() || 0;
+  const alf_offset = ((alfStartUnixMs || 0) - primary) / 1000;
+  const t_base = alf_offset + alfShift + et;   // alfShift shifts noise curve on plot axis
+  const t_display = alfForwardWarp(t_base);
+  return primary + t_display * 1000;
+}
+function activeKind(){
+  if (_bmCache && _alfCache) return 'both';
+  if (_bmCache) return 'bm';
+  if (_alfCache) return 'alf';
+  return null;
+}
+
+/* ── Log ────────────────────────────────────────────────────── */
+let logMuted = false;
+// Patterns of "interactive" log entries that get suppressed when muted
+const LOG_INTERACTIVE_RE = /^(Pick-shift|Pick-stretch|Stick #|zoom|undo|redo|downloaded)/;
+function log(msg, cls=''){
+  if (logMuted && cls !== 'err' && LOG_INTERACTIVE_RE.test(msg)) return;
+  const d = document.createElement('div');
+  d.className = 'ln' + (cls?' '+cls:'');
+  d.textContent = msg;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog(){ logEl.innerHTML = ''; }
+const logMuteBtn = document.getElementById('log-mute');
+logMuteBtn.addEventListener('click', ()=>{
+  logMuted = !logMuted;
+  logMuteBtn.classList.toggle('muted', logMuted);
+  logMuteBtn.textContent = logMuted ? '⊘ viz logs OFF' : '⊙ viz logs ON';
+});
+document.getElementById('log-clear').addEventListener('click', clearLog);
+
+/* ── FFT (Cooley-Tukey, identical to BAS HTML) ───────────────── */
+function _fft(re, im){
+  const N = re.length;
+  for (let i=1, j=0; i<N; i++){
+    let bit = N>>1;
+    for (; j & bit; bit>>=1) j ^= bit;
+    j ^= bit;
+    if (i<j){ [re[i],re[j]]=[re[j],re[i]]; [im[i],im[j]]=[im[j],im[i]]; }
+  }
+  for (let len=2; len<=N; len<<=1){
+    const ang = -2*Math.PI/len, wRe=Math.cos(ang), wIm=Math.sin(ang);
+    for (let i=0; i<N; i+=len){
+      let cRe=1, cIm=0;
+      for (let j=0; j<(len>>1); j++){
+        const uR=re[i+j], uI=im[i+j];
+        const vR=re[i+j+(len>>1)]*cRe - im[i+j+(len>>1)]*cIm;
+        const vI=re[i+j+(len>>1)]*cIm + im[i+j+(len>>1)]*cRe;
+        re[i+j]=uR+vR; im[i+j]=uI+vI;
+        re[i+j+(len>>1)]=uR-vR; im[i+j+(len>>1)]=uI-vI;
+        const nr=cRe*wRe - cIm*wIm; cIm=cRe*wIm + cIm*wRe; cRe=nr;
+      }
+    }
+  }
+}
+
+/* ── BM gate (offsets +100..+120) ────────────────────────────── */
+function mcsRowUnixOrNullBmCh(view, u8, b){
+  const yr=u8[b+100], mo=u8[b+101], dy=u8[b+102];
+  const hr=u8[b+103], mn=u8[b+104], sc=u8[b+105];
+  if (mo<1||mo>12||dy<1||dy>31||hr>23||mn>59||sc>59) return null;
+  const unix = Date.UTC(2000+yr, mo-1, dy, hr, mn, sc);
+  if (unix < Date.UTC(2000,0,1)) return null;
+  const Pwh = view.getUint16(b+110, true);
+  const r114 = view.getUint16(b+114, true);
+  const r120 = view.getUint16(b+120, true);
+  if (Pwh<1000||Pwh>60000) return null;
+  if (r114<1500||r114>25000) return null;
+  if (r120<15000||r120>65000) return null;
+  return unix;
+}
+
+function parseBM(buf, stripHdr=false){
+  let bytes = buf;
+  if (stripHdr){
+    if (bytes.byteLength < 100) return null;
+    bytes = buf.slice(100);
+  }
+  if (bytes.byteLength < REC*2) return null;
+  const view = new DataView(bytes);
+  const u8 = new Uint8Array(bytes);
+  const nRec = Math.floor(bytes.byteLength / REC);
+
+  // CCL auto-pick
+  const acc = CCL_CAND.map(()=>({n:0,minv:Infinity,maxv:-Infinity}));
+  for (let i=1;i<nRec;i++){
+    const b=i*REC;
+    if (mcsRowUnixOrNullBmCh(view,u8,b)===null) continue;
+    for (let ci=0;ci<CCL_CAND.length;ci++){
+      const v=view.getInt16(b+CCL_CAND[ci],true);
+      if (v===-1||!Number.isFinite(v)) continue;
+      const a=acc[ci]; a.n++;
+      if (v<a.minv) a.minv=v;
+      if (v>a.maxv) a.maxv=v;
+    }
+  }
+  let bestCi = CCL_CAND.indexOf(82), bestSpan=-1;
+  for (let ci=0;ci<CCL_CAND.length;ci++){
+    const a=acc[ci]; if (a.n<200) continue;
+    const span=a.maxv-a.minv;
+    if (span>bestSpan){ bestSpan=span; bestCi=ci; }
+  }
+  const cclOff = CCL_CAND[bestCi];
+
+  const rows=[];
+  for (let i=1;i<nRec;i++){
+    const b=i*REC;
+    const unix = mcsRowUnixOrNullBmCh(view,u8,b);
+    if (unix===null) continue;
+    const pWh = view.getUint16(b+110,true);
+    const r114 = view.getUint16(b+114,true);
+    const r120 = view.getUint16(b+120,true);
+    const cRaw = view.getInt16(b+cclOff,true);
+    const ccl  = cRaw!==-1 ? cRaw : null;
+    rows.push({unix, pWh, r114, r120, ccl});
+  }
+  rows.sort((a,b)=>a.unix-b.unix);
+  if (rows.length < 50) return null;
+
+  const sl = rows.slice(5,35);
+  const surf120 = sl.length ? sl.reduce((s,r)=>s+r.r120,0)/sl.length : rows[0].r120;
+  const surf114 = sl.length ? sl.reduce((s,r)=>s+r.r114,0)/sl.length : rows[0].r114;
+  const tRef = surf114/200 + 7;
+
+  let alpha = 1.4;
+  if (rows.length > 200){
+    const n=rows.length;
+    const m120=rows.reduce((s,r)=>s+r.r120,0)/n;
+    const m114=rows.reduce((s,r)=>s+r.r114,0)/n;
+    let cov=0, v120=0;
+    for (const r of rows){
+      const d120=r.r120-m120, d114=r.r114-m114;
+      cov+=d120*d114; v120+=d120*d120;
+    }
+    if (v120>1e-3) alpha = cov/v120;
+    if (!isFinite(alpha) || alpha<0.35 || alpha>6) alpha = 1.4;
+  }
+  const m114v = rows.reduce((s,r)=>s+r.r114,0)/rows.length;
+  const varV  = rows.reduce((s,r)=>s+(r.r114-m114v)**2,0)/rows.length;
+  const r114std = rows.length>5 ? Math.sqrt(varV) : 0;
+  const hasDynP = r114std > 50;
+
+  for (const r of rows){
+    r.T_C   = (r.r120-surf120)*(alpha/200)+tRef;
+    r.P_kPa = hasDynP ? r.pWh + (r.r114-surf114)*(P_DYN_K/alpha) : r.pWh;
+  }
+  const t0 = rows[0].unix;
+  return { rows, cclOff, alpha, hasDynP, r114std, nRec, durSec:(rows.at(-1).unix-t0)/1000, t0Unix:t0 };
+}
+
+/* ── ALF STFT ─────────────────────────────────────────────────
+   Single STFT: 2048-pt FFT @ 3600 Hz, hop = sample_rate (1 frame
+   per second). Keeps 1024 bins (skip DC, skip Nyquist).
+   Frequency coverage: ~1.76 Hz … 1800 Hz.
+   Modes only differ in how the 1024 bins are sliced into files:
+     • lfp-hfp-512: LFP = bins 1..512 (low freq half: ~1.76..900 Hz)
+                    HFP = bins 513..1024 (high freq half: ~901..1800 Hz)
+     • hfp-1024:    all 1024 bins in one file
+   ──────────────────────────────────────────────────────────── */
+function computeStftALF(samples, sampleRate){
+  const fftSize  = 2048;
+  const nBins    = 1024;          // skip DC & Nyquist, keep 1..1024
+  const N = samples.length;
+  if (N < fftSize) return null;
+  const hop = sampleRate;         // exactly 1 frame per second
+  const nFrames = Math.floor((N - fftSize) / hop) + 1;
+  if (nFrames < 4) return null;
+
+  const win = new Float32Array(fftSize);
+  for (let i=0;i<fftSize;i++) win[i] = 0.5*(1 - Math.cos(2*Math.PI*i/(fftSize-1)));
+  const freqs = new Float32Array(nBins);
+  for (let k=0;k<nBins;k++) freqs[k] = (k+1) * sampleRate / fftSize;
+  const times = new Int32Array(nFrames);    // integer second labels: 1..N
+  const spectra = new Array(nFrames);
+  const logNorm = 20*Math.log10(fftSize);
+
+  for (let f=0; f<nFrames; f++){
+    const start = f * hop;
+    const re = new Float32Array(fftSize);
+    const im = new Float32Array(fftSize);
+    for (let i=0;i<fftSize;i++) re[i] = (samples[start+i]/32768) * win[i];
+    _fft(re, im);
+    const spec = new Float32Array(nBins);
+    for (let k=0;k<nBins;k++){
+      const kk = k + 1;             // bin 0 = DC, skipped
+      spec[k] = 10*Math.log10(re[kk]*re[kk] + im[kk]*im[kk] + 1e-20) - logNorm;
+    }
+    times[f] = f + 1;               // 1, 2, 3, …
+    spectra[f] = spec;
+  }
+  return { fftSize, sampleRate, times, freqs, spectra, nFrames, nBins };
+}
+
+function parseALFmode(buf, mode){
+  const srEl = document.getElementById('alf-sr');
+  const SR = (srEl && parseInt(srEl.value, 10)) || 1800;
+  const headers = [256, 0, 512];
+  for (const HEADER of headers){
+    if (buf.byteLength <= HEADER + 4) continue;
+    const samples = new Int16Array(buf, HEADER, Math.floor((buf.byteLength-HEADER)/2));
+    const stft = computeStftALF(samples, SR);
+    if (!stft) continue;
+    if (mode === 'hfp-1024'){
+      return { mode, header:HEADER, bands:[
+        {name:'HFP', n:1024, binStart:0, stft}
+      ]};
+    }
+    // lfp-hfp-512 — slice the same STFT into low/high halves
+    return { mode, header:HEADER, bands:[
+      {name:'LFP', n:512, binStart:0,   stft},
+      {name:'HFP', n:512, binStart:512, stft},
+    ]};
+  }
+  return null;
+}
+
+/* ── Depth file parser (with interactive column mapping modal) ── */
+
+function detectDelimiter(line){
+  const c = {'\t': (line.match(/\t/g)||[]).length,
+             ',':  (line.match(/,/g)||[]).length,
+             ';':  (line.match(/;/g)||[]).length};
+  if (c['\t'] >= c[','] && c['\t'] >= c[';'] && c['\t']>0) return '\t';
+  if (c[','] >= c[';'] && c[',']>0) return ',';
+  if (c[';']>0) return ';';
+  return /\s+/;
+}
+function resolveDelim(v, sampleLine){
+  if (v === 'auto') return detectDelimiter(sampleLine||'');
+  if (v === 'tab')  return '\t';
+  if (v === 'comma')return ',';
+  if (v === 'semi') return ';';
+  if (v === 'ws')   return /\s+/;
+  return '\t';
+}
+
+function parseDateStr(s, fmt){
+  s = (s||'').trim();
+  if (!s) return null;
+  // YYYY-MM-DD
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m && (fmt==='auto'||fmt==='YMD')) return {y:+m[1], mo:+m[2], d:+m[3]};
+  // a / b / y  with / - or .
+  m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if (!m) return null;
+  const a = +m[1], b = +m[2];
+  let y = +m[3]; if (y < 100) y += 2000;
+  if (fmt === 'MDY') return {y, mo:a, d:b};
+  if (fmt === 'DMY') return {y, mo:b, d:a};
+  // auto: disambiguate by range
+  if (a > 12) return {y, mo:b, d:a};       // a is day → D/M/Y
+  if (b > 12) return {y, mo:a, d:b};       // b is day → M/D/Y
+  return {y, mo:a, d:b};                   // ambiguous → assume M/D/Y (US)
+}
+function parseTimeStr(s){
+  const m = (s||'').trim().match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  return {h:+m[1], mi:+m[2], se:+(m[3]||0)};
+}
+function parseDepthRow(parts, cfg){
+  if (!parts || cfg.cdate >= parts.length || cfg.cdep >= parts.length) return null;
+  let dateField = parts[cfg.cdate] || '';
+  let timeField;
+  if (cfg.ctime < 0){
+    // combined: extract HH:MM[:SS] tail; the rest is the date
+    const tm = dateField.match(/(\d{1,2}:\d{2}(?::\d{2})?)/);
+    timeField = tm ? tm[1] : '00:00:00';
+    dateField = dateField.replace(/\s+\d{1,2}:.*$/, '').trim();
+  } else {
+    if (cfg.ctime >= parts.length) return null;
+    timeField = parts[cfg.ctime] || '00:00:00';
+  }
+  const dd = parseDateStr(dateField, cfg.fmt);
+  const tt = parseTimeStr(timeField);
+  if (!dd || !tt) return null;
+  if (dd.mo<1||dd.mo>12||dd.d<1||dd.d>31||tt.h>23||tt.mi>59||tt.se>59) return null;
+  const t = Date.UTC(dd.y, dd.mo-1, dd.d, tt.h, tt.mi, tt.se);
+  const ds = (parts[cfg.cdep]||'').replace(',', '.').trim();
+  const d = parseFloat(ds);
+  if (!isFinite(d)) return null;
+  return {t, d};
+}
+
+/* Modal state */
+const dmod      = document.getElementById('dmod');
+const dmodFname = document.getElementById('dmod-fname');
+const dmodRaw   = document.getElementById('dmod-raw');
+const dmodDelim = document.getElementById('dmod-delim');
+const dmodHdr   = document.getElementById('dmod-hdr');
+const dmodCdate = document.getElementById('dmod-cdate');
+const dmodCtime = document.getElementById('dmod-ctime');
+const dmodCdep  = document.getElementById('dmod-cdep');
+const dmodFmt   = document.getElementById('dmod-fmt');
+const dmodUnit  = document.getElementById('dmod-unit');
+const dmodParsed= document.getElementById('dmod-parsed');
+const dmodMsg   = document.getElementById('dmod-msg');
+const dmodOk    = document.getElementById('dmod-ok');
+const dmodCancel= document.getElementById('dmod-cancel');
+const dmodX     = document.getElementById('dmod-x');
+
+let depthRawLines = [];
+let depthPendingFile = null;
+
+function fillColumnSelects(ncols, headerCells){
+  const opts = [];
+  for (let i=0;i<ncols;i++){
+    const label = (headerCells && headerCells[i]) ? headerCells[i] : `Col ${i+1}`;
+    opts.push(`<option value="${i}">${i+1} · ${escapeHtml(label.trim()||('Col '+(i+1)))}</option>`);
+  }
+  dmodCdate.innerHTML = opts.join('');
+  dmodCtime.innerHTML = '<option value="-1">(same as date column — combined)</option>' + opts.join('');
+  dmodCdep.innerHTML  = opts.join('');
+}
+
+function readModalCfg(){
+  return {
+    delim:     resolveDelim(dmodDelim.value, depthRawLines[0]||''),
+    headerRow: dmodHdr.value === '1',
+    cdate:     parseInt(dmodCdate.value,10),
+    ctime:     parseInt(dmodCtime.value,10),
+    cdep:      parseInt(dmodCdep.value,10),
+    fmt:       dmodFmt.value,
+    unit:      dmodUnit.value,
+  };
+}
+
+function reparseModal(){
+  const cfg = readModalCfg();
+  const startIdx = cfg.headerRow ? 1 : 0;
+  const points = [];
+  let firstFail = null;
+  for (let i=startIdx; i<depthRawLines.length; i++){
+    const line = depthRawLines[i];
+    if (!line || !line.trim()) continue;
+    const parts = line.split(cfg.delim);
+    const row = parseDepthRow(parts, cfg);
+    if (row) points.push(row);
+    else if (!firstFail) firstFail = {line, parts};
+  }
+  points.sort((a,b)=>a.t-b.t);
+
+  let html = '<table><thead><tr><th>#</th><th>Timestamp (UTC)</th><th>Depth (' + cfg.unit + ')</th></tr></thead><tbody>';
+  const showN = Math.min(8, points.length);
+  for (let i=0;i<showN;i++){
+    const p = points[i];
+    const iso = new Date(p.t).toISOString().slice(0,19).replace('T',' ');
+    html += `<tr><td style="color:var(--muted);">${i+1}</td><td>${iso}</td><td>${p.d}</td></tr>`;
+  }
+  if (points.length > showN) html += `<tr><td colspan="3" style="color:var(--muted);text-align:center;padding:6px;">… +${points.length-showN} more rows</td></tr>`;
+  html += '</tbody></table>';
+  dmodParsed.innerHTML = points.length ? html : '<div style="padding:14px;color:var(--muted);text-align:center;">No rows parsed.</div>';
+
+  if (points.length === 0){
+    dmodMsg.className = 'parsed-msg err';
+    const sample = firstFail ? `"${firstFail.line.slice(0,90).replace(/\t/g,'⇥')}" → ${firstFail.parts.length} col(s)` : 'no data lines';
+    dmodMsg.textContent = 'No rows parsed. Sample: ' + sample + '. Check delimiter / columns / date format.';
+    dmodOk.disabled = true;
+  } else {
+    const span = (points.at(-1).t - points[0].t) / 1000;
+    dmodMsg.className = 'parsed-msg ok';
+    const t0 = new Date(points[0].t).toISOString().slice(0,16).replace('T',' ');
+    const t1 = new Date(points.at(-1).t).toISOString().slice(0,16).replace('T',' ');
+    dmodMsg.textContent = `Parsed ${points.length} pts · span ${fmtDur(span)} · ${t0} → ${t1}`;
+    dmodOk.disabled = false;
+  }
+  dmod._points = points;
+  dmod._cfg = cfg;
+}
+
+function openDepthModal(file, text){
+  depthPendingFile = file;
+  text = text.replace(/^﻿/, '');
+  depthRawLines = text.split(/\r?\n/);
+  while (depthRawLines.length && !depthRawLines.at(-1).trim()) depthRawLines.pop();
+  if (!depthRawLines.length){
+    log('depth file is empty', 'err');
+    return;
+  }
+
+  dmodFname.textContent = file.name;
+  let raw = '';
+  const maxLines = Math.min(12, depthRawLines.length);
+  for (let i=0;i<maxLines;i++){
+    const isH = (i===0);
+    const display = depthRawLines[i].replace(/\t/g, '→   ');  // show tabs as arrows
+    raw += `<div class="l${isH?' h':''}"><span class="ln-no">${i+1}</span><span>${escapeHtml(display)||'<em style="opacity:.5;">(empty)</em>'}</span></div>`;
+  }
+  dmodRaw.innerHTML = raw;
+
+  // Auto-defaults
+  dmodDelim.value = 'auto';
+  dmodFmt.value   = 'auto';
+  dmodUnit.value  = (/\[ft\]|\(ft\)/i.test(depthRawLines[0])) ? 'ft' : 'm';
+
+  const dlm = detectDelimiter(depthRawLines[0]);
+  const cells = depthRawLines[0].split(dlm).map(s=>s.trim());
+  const looksLikeHeader = cells.some(c => c && !/^[\d\/\-.: ,]+$/.test(c));
+  dmodHdr.value = looksLikeHeader ? '1' : '0';
+  const headerCells = looksLikeHeader ? cells : null;
+  fillColumnSelects(cells.length, headerCells);
+
+  // Smart guesses for columns
+  const probeRow = (looksLikeHeader && depthRawLines[1])
+    ? depthRawLines[1].split(dlm) : cells;
+  let gDate = 0, gTime = -1, gDep = Math.max(0, cells.length-1);
+  for (let i=0;i<cells.length;i++){
+    const hn = (headerCells ? headerCells[i] : '').toLowerCase();
+    const samp = (probeRow[i]||'').trim();
+    if (/date|day/.test(hn) || /^\d+[\/\-.]\d+[\/\-.]\d/.test(samp)) gDate = i;
+    if (/time|hour/.test(hn) || (/^\d{1,2}:\d{2}/.test(samp) && !/[\/\-.]/.test(samp))) gTime = i;
+    if (/depth|line|dep\b/.test(hn)) gDep = i;
+  }
+  // If 2 cols, time defaults to combined
+  if (cells.length === 2) gTime = -1;
+  if (cells.length >= 3 && gTime === -1 && /\d{1,2}:\d{2}/.test(probeRow[1]||'')) gTime = 1;
+  dmodCdate.value = gDate;
+  dmodCtime.value = gTime;
+  dmodCdep.value  = gDep;
+
+  dmod.classList.add('on');
+  reparseModal();
+}
+function closeDepthModal(){ dmod.classList.remove('on'); }
+
+dmodCancel.onclick = closeDepthModal;
+dmodX.onclick      = closeDepthModal;
+dmodOk.onclick = ()=>{
+  if (!dmod._points || !dmod._points.length) return;
+  depthData = { points: dmod._points, srcUnit: dmod._cfg.unit };
+  depthFile = depthPendingFile;
+  dzDep.classList.add('loaded','d');
+  dzDepName.textContent = depthPendingFile.name + '  ·  ' + depthData.points.length + ' pts';
+  const p = depthData.points;
+  log(`depth: ${p.length} pts, src=${depthData.srcUnit}, ${new Date(p[0].t).toISOString().slice(0,16).replace('T',' ')} → ${new Date(p.at(-1).t).toISOString().slice(0,16).replace('T',' ')}`, 'ok');
+  refreshConvertEnabled();
+  if (_lastProject) applyProjectJson(_lastProject, /*silent=*/true);
+  else if (_alfCache || _bmCache) renderPlot();
+  closeDepthModal();
+};
+
+[dmodDelim, dmodHdr, dmodCdate, dmodCtime, dmodCdep, dmodFmt, dmodUnit].forEach(el=>{
+  el.addEventListener('change', ()=>{
+    if (el === dmodDelim || el === dmodHdr){
+      const dlm = resolveDelim(dmodDelim.value, depthRawLines[0]||'');
+      const cells = (depthRawLines[0]||'').split(dlm).map(s=>s.trim());
+      const useHeader = dmodHdr.value === '1';
+      const cur = {cd: dmodCdate.value, ct: dmodCtime.value, cdp: dmodCdep.value};
+      fillColumnSelects(cells.length, useHeader ? cells : null);
+      if (+cur.cd < cells.length) dmodCdate.value = cur.cd;
+      if (+cur.ct < cells.length) dmodCtime.value = cur.ct;
+      if (+cur.cdp < cells.length) dmodCdep.value = cur.cdp;
+    }
+    reparseModal();
+  });
+});
+
+/* Linear interpolation of depth at given unix ms.
+   Returns NaN if the query is OUTSIDE the depth file's time window —
+   the CSV will show an empty cell rather than a misleading clamped value. */
+function depthAt(unixMs){
+  if (!depthData) return NaN;
+  const p = depthData.points;
+  if (!p.length) return NaN;
+  if (unixMs < p[0].t || unixMs > p.at(-1).t) return NaN;  // out-of-range → blank
+  // Binary search
+  let lo=0, hi=p.length-1;
+  while (hi-lo>1){
+    const mid = (lo+hi)>>1;
+    if (p[mid].t <= unixMs) lo = mid; else hi = mid;
+  }
+  const a = p[lo], b = p[hi];
+  if (b.t === a.t) return a.d;
+  const r = (unixMs - a.t) / (b.t - a.t);
+  return a.d + (b.d - a.d) * r;
+}
+
+function fmtUtc(ms){
+  return new Date(ms).toISOString().slice(0,19).replace('T',' ') + 'Z';
+}
+
+/* Sticks-based piecewise warp + global shift/stretch.
+   Each stick is {src_s, tgt_s} — src_s in original depth time (from depth_t0),
+   tgt_s in displayed (data) time (from data start).
+   With 0 sticks → identity. 1 stick → constant shift. 2 → linear.
+   3+ → piecewise linear (sort by tgt_s). */
+function srcTimeFromDataTime(t_data_s){
+  if (!sticks.length) return t_data_s;
+  const sorted = [...sticks].sort((a,b)=>a.tgt_s - b.tgt_s);
+  if (t_data_s <= sorted[0].tgt_s){
+    if (sorted.length >= 2){
+      const a=sorted[0], b=sorted[1];
+      const slope = (b.src_s - a.src_s) / (b.tgt_s - a.tgt_s);
+      return a.src_s + slope * (t_data_s - a.tgt_s);
+    }
+    return sorted[0].src_s + (t_data_s - sorted[0].tgt_s);
+  }
+  if (t_data_s >= sorted[sorted.length-1].tgt_s){
+    if (sorted.length >= 2){
+      const a=sorted[sorted.length-2], b=sorted[sorted.length-1];
+      const slope = (b.src_s - a.src_s) / (b.tgt_s - a.tgt_s);
+      return b.src_s + slope * (t_data_s - b.tgt_s);
+    }
+    return sorted[0].src_s + (t_data_s - sorted[0].tgt_s);
+  }
+  for (let i=0;i<sorted.length-1;i++){
+    const a=sorted[i], b=sorted[i+1];
+    if (t_data_s >= a.tgt_s && t_data_s <= b.tgt_s){
+      const r = (t_data_s - a.tgt_s) / (b.tgt_s - a.tgt_s);
+      return a.src_s + r * (b.src_s - a.src_s);
+    }
+  }
+  return t_data_s;
+}
+
+/* Inverse warp: given a source-time (depth file time), return the data-time
+   where that point should appear on the plot. Used for plotting depth at its
+   native (high-resolution) sampling. */
+function dataTimeFromSrcTime(t_src_s){
+  if (!sticks.length) return t_src_s;
+  const sorted = [...sticks].sort((a,b)=>a.src_s - b.src_s);
+  if (t_src_s <= sorted[0].src_s){
+    if (sorted.length >= 2){
+      const a=sorted[0], b=sorted[1];
+      const denom = (b.src_s - a.src_s) || 1;
+      const slope = (b.tgt_s - a.tgt_s) / denom;
+      return a.tgt_s + slope * (t_src_s - a.src_s);
+    }
+    return sorted[0].tgt_s + (t_src_s - sorted[0].src_s);
+  }
+  if (t_src_s >= sorted[sorted.length-1].src_s){
+    if (sorted.length >= 2){
+      const a=sorted[sorted.length-2], b=sorted[sorted.length-1];
+      const denom = (b.src_s - a.src_s) || 1;
+      const slope = (b.tgt_s - a.tgt_s) / denom;
+      return b.tgt_s + slope * (t_src_s - b.src_s);
+    }
+    return sorted[0].tgt_s + (t_src_s - sorted[0].src_s);
+  }
+  for (let i=0;i<sorted.length-1;i++){
+    const a=sorted[i], b=sorted[i+1];
+    if (t_src_s >= a.src_s && t_src_s <= b.src_s){
+      const denom = (b.src_s - a.src_s) || 1;
+      const r = (t_src_s - a.src_s) / denom;
+      return a.tgt_s + r * (b.tgt_s - a.tgt_s);
+    }
+  }
+  return t_src_s;
+}
+
+function depthQueryAligned(t_query_ms){
+  if (!depthData) return t_query_ms;
+  const dataStart = primaryDataStart() || 0;
+  // 1) data-time in seconds, with global shift subtracted (pre-warp)
+  const t_data_s = (t_query_ms - dataStart) / 1000 - depthShift;
+  // 2) sticks-based piecewise warp → source-time in seconds from depth_t0
+  const t_src_s = srcTimeFromDataTime(t_data_s);
+  // 3) global stretch (post-warp uniform scale in source time)
+  const t_src_scaled = t_src_s / depthStretch;
+  return depthData.points[0].t + t_src_scaled * 1000;
+}
+function depthAtAligned(t_query){
+  return depthAt(depthQueryAligned(t_query));
+}
+
+function logDepthOverlap(startUnixMs, endUnixMs, totalRows){
+  if (!depthData) return;
+  const dp0 = depthData.points[0].t;
+  const dp1 = depthData.points.at(-1).t;
+  log(`ALF window:   ${fmtUtc(startUnixMs)} → ${fmtUtc(endUnixMs)}`, 'info');
+  log(`Depth window: ${fmtUtc(dp0)} → ${fmtUtc(dp1)}  (${depthData.points.length} pts, src=${depthData.srcUnit})`, 'info');
+  const ovStart = Math.max(startUnixMs, dp0);
+  const ovEnd   = Math.min(endUnixMs,   dp1);
+  const ovSec = Math.max(0, Math.floor((ovEnd - ovStart) / 1000));
+  if (ovSec === 0){
+    log(`⚠ NO OVERLAP between ALF and depth time windows — depth column will be empty everywhere. Adjust "ALF start time" field if needed.`, 'err');
+  } else {
+    const pct = (ovSec / totalRows * 100).toFixed(1);
+    log(`Depth overlap: ${ovSec} / ${totalRows} rows have depth (${pct}%)`, 'ok');
+    if (startUnixMs < dp0){
+      const gap = Math.floor((dp0 - startUnixMs) / 1000);
+      log(`First ~${gap} ALF rows precede depth coverage → depth blank`, 'warn');
+    }
+    if (endUnixMs > dp1){
+      const gap = Math.floor((endUnixMs - dp1) / 1000);
+      log(`Last ~${gap} ALF rows extend past depth coverage → depth blank`, 'warn');
+    }
+  }
+}
+
+/* Convert source-unit depth to output unit. */
+function depthInUnit(dSrc){
+  if (depthData == null || !isFinite(dSrc)) return NaN;
+  if (depthData.srcUnit === depthUnit) return dSrc;
+  // m→ft : dSrc / M_PER_FT ; ft→m : dSrc * M_PER_FT
+  return depthData.srcUnit === 'm' ? dSrc / M_PER_FT : dSrc * M_PER_FT;
+}
+
+/* ── Filename builders ───────────────────────────────────────── */
+function snFromName(name){
+  const m = name.match(/(\d{5})/);
+  return m ? m[1] : '00000';
+}
+function safeWell(){
+  const w = (wellEl.value || 'WELL').trim().replace(/[^\w.\-]+/g, '_');
+  return w || 'WELL';
+}
+function buildBmFilename(){
+  return `${safeWell()}_BM_${bmSN || '00000'}.csv`;
+}
+function buildAlfFilenames(mode){
+  const sn = alfSN || '00000';
+  if (mode === 'hfp-1024'){
+    return [`${safeWell()}_ALF_${sn}_HFP_1024.csv`];
+  }
+  return [
+    `${safeWell()}_ALF_${sn}_LFP_512.csv`,
+    `${safeWell()}_ALF_${sn}_HFP_512.csv`,
+  ];
+}
+function refreshFnamePreview(){
+  const names = [];
+  if (bmFile) names.push(buildBmFilename());
+  if (alfFile) names.push(...buildAlfFilenames(alfModeEl.value));
+  if (!names.length){
+    fnamePrev.innerHTML = '<span class="lbl">load .dmp to preview</span>';
+  } else {
+    fnamePrev.innerHTML = names.map(n=>`<div>${n}</div>`).join('');
+  }
+}
+
+/* ── Parse start time of ALF file from its name ──────────────── */
+/* Pattern: ddddd-MM-DD@HH-MM   → uses year from depth file or current. */
+function parseAlfStartFromName(name){
+  const m = name.match(/(\d{5})-(\d{1,2})-(\d{1,2})@(\d{1,2})-(\d{1,2})/);
+  if (!m) return null;
+  let year = new Date().getFullYear();
+  if (depthData && depthData.points.length){
+    year = new Date(depthData.points[0].t).getUTCFullYear();
+  }
+  return Date.UTC(year, +m[2]-1, +m[3], +m[4], +m[5], 0);
+}
+
+/* ── Emeraude CSV writers ────────────────────────────────────── */
+function unitLabel(){ return depthUnit; }  // 'm' or 'ft'
+
+function buildBmCsv(bm){
+  const header = ['ElapsedTime','Depth','GR','CCL','PRES','TEMP','W'];
+  const units  = ['s', unitLabel(), 'gAPI','V','kPa','degC',''];
+  const lines = [header.join(','), units.join(',')];
+  const t0 = bm.t0Unix;
+
+  // First pass: find elapsed time of first row with depth + full depth range
+  let firstDepthEt = null, depthMin = Infinity, depthMax = -Infinity;
+  for (const r of bm.rows){
+    const dOut = depthInUnit(depthAtAligned(r.unix));
+    if (isFinite(dOut)){
+      if (firstDepthEt === null) firstDepthEt = (r.unix - t0) / 1000;
+      if (dOut < depthMin) depthMin = dOut;
+      if (dOut > depthMax) depthMax = dOut;
+    }
+  }
+
+  // Second pass: output only rows that have depth; ElapsedTime re-indexed so first depth row = 1s
+  const previewRows = [];
+  let totalRows = 0;
+  for (const r of bm.rows){
+    const et  = (r.unix - t0) / 1000;
+    const dOut = depthInUnit(depthAtAligned(r.unix));
+    if (!isFinite(dOut)) continue;
+    const etNew = firstDepthEt != null ? et - firstDepthEt + 1 : et;
+    const row = [
+      etNew.toFixed(3),
+      dOut.toFixed(3),
+      '',
+      r.ccl == null ? '' : r.ccl,
+      r.P_kPa.toFixed(4),
+      r.T_C.toFixed(4),
+      '',
+    ];
+    lines.push(row.join(','));
+    if (previewRows.length < PREVIEW_ROWS) previewRows.push(row);
+    totalRows++;
+  }
+
+  return { csv: lines.join('\n')+'\n', header, units, preview: previewRows,
+           previewHasDepth: previewRows.length > 0,
+           firstDepthRow: 0, depthMin, depthMax, totalRows };
+}
+
+function buildAlfBandCsv(band, startUnixMs){
+  const stft = band.stft;
+  const header = ['ElapsedTime','Depth'];
+  for (let k=0;k<band.n;k++) header.push(`CH${k+1}`);
+  const units = ['s', unitLabel()];
+  for (let k=0;k<band.n;k++) units.push('dB');
+  const lines = [header.join(','), units.join(',')];
+  const prevCh = Math.min(12, band.n);
+  const previewHeader = header.slice(0, 2+prevCh).concat(['…']);
+  const previewUnits  = units.slice(0, 2+prevCh).concat(['']);
+
+  // First pass: find et of first frame with depth + full depth range
+  let firstDepthEt = null, depthMin = Infinity, depthMax = -Infinity;
+  for (let f=0; f<stft.nFrames; f++){
+    const et  = stft.times[f];
+    const dOut = depthInUnit(depthAtAligned(alfCorrectedAbsMs(et)));
+    if (isFinite(dOut)){
+      if (firstDepthEt === null) firstDepthEt = et;
+      if (dOut < depthMin) depthMin = dOut;
+      if (dOut > depthMax) depthMax = dOut;
+    }
+  }
+
+  // Second pass: output only frames that have depth; ElapsedTime re-indexed so first = 1s
+  const previewRows = [];
+  let totalRows = 0;
+  for (let f=0; f<stft.nFrames; f++){
+    const et  = stft.times[f];
+    const dOut = depthInUnit(depthAtAligned(alfCorrectedAbsMs(et)));
+    if (!isFinite(dOut)) continue;
+    const etNew = firstDepthEt != null ? et - firstDepthEt + 1 : et;
+    const spec = stft.spectra[f];
+    const row = new Array(2 + band.n);
+    row[0] = String(etNew);
+    row[1] = dOut.toFixed(3);
+    for (let k=0;k<band.n;k++) row[2+k] = spec[band.binStart + k].toFixed(3);
+    lines.push(row.join(','));
+    const rowPrev = row.slice(0, 2+prevCh).concat(['…']);
+    if (previewRows.length < PREVIEW_ROWS) previewRows.push(rowPrev);
+    totalRows++;
+  }
+
+  return { csv: lines.join('\n')+'\n', header: previewHeader, units: previewUnits, preview: previewRows,
+           previewHasDepth: previewRows.length > 0,
+           firstDepthRow: 0, depthMin, depthMax, totalRows };
+}
+
+/* ── Stats render ────────────────────────────────────────────── */
+function statAdd(k,v,cls=''){
+  const d=document.createElement('div'); d.className='stat';
+  d.innerHTML = `<div class="stat-k">${k}</div><div class="stat-v ${cls}">${v}</div>`;
+  statsEl.appendChild(d);
+}
+function fmtDur(sec){
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=Math.floor(sec%60);
+  return (h?h+'h ':'')+(m||h?String(m).padStart(h?2:1,'0')+'m ':'')+String(s).padStart(2,'0')+'s';
+}
+function fmtBytes(n){
+  if (n<1024) return n+' B';
+  if (n<1048576) return (n/1024).toFixed(1)+' KB';
+  return (n/1048576).toFixed(2)+' MB';
+}
+
+/* ── Download ────────────────────────────────────────────────── */
+function downloadBlob(name){
+  const blob = csvBlobs[name];
+  if (!blob) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  log('downloaded '+name, 'ok');
+}
+
+/* ── Preview rendering ───────────────────────────────────────── */
+function renderPreviewTabs(names){
+  pvTabsEl.innerHTML = '';
+  if (names.length <= 1){ pvTabsEl.classList.add('hidden'); previewEl.classList.remove('tabbed'); return; }
+  pvTabsEl.classList.remove('hidden');
+  previewEl.classList.add('tabbed');
+  for (let i=0;i<names.length;i++){
+    const b = document.createElement('button');
+    b.className = 'pv-tab' + (i===0?' active':'');
+    b.textContent = names[i];
+    b.onclick = ()=>{
+      pvTabsEl.querySelectorAll('.pv-tab').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      renderPreview(names[i]);
+    };
+    pvTabsEl.appendChild(b);
+  }
+}
+function renderPreview(name){
+  const pv = csvPreview[name];
+  const pvSub    = document.getElementById('pv-sub');
+  const pvStatus = document.getElementById('pv-status');
+  if (!pv){
+    previewEl.innerHTML = '<div class="preview-empty">no data</div>';
+    if (pvStatus) pvStatus.textContent = '';
+    return;
+  }
+  // Update subtitle
+  if (pvSub){
+    if (pv.previewHasDepth && pv.firstDepthRow > 0){
+      const endRow = Math.min(pv.firstDepthRow + PREVIEW_ROWS, pv.totalRows);
+      pvSub.textContent = `rows ${pv.firstDepthRow+1}–${endRow} · first with depth`;
+    } else if (pv.previewHasDepth){
+      pvSub.textContent = `first ${PREVIEW_ROWS} rows · depth filled`;
+    } else {
+      pvSub.textContent = `first ${PREVIEW_ROWS} rows · no depth yet`;
+    }
+  }
+  // Update status under preview
+  if (pvStatus){
+    if (pv.previewHasDepth && isFinite(pv.depthMin)){
+      pvStatus.style.color = 'var(--c-d)';
+      const endRow = Math.min(pv.firstDepthRow + PREVIEW_ROWS, pv.totalRows);
+      pvStatus.textContent = `depth ${pv.depthMin.toFixed(1)}–${pv.depthMax.toFixed(1)} ${depthUnit}  ·  preview rows ${pv.firstDepthRow+1}–${endRow} of ${pv.totalRows}`;
+    } else if (pv.previewHasDepth === false || (pv.totalRows && !pv.previewHasDepth)){
+      pvStatus.style.color = 'var(--c-t)';
+      pvStatus.textContent = `depth column empty in all ${pv.totalRows || '?'} rows — adjust Shift in Depth Alignment`;
+    } else {
+      pvStatus.style.color = 'var(--muted)';
+      pvStatus.textContent = '';
+    }
+  }
+  let html = '<table><thead><tr>';
+  for (const h of pv.header) html += '<th>'+escapeHtml(h)+'</th>';
+  html += '</tr></thead><tbody>';
+  // units row
+  html += '<tr class="units">';
+  for (const u of pv.units) html += '<td>'+escapeHtml(u||'')+'</td>';
+  html += '</tr>';
+  for (const row of pv.preview){
+    html += '<tr>';
+    for (const c of row) html += '<td>'+escapeHtml(String(c))+'</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  previewEl.innerHTML = html;
+}
+function escapeHtml(s){ return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ── DMP load: detect BM vs ALF, route to its slot. Both can coexist. */
+async function handleDmpFile(file){
+  busy.classList.add('on');
+  log('dmp: '+file.name+'  ('+fmtBytes(file.size)+')', 'info');
+  const sn = snFromName(file.name);
+  log('S/N (first 5 digits): '+sn, 'info');
+  await new Promise(r=>setTimeout(r,30));
+  const buf = await file.arrayBuffer();
+
+  // Probe BM
+  let bm = null;
+  try { bm = parseBM(buf, optStrip.checked); } catch(e){}
+
+  if (bm){
+    bmFile = file; bmBuf = buf; bmSN = sn;
+    bmStartUnixMs = bm.t0Unix;
+    _bmCache = bm;
+    window._bm = bm;
+    log(`BM loaded: rows=${bm.rows.length}, dur=${fmtDur(bm.durSec)}, start=${fmtUtc(bmStartUnixMs)}`, 'ok');
+  } else {
+    alfFile = file; alfBuf = buf; alfSN = sn;
+    alfStartUnixMs = parseAlfStartFromName(file.name);
+    _alfCache = null;   // need RUN to actually parse STFT
+    if (alfStartUnixMs){
+      log(`ALF loaded: start=${fmtUtc(alfStartUnixMs)} — press RUN to parse STFT`, 'ok');
+    } else {
+      log('ALF loaded; could not parse start time from filename', 'warn');
+    }
+  }
+
+  // Sync legacy aliases used elsewhere in the code
+  syncLegacyDmpVars();
+  updateSlots(); refreshAlfAlignCard();
+  // Reset zoom + cached outputs (sticks remain — they're aligned in absolute terms via the warp)
+  csvBlobs = {}; csvPreview = {}; resultsBlock.style.display = 'none';
+  viewTMin = null; viewTMax = null;
+  previewEl.innerHTML = '<div class="preview-empty">load files, then press RUN</div>';
+  pvTabsEl.classList.add('hidden');
+  // Populate editable Start time field with ALF start (BM start is read-only)
+  startEl.value = alfStartUnixMs
+    ? new Date(alfStartUnixMs).toISOString().slice(0,19).replace('T',' ')
+    : '';
+  updateAlfSrInfo();
+  refreshFnamePreview();
+  refreshConvertEnabled();
+  // Re-apply project settings (overrides filename-derived start time, restores alignment)
+  if (_lastProject) applyProjectJson(_lastProject, /*silent=*/true);
+  else renderPlot();
+  busy.classList.remove('on');
+}
+
+function syncLegacyDmpVars(){
+  // Pick a "current" kind for legacy code paths
+  if (_bmCache){
+    dmpKind = 'bm'; dmpFile = bmFile; dmpBuf = bmBuf; dmpSN = bmSN;
+    dmpStartUnixMs = bmStartUnixMs;
+  } else if (alfBuf){
+    dmpKind = 'alf'; dmpFile = alfFile; dmpBuf = alfBuf; dmpSN = alfSN;
+    dmpStartUnixMs = alfStartUnixMs;
+  } else {
+    dmpKind = null; dmpFile = null; dmpBuf = null; dmpSN = '';
+    dmpStartUnixMs = null;
+  }
+}
+
+function updateSlots(){
+  const bmSlot   = document.getElementById('slot-bm');
+  const alfSlot  = document.getElementById('slot-alf');
+  const bmName   = document.getElementById('slot-bm-name');
+  const alfName  = document.getElementById('slot-alf-name');
+  if (bmFile){
+    bmSlot.classList.add('filled');
+    bmName.textContent = bmFile.name;
+  } else {
+    bmSlot.classList.remove('filled');
+    bmName.textContent = '—';
+  }
+  if (alfFile){
+    alfSlot.classList.add('filled');
+    alfName.textContent = alfFile.name + (_alfCache ? '' : ' (not parsed)');
+  } else {
+    alfSlot.classList.remove('filled');
+    alfName.textContent = '—';
+  }
+  // Update top-right kind tag
+  const k = activeKind();
+  if (k === 'both'){ kindTag.className='kind-tag bm'; kindTag.textContent='BM + ALF'; kindTag.style.borderColor=''; }
+  else if (k === 'bm'){ kindTag.className='kind-tag bm'; kindTag.textContent='BM'; }
+  else if (k === 'alf' || alfBuf){ kindTag.className='kind-tag alf'; kindTag.textContent='ALF'; }
+  else { kindTag.className='kind-tag none'; kindTag.textContent='no file'; }
+}
+
+document.getElementById('slot-bm-rm').addEventListener('click', ()=>{
+  bmFile = null; bmBuf = null; bmSN = ''; bmStartUnixMs = null; _bmCache = null;
+  syncLegacyDmpVars(); updateSlots(); refreshConvertEnabled(); refreshFnamePreview();
+  renderPlot();
+  log('BM slot cleared', 'info');
+});
+document.getElementById('slot-alf-rm').addEventListener('click', ()=>{
+  alfFile = null; alfBuf = null; alfSN = ''; alfStartUnixMs = null; _alfCache = null;
+  syncLegacyDmpVars(); updateSlots(); refreshConvertEnabled(); refreshFnamePreview();
+  renderPlot();
+  log('ALF slot cleared', 'info');
+});
+
+/* ── Depth load (opens column-mapping modal, or parses LAS directly) ── */
+async function handleDepthFile(file){
+  log('depth file selected: '+file.name+'  ('+fmtBytes(file.size)+')', 'info');
+  try {
+    const txt = await file.text();
+    if (looksLikeLas(txt)){
+      const ok = parseLasDepth(file, txt);
+      if (!ok) openDepthModal(file, txt);   // fallback if LAS parse fails
+    } else {
+      openDepthModal(file, txt);
+    }
+  } catch (e){
+    log('failed to read depth file: '+e.message, 'err');
+  }
+}
+
+function looksLikeLas(txt){
+  const head = txt.slice(0, 400);
+  return /(^|\n)\s*~V/i.test(head) || /VERS\s*\.\s*\d/i.test(head);
+}
+
+/* Parse our own LAS export (TIME, DEPT). Requires DATE header for absolute time. */
+function parseLasDepth(file, txt){
+  // Find data start UTC from header
+  let dataStartMs = null;
+  const dateMatch = txt.match(/^\s*DATE\.\s*\S*\s+([\d\-]+\s+[\d:]+)\s*:/mi);
+  if (dateMatch){
+    const ds = dateMatch[1].trim();
+    const m = ds.match(/(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (m) dataStartMs = Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +(m[6]||0));
+  }
+  // Detect unit
+  let srcUnit = 'm';
+  const dm = txt.match(/DEPT\s*\.\s*([a-zA-Z]+)/);
+  if (dm){ const u = dm[1].toLowerCase(); if (u==='ft') srcUnit='ft'; }
+
+  // Find ~A section
+  const lines = txt.split(/\r?\n/);
+  let dataIdx = -1;
+  for (let i=0;i<lines.length;i++){
+    if (/^~A/i.test(lines[i].trim())){ dataIdx = i+1; break; }
+  }
+  if (dataIdx < 0){
+    log('LAS: ~A (ASCII) section not found', 'err');
+    return false;
+  }
+  if (dataStartMs == null){
+    log('LAS: missing DATE header — cannot reconstruct absolute timestamps.', 'err');
+    return false;
+  }
+
+  const points = [];
+  for (let i=dataIdx; i<lines.length; i++){
+    const ln = lines[i].trim();
+    if (!ln || ln.startsWith('#') || ln.startsWith('~')) continue;
+    const parts = ln.split(/\s+/);
+    if (parts.length < 2) continue;
+    const t_s = parseFloat(parts[0]);
+    const d   = parseFloat(parts[1]);
+    if (!isFinite(t_s) || !isFinite(d)) continue;
+    if (d === -999.25) continue;   // NULL
+    points.push({ t: dataStartMs + t_s * 1000, d });
+  }
+  if (!points.length){
+    log('LAS: no data rows parsed', 'err');
+    return false;
+  }
+  points.sort((a,b)=>a.t-b.t);
+
+  depthData = { points, srcUnit };
+  depthFile = file;
+  dzDep.classList.add('loaded','d');
+  dzDepName.textContent = file.name + '  ·  ' + points.length + ' pts (LAS)';
+  const p = depthData.points;
+  log(`LAS depth loaded: ${p.length} pts, src=${srcUnit}, ${new Date(p[0].t).toISOString().slice(0,16).replace('T',' ')} → ${new Date(p.at(-1).t).toISOString().slice(0,16).replace('T',' ')}`, 'ok');
+  refreshConvertEnabled();
+  return true;
+}
+
+/* ── Convert ─────────────────────────────────────────────────── */
+function refreshConvertEnabled(){
+  btnConv.disabled = !((bmFile || alfFile) && depthData);
+}
+
+async function runConvert(){
+  if (!bmBuf && !alfBuf){ log('no .dmp loaded', 'err'); return; }
+  if (!depthData){ log('no depth file loaded', 'err'); return; }
+  busy.classList.add('on');
+  csvBlobs={}; csvPreview={}; statsEl.innerHTML=''; btnsEl.innerHTML='';
+  resultsBlock.style.display='none';
+  previewEl.innerHTML = '<div class="preview-empty">building CSV…</div>';
+  await new Promise(r=>setTimeout(r,30));
+
+  const allNames = [];
+
+  try {
+    // ── BM ─────────────────────────────────────────────────────
+    if (_bmCache){
+      const bm = _bmCache;
+      statAdd('BM Rows', bm.rows.length.toLocaleString(), 'p');
+      statAdd('BM Dur',  fmtDur(bm.durSec));
+      statAdd('CCL off', '+'+bm.cclOff, 'ccl');
+      statAdd('hasDynP', bm.hasDynP ? 'true' : 'false');
+      logDepthOverlap(bm.t0Unix, bm.rows.at(-1).unix, bm.rows.length);
+      const out = buildBmCsv(bm);
+      const blob = new Blob([out.csv], {type:'text/csv'});
+      const name = buildBmFilename();
+      csvBlobs[name] = blob;
+      csvPreview[name] = {header:out.header, units:out.units, preview:out.preview,
+                          previewHasDepth:out.previewHasDepth, firstDepthRow:out.firstDepthRow,
+                          depthMin:out.depthMin, depthMax:out.depthMax, totalRows:out.totalRows};
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.innerHTML = `<span><span class="ico">⬇ ${name}</span></span><span class="sz">${fmtBytes(blob.size)}</span>`;
+      btn.onclick = ()=>downloadBlob(name);
+      btnsEl.appendChild(btn);
+      log('wrote '+name+'  ('+fmtBytes(blob.size)+')', 'ok');
+      allNames.push(name);
+    }
+
+    // ── ALF ────────────────────────────────────────────────────
+    if (alfBuf){
+      const mode = alfModeEl.value;
+      const alf = parseALFmode(alfBuf, mode);
+      if (!alf){ throw new Error('ALF parse failed (file too small for chosen mode?)'); }
+      _alfCache = alf;
+      _alfCache.noisePower = computeNoisePower(alf.bands[0].stft);
+      const stft0 = alf.bands[0].stft;
+      log(`ALF parsed: samples=${Math.floor((alfBuf.byteLength-alf.header)/2).toLocaleString()} · SR=${stft0.sampleRate} Hz · header=${alf.header}B · frames=${stft0.nFrames} · duration=${fmtDur(stft0.nFrames)} (1 frame = 1 sec)`, 'info');
+      statAdd('ALF Mode', mode==='hfp-1024'?'HFP·1024':'LFP+HFP·512+512');
+      statAdd('ALF Frames', stft0.nFrames.toLocaleString());
+      statAdd('ALF Dur', fmtDur(stft0.times[stft0.nFrames-1]));
+      if (alfStartUnixMs){
+        const endMs = alfStartUnixMs + stft0.nFrames * 1000;
+        logDepthOverlap(alfStartUnixMs, endMs, stft0.nFrames);
+      } else {
+        log('ALF: no start time — depth column will be empty in ALF CSV', 'warn');
+      }
+      const names = buildAlfFilenames(mode);
+      for (let bi=0; bi<alf.bands.length; bi++){
+        const band = alf.bands[bi];
+        const name = names[bi];
+        const out = buildAlfBandCsv(band, alfStartUnixMs || 0);
+        const blob = new Blob([out.csv], {type:'text/csv'});
+        csvBlobs[name] = blob;
+        csvPreview[name] = {header:out.header, units:out.units, preview:out.preview,
+                            previewHasDepth:out.previewHasDepth, firstDepthRow:out.firstDepthRow,
+                            depthMin:out.depthMin, depthMax:out.depthMax, totalRows:out.totalRows};
+        const btn = document.createElement('button');
+        btn.className = 'btn' + (band.name==='LFP'?' snl':'');
+        btn.innerHTML = `<span><span class="ico">⬇ ${name}</span></span><span class="sz">${fmtBytes(blob.size)}</span>`;
+        btn.onclick = ()=>downloadBlob(name);
+        btnsEl.appendChild(btn);
+        log('wrote '+name+'  ('+fmtBytes(blob.size)+')', 'ok');
+        allNames.push(name);
+      }
+    }
+
+    statAdd('Depth pts', depthData.points.length.toLocaleString(), 'd');
+    resultsBlock.style.display = '';
+    renderPreviewTabs(allNames);
+    if (allNames[0]) renderPreview(allNames[0]);
+    renderPlot();
+  } catch (e){
+    log('error: '+e.message, 'err');
+    previewEl.innerHTML = '<div class="preview-empty">'+escapeHtml(e.message)+'</div>';
+  }
+  busy.classList.remove('on');
+}
+
+/* ── Noise power (sum of bin energies → dB) ──────────────────── */
+function computeNoisePower(stft){
+  const np = new Float32Array(stft.nFrames);
+  for (let f=0; f<stft.nFrames; f++){
+    const spec = stft.spectra[f];
+    let s = 0;
+    for (let k=0; k<spec.length; k++) s += Math.pow(10, spec[k]/10);
+    np[f] = 10 * Math.log10(s + 1e-20);
+  }
+  return np;
+}
+
+/* ── Plot rendering ──────────────────────────────────────────── */
+const PALETTE = {
+  bg:'#f5f7fa', grid:'#d1d9e3', border:'#8b95a4', text:'#2a3545', muted:'#6b7280',
+  noise:'#7c3aed',   // bright purple
+  depth:'#d97706',   // amber/orange
+  pres :'#059669',   // emerald green
+  ccl  :'#2563eb',   // royal blue
+  temp :'#b91c1c',   // dark crimson
+  marker:'#dc2626',  // vivid red (UI marker — distinct from data colors)
+};
+
+/* Build depth series at depth file's NATIVE points,
+   mapped to data-time via inverse warp/shift/stretch.
+   This lets depth extend beyond the data-channel time range. */
+function buildDepthPlotSeries(){
+  if (!depthData) return null;
+  const dataStart = primaryDataStart();
+  if (!dataStart) return null;
+  const depth_t0 = depthData.points[0].t;
+  const N = depthData.points.length;
+  const dt = new Float32Array(N);
+  const dv = new Float32Array(N);
+  for (let i=0;i<N;i++){
+    const p = depthData.points[i];
+    const t_src_s_scaled = (p.t - depth_t0) / 1000;
+    const t_src_s_unscaled = t_src_s_scaled * depthStretch;
+    const t_data_s = dataTimeFromSrcTime(t_src_s_unscaled);
+    dt[i] = t_data_s + depthShift;
+    dv[i] = depthInUnit(p.d);
+  }
+  return { name:'Depth', units:depthUnit, color:PALETTE.depth, times: dt, values: dv };
+}
+
+function buildPlotSeries(){
+  const series = [];
+  const primary = primaryDataStart();   // BM start preferred; ALF start as fallback
+
+  // BM channels — Pressure + Temperature + CCL (in BM-elapsed time)
+  if (_bmCache){
+    const bm = _bmCache;
+    const N = bm.rows.length;
+    const tm = new Float32Array(N);
+    const pr = new Float32Array(N);
+    const tp = new Float32Array(N);
+    const cc = new Float32Array(N);
+    for (let i=0;i<N;i++){
+      tm[i] = (bm.rows[i].unix - primary)/1000;
+      pr[i] = bm.rows[i].P_kPa;
+      tp[i] = bm.rows[i].T_C;
+      cc[i] = bm.rows[i].ccl==null ? NaN : bm.rows[i].ccl;
+    }
+    series.push({ name:'Pressure',    units:'kPa', color:PALETTE.pres, times: tm, values: pr });
+    series.push({ name:'Temperature', units:'°C',  color:PALETTE.temp, times: tm, values: tp });
+    series.push({ name:'CCL',         units:'',    color:PALETTE.ccl,  times: tm, values: cc });
+  }
+
+  // ALF channel — Noise Power, mapped to primary-elapsed time, with ALF shift/stretch applied
+  if (_alfCache && alfStartUnixMs != null){
+    const stft = _alfCache.bands[0].stft;
+    const np = _alfCache.noisePower;
+    const times = new Float32Array(stft.nFrames);
+    for (let i=0;i<stft.nFrames;i++){
+      const corrAbs = alfCorrectedAbsMs(stft.times[i]);
+      times[i] = (corrAbs - primary) / 1000;
+    }
+    series.push({ name:'Noise Power', units:'dB', color:PALETTE.noise, times, values: np });
+  }
+
+  // Depth — always (uses primary as time reference)
+  const dpts = buildDepthPlotSeries();
+  if (dpts) series.push(dpts);
+
+  // Default range = global (used as fallback before first render or when no view set)
+  for (const s of series){
+    let mn = Infinity, mx = -Infinity;
+    for (let i=0;i<s.values.length;i++){
+      const v = s.values[i];
+      if (!isFinite(v)) continue;
+      if (v<mn) mn=v; if (v>mx) mx=v;
+    }
+    s.range = isFinite(mn) ? [mn, mx] : [0, 1];
+  }
+  return series;
+}
+
+/* Recompute each series' Y range based on visible time window — for "local zoom". */
+function recomputeLocalRanges(series, tMin, tMax){
+  for (const s of series){
+    let mn = Infinity, mx = -Infinity;
+    for (let i=0;i<s.times.length;i++){
+      const t = s.times[i];
+      if (t < tMin || t > tMax) continue;
+      const v = s.values[i];
+      if (!isFinite(v)) continue;
+      if (v < mn) mn = v;
+      if (v > mx) mx = v;
+    }
+    if (isFinite(mn) && mx > mn){
+      // 4% headroom so peaks aren't glued to the edges
+      const pad = (mx - mn) * 0.04;
+      s.range = [mn - pad, mx + pad];
+    } else if (isFinite(mn)){
+      // single value — small margin around it
+      s.range = [mn - 1, mn + 1];
+    } else {
+      s.range = [0, 1];
+    }
+  }
+}
+
+function fmtTimeShort(sec){
+  if (sec < 60) return Math.round(sec)+'s';
+  const m = Math.floor(sec/60), s = Math.round(sec%60);
+  if (m < 60) return m+':'+String(s).padStart(2,'0');
+  const h = Math.floor(m/60);
+  return h+':'+String(m%60).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+let _plotCache = null; // {series, tMin, tMax, ml, mr, mt, mb, pw, ph, cssW, cssH}
+let seriesVisibility = {}; // {seriesName: bool} — false = hidden
+
+function renderPlot(){
+  const series = buildPlotSeries();
+  const wrap = plotCanvas.parentElement;
+  const cssW = wrap.clientWidth || 600;
+  const cssH = wrap.clientHeight || 280;
+  const dpr  = window.devicePixelRatio || 1;
+  plotCanvas.width  = Math.max(1, Math.floor(cssW * dpr));
+  plotCanvas.height = Math.max(1, Math.floor(cssH * dpr));
+  const ctx = plotCanvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  // Legend & empty state
+  renderPlotLegend(series);
+
+  if (!series.length){
+    plotEmpty.style.display = '';
+    plotEmpty.textContent = 'run conversion to see plot';
+    _plotCache = null;
+    return;
+  }
+  plotEmpty.style.display = 'none';
+
+  // Common time range — honor zoom view if set, else span of data
+  let tMin, tMax;
+  if (viewTMin != null && viewTMax != null && viewTMax > viewTMin){
+    tMin = viewTMin; tMax = viewTMax;
+  } else {
+    tMin = Infinity; tMax = -Infinity;
+    for (const s of series){
+      if (s.times.length === 0) continue;
+      if (s.times[0] < tMin) tMin = s.times[0];
+      const last = s.times[s.times.length-1];
+      if (last > tMax) tMax = last;
+    }
+    if (!isFinite(tMin)) { tMin = 0; tMax = 1; }
+    if (tMax <= tMin) tMax = tMin + 1;
+  }
+
+  // Local Y rescale — each series' min/max recomputed over the visible window
+  recomputeLocalRanges(series, tMin, tMax);
+
+  const ml = 14, mr = 14, mt = 8, mb = 22;
+  const pw = cssW - ml - mr;
+  const ph = cssH - mt - mb;
+
+  // Background (light)
+  ctx.fillStyle = PALETTE.bg;
+  ctx.fillRect(0,0,cssW,cssH);
+
+  // Grid + time labels
+  ctx.strokeStyle = PALETTE.grid;
+  ctx.lineWidth = 1;
+  ctx.font = '9px JetBrains Mono';
+  ctx.fillStyle = PALETTE.muted;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (let i=0;i<=5;i++){
+    const x = ml + i*pw/5;
+    ctx.beginPath(); ctx.moveTo(x, mt); ctx.lineTo(x, mt+ph); ctx.stroke();
+    const t = tMin + (tMax-tMin)*i/5;
+    ctx.fillText(fmtTimeShort(t), x, mt+ph+5);
+  }
+  for (let i=0;i<=4;i++){
+    const y = mt + i*ph/4;
+    ctx.beginPath(); ctx.moveTo(ml, y); ctx.lineTo(ml+pw, y); ctx.stroke();
+  }
+
+  // Plot box border
+  ctx.strokeStyle = PALETTE.border;
+  ctx.strokeRect(ml, mt, pw, ph);
+
+  // Status line is rendered as a DOM div (see #plot-status), not on canvas
+
+  // Series — each normalized to its own range; skip hidden via seriesVisibility
+  for (const s of series){
+    if (seriesVisibility[s.name] === false) continue;
+    const [mn, mx] = s.range;
+    const rng = (mx - mn) || 1;
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    let started = false;
+    for (let i=0;i<s.times.length;i++){
+      const v = s.values[i];
+      if (!isFinite(v)) { started = false; continue; }
+      const t = s.times[i];
+      const x = ml + (t - tMin) / (tMax - tMin) * pw;
+      const y = mt + ph - (v - mn) / rng * ph;
+      if (!started){ ctx.moveTo(x, y); started = true; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  /* Draw sticks for a given array + colour + active ref */
+  function drawSticks(sticksArr, color, activeRef){
+    if (!sticksArr.length) return;
+    ctx.lineWidth = 1.5;
+    ctx.font = 'bold 9.5px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const sorted = [...sticksArr].map((s,i)=>({...s, _idx:i})).sort((a,b)=>a.tgt_s - b.tgt_s);
+    for (let i=0;i<sorted.length;i++){
+      const s = sorted[i];
+      // Both depth and ALF sticks: tgt_s is in primary-elapsed
+      const x = ml + (s.tgt_s - tMin) / (tMax - tMin) * pw;
+      if (x < ml-1 || x > ml+pw+1) continue;
+      const isActive = activeRef && s._idx === sticksArr.indexOf(activeRef);
+      ctx.strokeStyle = color;
+      ctx.setLineDash(isActive ? [] : [5, 4]);
+      ctx.beginPath(); ctx.moveTo(x, mt); ctx.lineTo(x, mt+ph); ctx.stroke();
+      const lbl = String(i+1);
+      const tw = ctx.measureText(lbl).width;
+      ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.9;
+      ctx.fillRect(x - tw/2 - 5, mt + 2, tw + 10, 14);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = color;
+      ctx.fillText(lbl, x, mt + 3);
+    }
+    ctx.setLineDash([]);
+  }
+  drawSticks(sticks,    PALETTE.depth,  activeStick);      // Depth sticks — amber
+  drawSticks(alfSticks, PALETTE.noise,  activeAlfStick);   // ALF sticks — purple
+  // Cursor reference line — visible in either pick mode, always when mouse is on plot.
+  const cursorColor = pickTarget === 'alf' ? PALETTE.noise : PALETTE.depth;
+  if (pickMode && mouseT_current != null){
+    const xc = ml + (mouseT_current - tMin) / (tMax - tMin) * pw;
+    if (xc >= ml && xc <= ml+pw){
+      ctx.strokeStyle = cursorColor;
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(xc, mt); ctx.lineTo(xc, mt+ph);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Label at top: cursor t
+      ctx.font = 'bold 10px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const lbl = fmtTimeShort(mouseT_current);
+      const tw = ctx.measureText(lbl).width;
+      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.92;
+      ctx.fillRect(xc - tw/2 - 5, mt + 2, tw + 10, 14);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = cursorColor;
+      ctx.fillText(lbl, xc, mt + 3);
+    }
+  }
+  // Shift drag — solid anchor + arrow + Δ label
+  if (pickMode === 'shift' && dragSnapshot && dragSnapshot.target){
+    const xa = ml + (dragSnapshot.mouseT_start - tMin) / (tMax - tMin) * pw;
+    const xc = mouseT_current != null
+      ? ml + (mouseT_current - tMin) / (tMax - tMin) * pw
+      : xa;
+    const delta = depthShift - dragSnapshot.shift_start;
+    const arrowColor = pickTarget === 'alf' ? PALETTE.noise : PALETTE.depth;
+    ctx.strokeStyle = arrowColor;
+    ctx.setLineDash([]);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(xa, mt); ctx.lineTo(xa, mt+ph);
+    ctx.stroke();
+    // Horizontal arrow from anchor to cursor
+    if (Math.abs(xc - xa) > 4){
+      ctx.lineWidth = 2.5;
+      const yArrow = mt + ph * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(xa, yArrow);
+      ctx.lineTo(xc, yArrow);
+      ctx.stroke();
+      const dir = xc > xa ? 1 : -1;
+      ctx.beginPath();
+      ctx.moveTo(xc, yArrow);
+      ctx.lineTo(xc - 9*dir, yArrow - 6);
+      ctx.lineTo(xc - 9*dir, yArrow + 6);
+      ctx.closePath();
+      ctx.fillStyle = arrowColor;
+      ctx.fill();
+    }
+    // Delta label
+    ctx.font = 'bold 12px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lbl = 'Δ ' + (delta>=0?'+':'') + delta.toFixed(2) + 's';
+    const tw = ctx.measureText(lbl).width;
+    const lx = (xa + xc) / 2;
+    const ly = mt + ph * 0.5 - 16;
+    ctx.fillStyle = arrowColor;
+    ctx.fillRect(lx - tw/2 - 9, ly - 10, tw + 18, 20);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(lbl, lx, ly);
+  }
+
+  _plotCache = { series, tMin, tMax, ml, mr, mt, mb, pw, ph, cssW, cssH };
+
+  // Update status div — outside canvas, no overlap with data
+  const statusDiv = document.getElementById('plot-status');
+  if (statusDiv){
+    const parts = [`depth: shift=${depthShift.toFixed(2)}s  stretch=${depthStretch.toFixed(4)}  sticks=${sticks.length}`];
+    if (alfShift !== 0 || alfSticks.length)
+      parts.push(`alf: shift=${alfShift.toFixed(2)}s  sticks=${alfSticks.length}`);
+    statusDiv.textContent = parts.join(' · ');
+  }
+}
+
+function renderPlotLegend(series){
+  plotLegend.innerHTML = '';
+  if (!series.length) return;
+  for (const s of series){
+    const visible = seriesVisibility[s.name] !== false;
+    const item = document.createElement('label');
+    item.className = 'legend-item' + (visible ? '' : ' off');
+    item.style.cursor = 'pointer';
+    const r0 = s.range[0], r1 = s.range[1];
+    item.innerHTML =
+      `<input type="checkbox" ${visible?'checked':''} style="cursor:pointer;accent-color:${s.color};margin:0 2px 0 0;">
+       <span class="legend-line" style="background:${s.color};"></span>
+       <span class="legend-name">${s.name}</span>
+       <span class="legend-rng">[${r0.toFixed(2)}…${r1.toFixed(2)}${s.units?' '+s.units:''}]</span>`;
+    const cb = item.querySelector('input');
+    cb.addEventListener('change', ()=>{
+      seriesVisibility[s.name] = cb.checked;
+      renderPlot();
+    });
+    plotLegend.appendChild(item);
+  }
+}
+
+/* Plot hover tooltip — shows time + each series' value at that x.
+   Also tracks mouseT_current for live visual feedback in pick modes. */
+plotCanvas.addEventListener('mousemove', (e)=>{
+  if (!_plotCache) return;
+  const rect = plotCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const { series, tMin, tMax, ml, pw, mt, ph } = _plotCache;
+  if (x < ml || x > ml+pw || y < mt || y > mt+ph){
+    plotTT.classList.remove('on');
+    if (mouseT_current != null && pickMode){ mouseT_current = null; scheduleRender(); }
+    return;
+  }
+  const t = tMin + (x - ml) / pw * (tMax - tMin);
+  if (pickMode){
+    mouseT_current = t;
+    scheduleRender();
+  }
+  let html = '<div style="color:var(--c-p);"><b>t = '+fmtTimeShort(t)+'</b></div>';
+  for (const s of series){
+    if (seriesVisibility[s.name] === false) continue;
+    // Find nearest sample
+    let idx = -1, best = Infinity;
+    for (let i=0;i<s.times.length;i++){
+      const d = Math.abs(s.times[i] - t);
+      if (d < best){ best = d; idx = i; }
+    }
+    if (idx >= 0 && isFinite(s.values[idx])){
+      html += `<div><span style="color:${s.color};">■</span> ${s.name}: ${s.values[idx].toFixed(2)}${s.units?' '+s.units:''}</div>`;
+    }
+  }
+  plotTT.innerHTML = html;
+  plotTT.classList.add('on');
+  // Position
+  const ttW = plotTT.offsetWidth, ttH = plotTT.offsetHeight;
+  let px = x + 12, py = y + 12;
+  if (px + ttW > _plotCache.cssW) px = x - ttW - 12;
+  if (py + ttH > _plotCache.cssH) py = y - ttH - 12;
+  plotTT.style.left = px+'px';
+  plotTT.style.top  = py+'px';
+});
+plotCanvas.addEventListener('mouseleave', ()=>{
+  plotTT.classList.remove('on');
+  if (mouseT_current != null){ mouseT_current = null; if (pickMode) scheduleRender(); }
+});
+
+// rAF-throttled render to avoid lag on rapid mousemove
+let _renderPending = false;
+function scheduleRender(){
+  if (_renderPending) return;
+  _renderPending = true;
+  requestAnimationFrame(()=>{ _renderPending = false; renderPlot(); });
+}
+
+window.addEventListener('resize', ()=>{ if (_alfCache || _bmCache) renderPlot(); });
+
+/* ── Zoom ──────────────────────────────────────────────────────
+   Wheel = zoom around cursor.  Buttons = zoom around plot center.
+   Double-click = reset.  When zoomed, picks still work on the visible range. */
+function zoomBy(factor, centerT){
+  if (!_plotCache) return;
+  const { tMin, tMax } = _plotCache;
+  if (centerT == null) centerT = (tMin + tMax) / 2;
+  let newMin = centerT + (tMin - centerT) * factor;
+  let newMax = centerT + (tMax - centerT) * factor;
+  // Don't allow inverted or excessively tiny range
+  if (newMax - newMin < 1){
+    const c = (newMin + newMax)/2;
+    newMin = c - 0.5; newMax = c + 0.5;
+  }
+  viewTMin = newMin;
+  viewTMax = newMax;
+  renderPlot();
+}
+function resetZoom(){
+  viewTMin = null; viewTMax = null;
+  renderPlot();
+  log('zoom reset', 'info');
+}
+document.getElementById('zoom-in').onclick    = ()=> zoomBy(1/1.5);
+document.getElementById('zoom-out').onclick   = ()=> zoomBy(1.5);
+document.getElementById('zoom-reset').onclick = resetZoom;
+
+plotCanvas.addEventListener('wheel', (e)=>{
+  if (!_plotCache) return;
+  e.preventDefault();
+  const rect = plotCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const { tMin, tMax, ml, pw } = _plotCache;
+  if (x < ml || x > ml+pw) return;
+  const tCenter = tMin + (x - ml) / pw * (tMax - tMin);
+  const factor = e.deltaY > 0 ? 1.25 : 1/1.25;
+  zoomBy(factor, tCenter);
+}, {passive: false});
+
+plotCanvas.addEventListener('dblclick', (e)=>{
+  // Only reset zoom when not in pick mode (otherwise dblclick can also place pick)
+  if (!pickMode) resetZoom();
+});
+
+/* ── Alignment controls (depth) ──────────────────────────────── */
+function applyAlignment(){
+  depthShift   = parseFloat(shiftEl.value)   || 0;
+  depthStretch = parseFloat(stretchEl.value) || 1;
+  if (depthStretch < 0.001) depthStretch = 0.001;
+  if (_alfCache || _bmCache) renderPlot();
+}
+shiftEl.addEventListener('input', applyAlignment);
+stretchEl.addEventListener('input', applyAlignment);
+
+document.querySelectorAll('.adj-btn[data-adj]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const kind = btn.dataset.adj;
+    const target = kind === 'shift' ? shiftEl : kind === 'stretch' ? stretchEl : null;
+    if (!target) return;
+    const d = parseFloat(btn.dataset.d);
+    target.value = (parseFloat(target.value) || 0) + d;
+    if (kind === 'stretch') target.value = parseFloat(target.value).toFixed(3);
+    applyAlignment();
+  });
+});
+
+btnResetAlign.addEventListener('click', ()=>{
+  pushAlignState();
+  shiftEl.value = '0'; stretchEl.value = '1.0'; sticks = []; alfShift = 0; alfSticks = [];
+  if (pickMode) exitPickMode();
+  applyAlignment();
+});
+
+/* Show/hide ALF alignment card — removed, function kept as no-op for safety */
+function refreshAlfAlignCard(){}
+
+/* ── Undo / Redo for alignment changes ───────────────────────── */
+function snapshotAlign(){
+  return {
+    shift:    depthShift,
+    stretch:  depthStretch,
+    sticks:   sticks.map(s => ({...s})),
+    alfShift: alfShift,
+    alfSticks: alfSticks.map(s => ({...s})),
+  };
+}
+function applyAlignSnapshot(s){
+  depthShift   = s.shift;
+  depthStretch = s.stretch;
+  sticks       = s.sticks.map(x => ({...x}));
+  alfShift     = s.alfShift || 0;
+  alfSticks    = s.alfSticks ? s.alfSticks.map(x => ({...x})) : [];
+  shiftEl.value   = depthShift.toFixed(2);
+  stretchEl.value = depthStretch.toFixed(4);
+}
+function pushAlignState(){
+  alignHistory.push(snapshotAlign());
+  if (alignHistory.length > 200) alignHistory.shift();
+  alignFuture = [];   // clear redo on new change
+  updateUndoRedoButtons();
+}
+function undoAlign(){
+  if (!alignHistory.length){ log('nothing to undo', 'warn'); return; }
+  alignFuture.push(snapshotAlign());
+  applyAlignSnapshot(alignHistory.pop());
+  if (_alfCache || _bmCache) renderPlot();
+  updateUndoRedoButtons();
+  log(`undo (history: ${alignHistory.length}, redo: ${alignFuture.length})`, 'info');
+}
+function redoAlign(){
+  if (!alignFuture.length){ log('nothing to redo', 'warn'); return; }
+  alignHistory.push(snapshotAlign());
+  applyAlignSnapshot(alignFuture.pop());
+  if (_alfCache || _bmCache) renderPlot();
+  updateUndoRedoButtons();
+  log(`redo (history: ${alignHistory.length}, redo: ${alignFuture.length})`, 'info');
+}
+function updateUndoRedoButtons(){
+  document.getElementById('btn-undo').disabled = !alignHistory.length;
+  document.getElementById('btn-redo').disabled = !alignFuture.length;
+}
+// Beforedrag snapshot — push state when a drag begins, commit only if actually changed
+function preDragSnapshot(){
+  _preChangeSnapshot = snapshotAlign();
+}
+function commitDragChange(){
+  if (!_preChangeSnapshot) return;
+  const pre = _preChangeSnapshot;
+  const now = snapshotAlign();
+  const changed =
+    pre.shift !== now.shift ||
+    pre.stretch !== now.stretch ||
+    pre.sticks.length !== now.sticks.length ||
+    pre.sticks.some((s,i)=> s.src_s !== now.sticks[i].src_s || s.tgt_s !== now.sticks[i].tgt_s);
+  if (changed){
+    alignHistory.push(pre);
+    if (alignHistory.length > 200) alignHistory.shift();
+    alignFuture = [];
+    updateUndoRedoButtons();
+  }
+  _preChangeSnapshot = null;
+}
+
+document.getElementById('btn-undo').addEventListener('click', undoAlign);
+document.getElementById('btn-redo').addEventListener('click', redoAlign);
+updateUndoRedoButtons();
+
+window.addEventListener('keydown', (e)=>{
+  const inField = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
+  if (inField) return;
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z' || e.key === 'я' || e.key === 'Я')){
+    e.preventDefault(); undoAlign();
+  } else if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && (e.key === 'z' || e.key === 'Z' || e.key === 'я' || e.key === 'Я')) || e.key === 'y' || e.key === 'Y' || e.key === 'н' || e.key === 'Н')){
+    e.preventDefault(); redoAlign();
+  }
+});
+
+/* ── Interactive alignment ─────────────────────────────────────
+   SHIFT  : drag on plot → depth shifts horizontally in real time.
+   STRETCH: place sticks by clicking; drag a stick → piecewise warp.
+            1 stick = constant offset; 2 = linear; 3+ = piecewise.
+            Right-click stick to remove. ESC = exit mode.
+   ──────────────────────────────────────────────────────────── */
+const STICK_HIT_PX = 10;
+
+function setPickStatus(msg, cls=''){
+  pickStatusEl.textContent = msg;
+  pickStatusEl.className = 'pick-status' + (cls ? ' '+cls : '');
+}
+function startPickMode(mode){
+  if (pickMode === mode){ exitPickMode(); return; }
+  pickMode = mode;
+  activeStick = null; activeAlfStick = null;
+  dragSnapshot = null;
+  plotCanvas.classList.add('pick');
+  btnPickShift.classList.toggle('active', mode === 'shift');
+  btnPickStretch.classList.toggle('active', mode === 'stretch');
+  const tgt = pickTarget.toUpperCase();
+  const n = activeSticks().length;
+  if (mode === 'shift'){
+    setPickStatus(`[${tgt}] SHIFT · drag horizontally to slide. ESC = exit.`);
+  } else {
+    setPickStatus(`[${tgt}] STRETCH · click to place stick (${n} active). Drag stick to warp. Right-click = remove. ESC = exit.`);
+  }
+  renderPlot();
+}
+function exitPickMode(){
+  pickMode = null;
+  activeStick = null; activeAlfStick = null;
+  dragSnapshot = null;
+  plotCanvas.classList.remove('pick');
+  btnPickShift.classList.remove('active');
+  btnPickStretch.classList.remove('active');
+  const n = activeSticks().length;
+  setPickStatus(n
+    ? `Idle — ${n} stick(s) active for ${pickTarget.toUpperCase()}.`
+    : 'Choose target, then Pick Shift or Pick Stretch.');
+  if (_alfCache || _bmCache) renderPlot();
+}
+
+btnPickShift.addEventListener('click',   ()=> startPickMode('shift'));
+btnPickStretch.addEventListener('click', ()=> startPickMode('stretch'));
+
+function getMouseTime(e){
+  if (!_plotCache) return null;
+  const rect = plotCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const { tMin, tMax, ml, pw } = _plotCache;
+  if (x < ml || x > ml+pw) return null;
+  return tMin + (x - ml) / pw * (tMax - tMin);
+}
+/* ALF stick tgt_s is already in primary-elapsed — direct plot x */
+function alfStickPlotX(tgt_s_primary){
+  if (!_plotCache) return null;
+  const { tMin, tMax, ml, pw } = _plotCache;
+  return ml + (tgt_s_primary - tMin) / (tMax - tMin) * pw;
+}
+
+function findStickIdxNearX(canvas_x){
+  if (!_plotCache) return -1;
+  const { tMin, tMax, ml, pw } = _plotCache;
+  const arr = activeSticks();
+  let bestIdx = -1, bestDx = STICK_HIT_PX;
+  for (let i=0;i<arr.length;i++){
+    // Both depth and ALF sticks now store tgt_s in primary-elapsed
+    const x = ml + (arr[i].tgt_s - tMin) / (tMax - tMin) * pw;
+    const dx = Math.abs(x - canvas_x);
+    if (dx < bestDx){ bestDx = dx; bestIdx = i; }
+  }
+  return bestIdx;
+}
+
+plotCanvas.addEventListener('mousedown', (e)=>{
+  if (!_plotCache || e.button !== 0) return;
+  const t = getMouseTime(e);
+  if (t == null) return;
+  if (pickMode === 'shift'){
+    preDragSnapshot();
+    if (pickTarget === 'alf'){
+      dragSnapshot = { mouseT_start: t, shift_start: alfShift, target: 'alf' };
+    } else {
+      dragSnapshot = { mouseT_start: t, shift_start: depthShift, target: 'depth' };
+    }
+    scheduleRender();
+  } else if (pickMode === 'stretch'){
+    const rect = plotCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const idx = findStickIdxNearX(x);
+    preDragSnapshot();
+    if (pickTarget === 'alf'){
+      // t is already in primary-elapsed (plot coordinates)
+      if (idx >= 0){
+        activeAlfStick = alfSticks[idx];
+      } else {
+        // src_s = base position of the noise sample currently at plot position t
+        // = inverse warp of t (undoes existing sticks, then shift+stretch is already baked in)
+        const src_s = alfInverseWarp(t);
+        activeAlfStick = { src_s, tgt_s: t };
+        alfSticks.push(activeAlfStick);
+      }
+    } else {
+      if (idx >= 0){
+        activeStick = sticks[idx];
+      } else {
+        const src_s = srcTimeFromDataTime(t);
+        activeStick = { src_s, tgt_s: t };
+        sticks.push(activeStick);
+      }
+    }
+    scheduleRender();
+  } else {
+    // No pick mode — start panning
+    const rect = plotCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    panSnapshot = {
+      mouseX: x,
+      viewTMin: _plotCache.tMin,
+      viewTMax: _plotCache.tMax,
+    };
+    plotCanvas.classList.add('panning');
+  }
+});
+
+plotCanvas.addEventListener('mousemove', (e)=>{
+  if (!_plotCache) return;
+  if (panSnapshot){
+    const rect = plotCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const { ml, pw } = _plotCache;
+    const dx = x - panSnapshot.mouseX;
+    const dt = -dx * (panSnapshot.viewTMax - panSnapshot.viewTMin) / pw;
+    viewTMin = panSnapshot.viewTMin + dt;
+    viewTMax = panSnapshot.viewTMax + dt;
+    scheduleRender();
+    return;
+  }
+  if (!pickMode) return;
+  if (pickMode === 'shift' && dragSnapshot){
+    const t = getMouseTime(e);
+    if (t == null) return;
+    const delta = t - dragSnapshot.mouseT_start;
+    if (dragSnapshot.target === 'alf'){
+      alfShift = dragSnapshot.shift_start + delta;
+    } else {
+      depthShift = dragSnapshot.shift_start + delta;
+      shiftEl.value = depthShift.toFixed(2);
+    }
+    scheduleRender();
+  } else if (pickMode === 'stretch'){
+    const t = getMouseTime(e);
+    if (t == null) return;
+    if (pickTarget === 'alf' && activeAlfStick){
+      activeAlfStick.tgt_s = t;  // tgt_s is in primary-elapsed — just the mouse position
+      scheduleRender();
+    } else if (pickTarget !== 'alf' && activeStick){
+      activeStick.tgt_s = t;
+      scheduleRender();
+    }
+  }
+});
+
+function endDrag(){
+  if (panSnapshot){
+    panSnapshot = null;
+    plotCanvas.classList.remove('panning');
+    return;
+  }
+  if (pickMode === 'shift' && dragSnapshot){
+    const isAlf = dragSnapshot.target === 'alf';
+    const cur = isAlf ? alfShift : depthShift;
+    const d = cur - dragSnapshot.shift_start;
+    if (Math.abs(d) > 0.05){
+      log(`[${isAlf?'ALF':'DEPTH'}] shift Δ=${d>=0?'+':''}${d.toFixed(2)}s  (total=${cur.toFixed(2)}s)`, 'ok');
+    }
+    dragSnapshot = null;
+    commitDragChange();
+    scheduleRender();
+  } else if (pickMode === 'stretch'){
+    if (pickTarget === 'alf' && activeAlfStick){
+      log(`[ALF] stick #${alfSticks.indexOf(activeAlfStick)+1}: tgt=${fmtTimeShort(activeAlfStick.tgt_s)}  (${alfSticks.length} sticks)`, 'ok');
+      activeAlfStick = null;
+      setPickStatus(`[ALF] STRETCH · ${alfSticks.length} stick(s). Click to add, drag to warp, right-click = remove.`);
+      commitDragChange();
+      scheduleRender();
+    } else if (pickTarget !== 'alf' && activeStick){
+      log(`[DEPTH] stick #${sticks.indexOf(activeStick)+1}: src=${fmtTimeShort(activeStick.src_s)} → tgt=${fmtTimeShort(activeStick.tgt_s)}  (${sticks.length} sticks)`, 'ok');
+      activeStick = null;
+      setPickStatus(`[DEPTH] STRETCH · ${sticks.length} stick(s). Click to add, drag to warp, right-click = remove.`);
+      commitDragChange();
+      scheduleRender();
+    }
+  }
+}
+plotCanvas.addEventListener('mouseup',   endDrag);
+plotCanvas.addEventListener('mouseleave', endDrag);
+
+plotCanvas.addEventListener('contextmenu', (e)=>{
+  if (pickMode !== 'stretch') return;
+  e.preventDefault();
+  const rect = plotCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const idx = findStickIdxNearX(x);
+  if (idx >= 0){
+    pushAlignState();
+    activeSticks().splice(idx, 1);
+    const n = activeSticks().length;
+    setPickStatus(`[${pickTarget.toUpperCase()}] STRETCH · ${n} stick(s). Click to add more.`);
+    renderPlot();
+  }
+});
+
+window.addEventListener('keydown', (e)=>{
+  if (e.key === 'Escape' && pickMode) exitPickMode();
+});
+
+/* ── LAS export — aligned depth + data channels ──────────────── */
+function buildLas(kindOverride){
+  if (!depthData) throw new Error('No depth file loaded');
+  // Prefer BM as anchor for LAS; fall back to ALF
+  const useBm = kindOverride === 'bm' || (!kindOverride && _bmCache);
+  if (useBm && !_bmCache) throw new Error('BM not loaded');
+  if (!useBm && !_alfCache) throw new Error('Press RUN first to build dataset');
+
+  const rows = [];
+  let curveDefs;
+  const NULL = -999.25;
+  let lasStartUnixMs, lasSN, lasTag;
+
+  if (useBm){
+    const bm = _bmCache;
+    for (const r of bm.rows){
+      const et = (r.unix - bm.t0Unix)/1000;
+      const d  = depthInUnit(depthAtAligned(r.unix));
+      rows.push([et, isFinite(d) ? d : NULL]);
+    }
+    lasStartUnixMs = bm.t0Unix;
+    lasSN = bmSN; lasTag = 'BM';
+  } else {
+    const stft = _alfCache.bands[0].stft;
+    for (let f=0; f<stft.nFrames; f++){
+      const et = stft.times[f];
+      const d  = depthInUnit(depthAtAligned(alfCorrectedAbsMs(et)));
+      rows.push([et, isFinite(d) ? d : NULL]);
+    }
+    lasStartUnixMs = alfStartUnixMs;
+    lasSN = alfSN; lasTag = 'ALF';
+  }
+  curveDefs = [
+    ['TIME', 's',         'Elapsed time (data)'],
+    ['DEPT', depthUnit,    'Aligned depth'],
+  ];
+  if (!rows.length) throw new Error('No rows to write');
+
+  const start = rows[0][0];
+  const stop  = rows[rows.length-1][0];
+  const step  = rows.length > 1 ? (rows[1][0] - rows[0][0]) : 1;
+
+  const lines = [];
+  const pad = (s,n)=> String(s).padEnd(n);
+  lines.push('~Version Information');
+  lines.push(`VERS.   2.0 : CWLS LOG ASCII STANDARD - VERSION 2.0`);
+  lines.push(`WRAP.    NO : ONE LINE PER STEP`);
+  lines.push('~Well Information');
+  lines.push('#MNEM.UNIT       DATA                          DESCRIPTION');
+  lines.push(`STRT.s          ${pad(start.toFixed(3),20)}: START TIME`);
+  lines.push(`STOP.s          ${pad(stop.toFixed(3),20)}: STOP TIME`);
+  lines.push(`STEP.s          ${pad(step.toFixed(3),20)}: STEP`);
+  lines.push(`NULL.           ${pad(String(NULL),20)}: NULL VALUE`);
+  lines.push(`COMP.           ${pad('Borehole Plugin',20)}: COMPANY`);
+  lines.push(`WELL.           ${pad(safeWell(),20)}: WELL NAME`);
+  lines.push(`SRN .           ${pad(lasSN,20)}: TOOL S/N (${lasTag})`);
+  const start_iso = lasStartUnixMs ? new Date(lasStartUnixMs).toISOString().slice(0,19).replace('T',' ') : '';
+  lines.push(`DATE.           ${pad(start_iso,20)}: DATA START (UTC)`);
+  lines.push(`SHFT.s          ${pad(depthShift.toFixed(3),20)}: GLOBAL SHIFT APPLIED`);
+  lines.push(`STRC.           ${pad(depthStretch.toFixed(5),20)}: GLOBAL STRETCH APPLIED`);
+  lines.push(`STKS.           ${pad(String(sticks.length),20)}: SUMMARY OF STICKS`);
+  lines.push('~Curve Information');
+  lines.push('#MNEM.UNIT        API CODE      CURVE DESCRIPTION');
+  for (const cd of curveDefs){
+    lines.push(`${pad(cd[0]+'.'+cd[1], 18)}:                ${cd[2]}`);
+  }
+  lines.push('~Parameter Information');
+  if (sticks.length){
+    const sorted = [...sticks].sort((a,b)=>a.tgt_s - b.tgt_s);
+    for (let i=0;i<sorted.length;i++){
+      lines.push(`#STICK ${i+1}: src=${sorted[i].src_s.toFixed(2)}s  tgt=${sorted[i].tgt_s.toFixed(2)}s`);
+    }
+  }
+  lines.push('~ASCII');
+  for (const row of rows){
+    const parts = row.map(v => isFinite(v) ? v.toFixed(4) : String(NULL));
+    lines.push(parts.map(s=>s.padStart(14)).join(' '));
+  }
+  return { content: lines.join('\n')+'\n', rowCount: rows.length, tag: lasTag, sn: lasSN };
+}
+
+document.getElementById('btn-save-las').addEventListener('click', ()=>{
+  try {
+    const { content, rowCount, tag, sn } = buildLas();
+    const fname = `${safeWell()}_${tag}_${sn || '00000'}_depth.las`;
+    const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    log(`Saved LAS: ${fname}  (${rowCount} rows, ${fmtBytes(blob.size)})`, 'ok');
+  } catch(e){
+    log('LAS export error: '+e.message, 'err');
+  }
+});
+
+/* ── APPLY DEPTH — re-inject depth column into existing CSVs without
+   re-running FFT. Uses cached _bmCache / _alfCache and current alignment. ── */
+/* Count how many rows in a CSV string have a non-empty depth column (col index 1). */
+function countDepthFilled(csvStr){
+  let filled = 0, total = 0;
+  const lines = csvStr.split('\n');
+  for (let i=2; i<lines.length; i++){           // skip header + units rows
+    const ln = lines[i].trim();
+    if (!ln) continue;
+    total++;
+    const cols = ln.split(',');
+    if (cols[1] && cols[1].trim() !== '') filled++;
+  }
+  return {filled, total};
+}
+
+/* Log time-range diagnostics when depth is empty — helps user fix alignment. */
+function logDepthDiag(dataStartAbsMs, dataEndAbsMs){
+  if (!depthData || !depthData.points.length) return;
+  const dp0 = depthData.points[0].t;
+  const dp1 = depthData.points.at(-1).t;
+  log(`  Data window:  ${fmtUtc(dataStartAbsMs)} → ${fmtUtc(dataEndAbsMs)}`, 'warn');
+  log(`  Depth window: ${fmtUtc(dp0)} → ${fmtUtc(dp1)}`, 'warn');
+  const primary = primaryDataStart() || 0;
+  // Show what elapsed-second range has depth coverage
+  const covStart = Math.max(0, (dp0 - primary)/1000 + depthShift);
+  const covEnd   = (dp1 - primary)/1000 + depthShift;
+  log(`  Depth covers data elapsed ${covStart.toFixed(0)}s … ${covEnd.toFixed(0)}s`, 'warn');
+  if (covEnd < 0 || covStart > (dataEndAbsMs - dataStartAbsMs)/1000){
+    log('  ⚠ NO OVERLAP — adjust Shift in Depth Alignment to bring depth in range', 'err');
+  }
+}
+
+async function applyDepthToCSVs(){
+  if (!depthData || !depthData.points.length){
+    log('APPLY DEPTH: no depth data loaded', 'err'); return;
+  }
+  if (!_bmCache && !_alfCache){
+    log('APPLY DEPTH: press SYNC first', 'err'); return;
+  }
+
+  // ── Diagnostics ─────────────────────────────────────────────
+  const primary = primaryDataStart();
+  const dp0 = depthData.points[0].t;
+  const dp1 = depthData.points.at(-1).t;
+  log(`APPLY DEPTH  primary=${primary ? fmtUtc(primary) : 'null'}`, 'info');
+  log(`  depth: ${fmtUtc(dp0)} → ${fmtUtc(dp1)}  (${depthData.points.length} pts, unit=${depthData.srcUnit})`, 'info');
+  log(`  align: shift=${depthShift.toFixed(2)}s  stretch=${depthStretch.toFixed(4)}  sticks=${sticks.length}`, 'info');
+  // Probe one sample lookup
+  if (primary && _bmCache){
+    const testT = _bmCache.t0Unix + Math.floor(_bmCache.rows.length/2) * 2000;
+    const probeDepth = depthAtAligned(testT);
+    log(`  probe at BM mid-row → depth=${isFinite(probeDepth) ? probeDepth.toFixed(3) : 'NaN/out-of-range'}`, isFinite(probeDepth)?'ok':'warn');
+    if (!isFinite(probeDepth)){
+      const mapped = depthQueryAligned(testT);
+      log(`    depthQueryAligned=${fmtUtc(mapped)}  (must be between ${fmtUtc(dp0)} and ${fmtUtc(dp1)})`, 'warn');
+    }
+  }
+  // ────────────────────────────────────────────────────────────
+
+  busy.classList.add('on');
+  const szEl = document.getElementById('apply-depth-sz');
+  szEl.textContent = 'applying…';
+  await new Promise(r => setTimeout(r, 20));
+
+  const allNames = [];
+  let totalFilled = 0, totalRows = 0;
+
+  try {
+    // ── BM ──────────────────────────────────────────────────────
+    if (_bmCache){
+      const out  = buildBmCsv(_bmCache);
+      const blob = new Blob([out.csv], {type:'text/csv'});
+      const name = buildBmFilename();
+      csvBlobs[name]   = blob;
+      csvPreview[name] = {header: out.header, units: out.units, preview: out.preview,
+                          previewHasDepth: out.previewHasDepth, firstDepthRow: out.firstDepthRow,
+                          depthMin: out.depthMin, depthMax: out.depthMax, totalRows: out.totalRows};
+      allNames.push(name);
+      const origTotal = _bmCache.rows.length;
+      const filled = out.totalRows;
+      totalFilled += filled; totalRows += origTotal;
+      const pct = origTotal ? Math.round(filled/origTotal*100) : 0;
+      if (filled === 0){
+        log(`BM depth: 0/${origTotal} rows with depth ← alignment mismatch`, 'err');
+        logDepthDiag(_bmCache.t0Unix, _bmCache.rows.at(-1).unix);
+      } else {
+        log(`BM depth: ${filled}/${origTotal} rows with depth (${pct}%)  → ${name}`, 'ok');
+      }
+    }
+
+    // ── ALF ─────────────────────────────────────────────────────
+    if (_alfCache){
+      const mode  = alfModeEl.value;
+      const names = buildAlfFilenames(mode);
+      for (let bi = 0; bi < _alfCache.bands.length; bi++){
+        const band = _alfCache.bands[bi];
+        const name = names[bi];
+        const out  = buildAlfBandCsv(band, alfStartUnixMs || 0);
+        const blob = new Blob([out.csv], {type:'text/csv'});
+        csvBlobs[name]   = blob;
+        csvPreview[name] = {header: out.header, units: out.units, preview: out.preview,
+                            previewHasDepth: out.previewHasDepth, firstDepthRow: out.firstDepthRow,
+                            depthMin: out.depthMin, depthMax: out.depthMax, totalRows: out.totalRows};
+        allNames.push(name);
+        const origTotal = band.stft.nFrames;
+        const filled = out.totalRows;
+        totalFilled += filled; totalRows += origTotal;
+        const pct = origTotal ? Math.round(filled/origTotal*100) : 0;
+        if (filled === 0){
+          const alf0 = alfCorrectedAbsMs(1);
+          const alfN = alfCorrectedAbsMs(band.stft.nFrames);
+          log(`ALF ${band.name} depth: 0/${origTotal} frames with depth ← alignment mismatch`, 'err');
+          logDepthDiag(alf0, alfN);
+        } else {
+          log(`ALF ${band.name} depth: ${filled}/${origTotal} frames with depth (${pct}%)  → ${name}`, 'ok');
+        }
+      }
+    }
+
+    // Rebuild download buttons so they point to fresh blobs
+    btnsEl.innerHTML = '';
+    for (const name of allNames){
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.innerHTML = `<span><span class="ico">⬇ ${name}</span></span><span class="sz">${fmtBytes(csvBlobs[name].size)}</span>`;
+      btn.onclick = ()=>downloadBlob(name);
+      btnsEl.appendChild(btn);
+    }
+    // Refresh preview
+    if (allNames.length){
+      renderPreviewTabs(allNames);
+      renderPreview(allNames[0]);
+    }
+    const pct = totalRows ? Math.round(totalFilled/totalRows*100) : 0;
+    szEl.textContent = `${allNames.length} file(s) · ${totalFilled} rows · depth ${pct}%`;
+    resultsBlock.style.display = '';
+    renderPlot();
+  } catch(e){
+    log('APPLY DEPTH error: '+e.message, 'err');
+    szEl.textContent = 'error';
+  }
+  busy.classList.remove('on');
+}
+
+document.getElementById('btn-apply-depth').addEventListener('click', applyDepthToCSVs);
+
+/* ── Save / Load Project ─────────────────────────────────────── */
+function buildProjectJson(){
+  return {
+    _version: 1,
+    well:         wellEl.value,
+    depthUnit,
+    alfMode:      alfModeEl.value,
+    alfSR:        parseInt(document.getElementById('alf-sr').value, 10) || 1800,
+    // File identifiers (names only — user must reload actual files)
+    bmFileName:   bmFile  ? bmFile.name  : null,
+    alfFileName:  alfFile ? alfFile.name : null,
+    depthFileName:depthFile ? depthFile.name : null,
+    alfStartUTC:  alfStartUnixMs ? new Date(alfStartUnixMs).toISOString() : null,
+    // Alignment
+    depthShift,
+    depthStretch,
+    sticks:   sticks.map(s => ({...s})),
+    alfShift,
+    alfSticks: alfSticks.map(s => ({...s})),
+    // Depth mapping config (if available)
+    depthMapCfg: window._lastDepthMapCfg || null,
+  };
+}
+
+function applyProjectJson(obj){
+  if (!obj || obj._version !== 1){ log('Invalid project file', 'err'); return; }
+  // Settings
+  if (obj.well !== undefined) wellEl.value = obj.well;
+  if (obj.depthUnit) {
+    depthUnit = obj.depthUnit;
+    document.getElementById('u-m').classList.toggle('on', depthUnit === 'm');
+    document.getElementById('u-ft').classList.toggle('on', depthUnit === 'ft');
+  }
+  if (obj.alfMode) alfModeEl.value = obj.alfMode;
+  if (obj.alfSR){
+    const srEl = document.getElementById('alf-sr');
+    if (srEl) srEl.value = obj.alfSR;
+  }
+  if (obj.alfStartUTC && alfFile){
+    alfStartUnixMs = new Date(obj.alfStartUTC).getTime();
+    document.getElementById('start-time').value = obj.alfStartUTC.slice(0,19).replace('T',' ');
+  }
+  // Alignment
+  depthShift   = obj.depthShift   ?? 0;
+  depthStretch = obj.depthStretch ?? 1;
+  sticks       = (obj.sticks   || []).map(s => ({...s}));
+  alfShift     = obj.alfShift   ?? 0;
+  alfSticks    = (obj.alfSticks || []).map(s => ({...s}));
+  shiftEl.value   = depthShift.toFixed(2);
+  stretchEl.value = depthStretch.toFixed(4);
+  // Reset undo history (loaded state is the new baseline)
+  alignHistory = []; alignFuture = [];
+  updateUndoRedoButtons();
+  refreshFnamePreview();
+  if (_alfCache || _bmCache) renderPlot();
+  log(`Project loaded  (depth shift=${depthShift.toFixed(2)}s, stretch=${depthStretch.toFixed(4)}, sticks=${sticks.length}, alf-shift=${alfShift.toFixed(2)}s, alf-sticks=${alfSticks.length})`, 'ok');
+}
+
+document.getElementById('btn-save-project').addEventListener('click', ()=>{
+  const obj = buildProjectJson();
+  const json = JSON.stringify(obj, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const well = (obj.well || 'project').replace(/[^\w.\-]+/g,'_') || 'project';
+  const fname = `${well}_alignment.json`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fname;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  log(`Project saved: ${fname}  (${fmtBytes(blob.size)})`, 'ok');
+});
+
+document.getElementById('btn-load-project').addEventListener('click', ()=>{
+  document.getElementById('file-project').click();
+});
+document.getElementById('file-project').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const txt = await f.text();
+    const obj = JSON.parse(txt);
+    applyProjectJson(obj);
+    // Hint about files
+    const hint = [];
+    if (obj.bmFileName && !bmFile) hint.push(`BM: ${obj.bmFileName}`);
+    if (obj.alfFileName && !alfFile) hint.push(`ALF: ${obj.alfFileName}`);
+    if (obj.depthFileName && !depthFile) hint.push(`Depth: ${obj.depthFileName}`);
+    if (hint.length) log(`Note: re-load original files if not yet loaded — ${hint.join(', ')}`, 'warn');
+  } catch(err){
+    log('Load project error: '+err.message, 'err');
+  }
+  e.target.value = '';
+});
+
+/* ── Wiring ──────────────────────────────────────────────────── */
+function setupDropzone(dz, fileInput, handler, multi=false){
+  dz.addEventListener('click', ()=> fileInput.click());
+  dz.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); }});
+  fileInput.addEventListener('change', async e=>{
+    const files = Array.from(e.target.files || []);
+    if (multi){ for (const f of files) await handler(f); }
+    else if (files[0]) await handler(files[0]);
+    fileInput.value = '';
+  });
+  ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{
+    e.preventDefault(); e.stopPropagation(); dz.classList.add('drag');
+  }));
+  ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{
+    e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag');
+  }));
+  dz.addEventListener('drop', async e=>{
+    const files = Array.from(e.dataTransfer.files || []);
+    if (multi){ for (const f of files) await handler(f); }
+    else if (files[0]) await handler(files[0]);
+  });
+}
+
+setupDropzone(dzDmp, fileDmp, handleDmpFile, true);   // multi: drop both files at once
+setupDropzone(dzDep, fileDep, handleDepthFile);
+
+/* ── ALF SR controls (1800/3600 quick-buttons + auto-fit) ────── */
+const alfSrEl = document.getElementById('alf-sr');
+const alfSrInfoEl = document.getElementById('alf-sr-info');
+function updateAlfSrInfo(){
+  if (!alfBuf){ alfSrInfoEl.textContent = ''; return; }
+  const sr = parseInt(alfSrEl.value, 10) || 1800;
+  const headerGuess = 256;
+  const samples = Math.floor((alfBuf.byteLength - headerGuess) / 2);
+  const durS = samples / sr;
+  alfSrInfoEl.textContent =
+    `samples=${samples.toLocaleString()} · SR=${sr} Hz · duration=${fmtDur(durS)}`;
+}
+document.querySelectorAll('.adj-btn[data-sr]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    alfSrEl.value = btn.dataset.sr;
+    updateAlfSrInfo();
+  });
+});
+alfSrEl.addEventListener('input', updateAlfSrInfo);
+document.getElementById('alf-sr-fit').addEventListener('click', ()=>{
+  if (!alfBuf){ log('FIT: load ALF .dmp first', 'warn'); return; }
+  if (!depthData){ log('FIT: load depth file first', 'warn'); return; }
+  const samples = Math.floor((alfBuf.byteLength - 256) / 2);
+  const depDur = (depthData.points.at(-1).t - depthData.points[0].t) / 1000;
+  if (depDur < 1){ log('FIT: depth duration too small', 'err'); return; }
+  const sr = Math.round(samples / depDur);
+  alfSrEl.value = sr;
+  updateAlfSrInfo();
+  log(`FIT: SR set to ${sr} Hz so ALF duration ≈ depth duration (${fmtDur(depDur)}). Press RUN to re-parse.`, 'ok');
+});
+
+wellEl.addEventListener('input', refreshFnamePreview);
+alfModeEl.addEventListener('change', refreshFnamePreview);
+
+btnUm.onclick = ()=>{ depthUnit='m'; btnUm.classList.add('on'); btnUft.classList.remove('on'); };
+btnUft.onclick= ()=>{ depthUnit='ft'; btnUft.classList.add('on'); btnUm.classList.remove('on'); };
+
+optStrip.addEventListener('change', ()=>{ if (dmpFile) handleDmpFile(dmpFile); });
+
+/* Manual override of start time (UTC) — for depth alignment. */
+function parseUserStartTs(s){
+  s = (s||'').trim();
+  if (!s) return null;
+  // Accept "YYYY-MM-DD HH:MM[:SS]" or ISO
+  const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (m) return Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +(m[6]||0));
+  return null;
+}
+startEl.addEventListener('change', ()=>{
+  const ts = parseUserStartTs(startEl.value);
+  if (ts == null){
+    if (startEl.value.trim()) log('Cannot parse start time. Use format YYYY-MM-DD HH:MM:SS', 'err');
+    return;
+  }
+  // ALF start has filename-derived/uncertain time, so editable field overrides ALF.
+  // (BM has authoritative timestamps inside records and cannot be overridden.)
+  if (alfBuf){
+    alfStartUnixMs = ts;
+    log('ALF start overridden → '+fmtUtc(ts), 'info');
+    syncLegacyDmpVars();
+    renderPlot();
+  } else if (bmBuf){
+    log('Start time field is for ALF only; BM uses its internal record timestamps', 'warn');
+    startEl.value = new Date(bmStartUnixMs).toISOString().slice(0,19).replace('T',' ');
+  }
+});
+
+btnConv.onclick = runConvert;
+
+/* ── Save / Load Project ──────────────────────────────────────── */
+function buildProjectJson(){
+  return {
+    _version: 2,
+    savedAt:   new Date().toISOString(),
+    // Settings
+    well:          wellEl.value,
+    depthUnit,
+    alfMode:       alfModeEl.value,
+    alfSR:         parseInt(document.getElementById('alf-sr').value, 10) || 1800,
+    // File names (informational — user must re-load the actual files)
+    bmFileName:    bmFile   ? bmFile.name   : null,
+    alfFileName:   alfFile  ? alfFile.name  : null,
+    depthFileName: depthFile? depthFile.name: null,
+    alfStartUTC:   alfStartUnixMs ? new Date(alfStartUnixMs).toISOString() : null,
+    // Depth alignment
+    depthShift,
+    depthStretch,
+    sticks:    sticks.map(s => ({...s})),
+    // ALF alignment
+    alfShift,
+    alfSticks: alfSticks.map(s => ({...s})),
+  };
+}
+
+function applyProjectJson(obj){
+  if (!obj || (obj._version !== 1 && obj._version !== 2)){
+    log('Invalid or unsupported project file (expected version 1 or 2)', 'err');
+    return false;
+  }
+
+  // ── Settings ───────────────────────────────────────────────
+  if (obj.well !== undefined) wellEl.value = obj.well;
+
+  if (obj.depthUnit){
+    depthUnit = obj.depthUnit;
+    document.getElementById('u-m').classList.toggle('on', depthUnit === 'm');
+    document.getElementById('u-ft').classList.toggle('on', depthUnit === 'ft');
+  }
+  if (obj.alfMode) alfModeEl.value = obj.alfMode;
+  if (obj.alfSR){
+    const srEl = document.getElementById('alf-sr');
+    if (srEl){ srEl.value = obj.alfSR; updateAlfSrInfo(); }
+  }
+  // Restore ALF start time if ALF file is already loaded
+  if (obj.alfStartUTC && alfBuf){
+    alfStartUnixMs = new Date(obj.alfStartUTC).getTime();
+    document.getElementById('start-time').value = obj.alfStartUTC.slice(0,19).replace('T',' ');
+  }
+
+  // ── Depth alignment ────────────────────────────────────────
+  depthShift   = typeof obj.depthShift   === 'number' ? obj.depthShift   : 0;
+  depthStretch = typeof obj.depthStretch === 'number' ? obj.depthStretch : 1;
+  sticks       = Array.isArray(obj.sticks)    ? obj.sticks.map(s   => ({...s})) : [];
+
+  // ── ALF alignment ──────────────────────────────────────────
+  alfShift  = typeof obj.alfShift === 'number' ? obj.alfShift : 0;
+  alfSticks = Array.isArray(obj.alfSticks) ? obj.alfSticks.map(s => ({...s})) : [];
+
+  // Sync UI inputs
+  shiftEl.value   = depthShift.toFixed(2);
+  stretchEl.value = depthStretch.toFixed(4);
+
+  // Reset undo history — loaded state is the new baseline
+  alignHistory = []; alignFuture = [];
+  updateUndoRedoButtons();
+  refreshFnamePreview();
+
+  // Re-render if data is already loaded
+  if (_alfCache || _bmCache) renderPlot();
+
+  // Summary
+  log(`Project loaded: well="${obj.well || ''}"`, 'ok');
+  log(`  depth shift=${depthShift.toFixed(2)}s  stretch=${depthStretch.toFixed(4)}  sticks=${sticks.length}`, 'ok');
+  if (alfShift !== 0 || alfSticks.length)
+    log(`  ALF shift=${alfShift.toFixed(2)}s  alf-sticks=${alfSticks.length}`, 'ok');
+
+  // Hint about files that still need to be loaded
+  const need = [];
+  if (obj.bmFileName   && !bmFile)    need.push('BM: '    + obj.bmFileName);
+  if (obj.alfFileName  && !alfFile)   need.push('ALF: '   + obj.alfFileName);
+  if (obj.depthFileName&& !depthFile) need.push('Depth: ' + obj.depthFileName);
+  if (need.length)
+    log('Still need files: ' + need.join(' | '), 'warn');
+
+  return true;
+}
+
+document.getElementById('btn-save-project').addEventListener('click', ()=>{
+  const obj  = buildProjectJson();
+  const json = JSON.stringify(obj, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const well = (obj.well || 'project').replace(/[^\w.\-]+/g, '_') || 'project';
+  const fname = `${well}_alignment.json`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  log(`Project saved → ${fname}  (${fmtBytes(blob.size)})`, 'ok');
+});
+
+document.getElementById('btn-load-project').addEventListener('click', ()=>{
+  document.getElementById('file-project').click();
+});
+
+document.getElementById('file-project').addEventListener('change', async e=>{
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const txt = await f.text();
+    const obj = JSON.parse(txt);
+    applyProjectJson(obj);
+  } catch(err){
+    log('Load project error: ' + err.message, 'err');
+  }
+  e.target.value = '';
+});
+
+/* ── Save / Load Project ──────────────────────────────────────── */
+function buildProjectJson(){
+  return {
+    _version: 2,
+    savedAt:      new Date().toISOString(),
+    well:         wellEl.value,
+    depthUnit,
+    alfMode:      alfModeEl.value,
+    alfSR:        parseInt(document.getElementById('alf-sr').value, 10) || 1800,
+    bmFileName:   bmFile   ? bmFile.name   : null,
+    alfFileName:  alfFile  ? alfFile.name  : null,
+    depthFileName:depthFile? depthFile.name: null,
+    alfStartUTC:  alfStartUnixMs ? new Date(alfStartUnixMs).toISOString() : null,
+    depthShift, depthStretch,
+    sticks:   sticks.map(s => ({...s})),
+    alfShift,
+    alfSticks: alfSticks.map(s => ({...s})),
+  };
+}
+
+/* silent=true → reapply after file load, skip logging about missing files */
+function applyProjectJson(obj, silent=false){
+  if (!obj || (obj._version !== 1 && obj._version !== 2)){
+    if (!silent) log('Invalid project file (expected version 1 or 2)', 'err');
+    return false;
+  }
+  _lastProject = obj;   // remember for re-application after file loads
+
+  // ── Settings (only on explicit load, not on silent re-apply) ──
+  if (!silent){
+    if (obj.well !== undefined) wellEl.value = obj.well;
+    if (obj.depthUnit){
+      depthUnit = obj.depthUnit;
+      document.getElementById('u-m').classList.toggle('on', depthUnit === 'm');
+      document.getElementById('u-ft').classList.toggle('on', depthUnit === 'ft');
+    }
+    if (obj.alfMode) alfModeEl.value = obj.alfMode;
+    if (obj.alfSR){
+      const srEl = document.getElementById('alf-sr');
+      if (srEl){ srEl.value = obj.alfSR; updateAlfSrInfo(); }
+    }
+  }
+
+  // ── ALF start time — always apply if ALF is loaded ────────────
+  if (obj.alfStartUTC && alfBuf){
+    alfStartUnixMs = new Date(obj.alfStartUTC).getTime();
+    document.getElementById('start-time').value = obj.alfStartUTC.slice(0,19).replace('T',' ');
+    syncLegacyDmpVars();
+  }
+
+  // ── Alignment — always apply ───────────────────────────────────
+  depthShift   = typeof obj.depthShift   === 'number' ? obj.depthShift   : 0;
+  depthStretch = typeof obj.depthStretch === 'number' ? obj.depthStretch : 1;
+  sticks       = Array.isArray(obj.sticks)    ? obj.sticks.map(s  => ({...s})) : [];
+  alfShift     = typeof obj.alfShift === 'number'     ? obj.alfShift     : 0;
+  alfSticks    = Array.isArray(obj.alfSticks) ? obj.alfSticks.map(s => ({...s})) : [];
+
+  shiftEl.value   = depthShift.toFixed(2);
+  stretchEl.value = depthStretch.toFixed(4);
+
+  if (!silent){
+    alignHistory = []; alignFuture = [];
+    updateUndoRedoButtons();
+    refreshFnamePreview();
+  }
+  if (_alfCache || _bmCache) renderPlot();
+
+  if (!silent){
+    log(`Project loaded: well="${obj.well||''}"  depth shift=${depthShift.toFixed(2)}s  stretch=${depthStretch.toFixed(4)}  sticks=${sticks.length}`, 'ok');
+    if (alfShift !== 0 || alfSticks.length)
+      log(`  ALF: shift=${alfShift.toFixed(2)}s  sticks=${alfSticks.length}`, 'ok');
+    const need = [];
+    if (obj.bmFileName    && !bmFile)    need.push('BM: '    + obj.bmFileName);
+    if (obj.alfFileName   && !alfFile)   need.push('ALF: '   + obj.alfFileName);
+    if (obj.depthFileName && !depthFile) need.push('Depth: ' + obj.depthFileName);
+    if (need.length) log('Still need: ' + need.join(' | '), 'warn');
+  } else {
+    const alfOk = !!(obj.alfStartUTC && alfBuf);
+    log(`Project re-applied: depth shift=${depthShift.toFixed(2)}s  stretch=${depthStretch.toFixed(4)}  sticks=${sticks.length}  | alf shift=${alfShift.toFixed(2)}s  sticks=${alfSticks.length}  | alfStartUTC=${alfOk ? 'applied' : 'pending (no ALF file yet)'}`, 'ok');
+  }
+  return true;
+}
+
+// Save
+document.getElementById('btn-save-project').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const obj  = buildProjectJson();
+  const json = JSON.stringify(obj, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const well = (obj.well||'project').replace(/[^\w.\-]+/g,'_') || 'project';
+  const fname = `${well}_alignment.json`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fname;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  log(`Saved → ${fname}  (${fmtBytes(blob.size)})`, 'ok');
+});
+
+// Load — stopPropagation prevents click bubbling to any parent dropzone handlers
+document.getElementById('btn-load-project').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  e.preventDefault();
+  document.getElementById('file-project').click();
+});
+
+document.getElementById('file-project').addEventListener('change', async e=>{
+  e.stopPropagation();
+  const f = e.target.files[0];
+  if (!f){ e.target.value = ''; return; }
+  try {
+    const txt = await f.text();
+    applyProjectJson(JSON.parse(txt));
+  } catch(err){
+    log('Load project error: ' + err.message, 'err');
+  }
+  e.target.value = '';
+});
+
+log('ready. drop .dmp + depth file, set Well Name, then RUN.', 'info');
+// Initial empty plot render
+setTimeout(renderPlot, 30);
+</script>
+</body>
+</html>
