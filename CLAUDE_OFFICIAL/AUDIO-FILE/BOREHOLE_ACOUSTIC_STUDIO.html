@@ -14,32 +14,32 @@ html, body { height: 100%; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #080a0d; }
 
 .studio-header {
-  height: 40px; background: #06080b;
-  border-bottom: 1px solid #1a2030;
+  height: 40px; background: #1a0808;
+  border-bottom: 1px solid #3d1515;
   display: flex; align-items: center; gap: 0;
   flex-shrink: 0; position: relative; z-index: 100;
 }
 .studio-logo {
   padding: 0 16px; font-family: 'Barlow Condensed', sans-serif;
   font-size: 13px; font-weight: 800; letter-spacing: 0.1em;
-  color: #00e5b4; white-space: nowrap; border-right: 1px solid #1a2030;
+  color: #f5c0c0; white-space: nowrap; border-right: 1px solid #3d1515;
   display: flex; align-items: center; gap: 8px;
 }
 .studio-logo-badge {
   font-size: 8px; font-weight: 500; letter-spacing: 0.12em;
-  color: #4a5a6e; border: 1px solid #1a2030; padding: 1px 5px;
+  color: #7a3a3a; border: 1px solid #3d1515; padding: 1px 5px;
   border-radius: 2px;
 }
 .studio-tabs { display: flex; height: 100%; }
 .studio-tab-btn {
   padding: 0 18px; font-family: 'JetBrains Mono', monospace;
   font-size: 9px; font-weight: 500; letter-spacing: 0.14em;
-  text-transform: uppercase; color: #4a5a6e; cursor: pointer;
+  text-transform: uppercase; color: #7a3a3a; cursor: pointer;
   border: none; background: none; border-bottom: 2px solid transparent;
   transition: all 0.15s; white-space: nowrap; height: 100%;
 }
-.studio-tab-btn:hover { color: #8099b0; }
-.studio-tab-btn.active { color: #dde6f0; border-bottom-color: #00e5b4; }
+.studio-tab-btn:hover { color: #d09090; }
+.studio-tab-btn.active { color: #fce8e8; border-bottom-color: #e03535; }
 
 .studio-pane {
   flex: 1; min-height: 0; display: flex; flex-direction: column;
@@ -523,17 +523,17 @@ input[type=file]{display:none;}
     <span class="studio-logo-badge">v2.0 STUDIO</span>
   </div>
   <div class="studio-tabs">
-    <button class="studio-tab-btn active" onclick="studioTab('ch',this)">CH-DATA-CUT</button>
-    <button class="studio-tab-btn" onclick="studioTab('nf',this)">AUDIO-FILE</button>
+    <button class="studio-tab-btn active" onclick="studioTab('nf',this)">AUDIO-FILE</button>
     <button class="studio-tab-btn" onclick="studioTab('af',this)">NOISE-FILTERS</button>
     <button class="studio-tab-btn" onclick="studioTab('wa',this)">WAVEFORM ANALYSES (BETA)</button>
     <button class="studio-tab-btn" onclick="studioTab('dg',this)">DEPTH GENERATOR</button>
     <button class="studio-tab-btn" onclick="studioTab('d2c',this)">DMP2CSV</button>
+    <button class="studio-tab-btn" onclick="studioTab('dspp',this)">DSPP2CSV</button>
   </div>
 </div>
 
-<!-- CH-DATA-CUT PANE -->
-<div id="pane-ch" class="studio-pane">
+<!-- CH-DATA-CUT PANE (hidden — tab removed) -->
+<div id="pane-ch" class="studio-pane" style="display:none">
 
 <div class="topbar">
   <div>
@@ -860,7 +860,7 @@ input[type=file]{display:none;}
 </div>
 
 <!-- NOISE-FILTERS PANE -->
-<div id="pane-nf" class="studio-pane" style="display:none">
+<div id="pane-nf" class="studio-pane">
 <div id="gdo"><div class="gi">📂</div><p>DROP CSV FILE</p></div>
 <div class="nf-root" style="display:flex;flex-direction:column;height:100%">
 <header>
@@ -1279,6 +1279,11 @@ input[type=file]{display:none;}
 
 </div>
 
+<!-- DSPP2CSV PANE -->
+<div id="pane-dspp" class="studio-pane" style="display:none;flex-direction:column;overflow:hidden;">
+  <iframe id="dspp-frame" style="flex:1;border:none;width:100%;height:100%;display:block;" allowfullscreen></iframe>
+</div>
+
 <!-- DMP2CSV PANE -->
 <div id="pane-d2c" class="studio-pane" style="display:none;flex-direction:column;overflow:hidden;">
   <iframe id="d2c-frame" style="flex:1;border:none;width:100%;height:100%;display:block;" allowfullscreen></iframe>
@@ -1293,11 +1298,15 @@ function studioTab(name, el) {
   document.querySelectorAll('.studio-tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('pane-' + name).style.display = 'flex';
   el.classList.add('active');
-  // Lazy-load DMP2CSV iframe on first click
-  if (name === 'd2c') {
-    const fr = document.getElementById('d2c-frame');
-    if (!fr.src || fr.src === 'about:blank' || fr.src === window.location.href) {
-      fr.src = 'DMP2CSV.html';
+  // Lazy-load iframe tabs on first click
+  const lazyFrames = {
+    'd2c':  { id: 'd2c-frame',  src: 'DMP2CSV.html' },
+    'dspp': { id: 'dspp-frame', src: '../DSPP TO EMERAUDE/INTSC & ACX - DSPP TO EMERAUDE v1.2.html' },
+  };
+  if (lazyFrames[name]) {
+    const fr = document.getElementById(lazyFrames[name].id);
+    if (fr && (!fr.src || fr.src === 'about:blank' || fr.src === window.location.href)) {
+      fr.src = lazyFrames[name].src;
     }
   }
 }
@@ -3959,40 +3968,44 @@ function setVS(msg,pct,time){
   const t=document.getElementById('videoTime');if(t&&time)t.textContent=time;
 }
 
-// ── NF Download CSV ───────────────────────────────────────
+// ── NF Download CSV  (Emeraude format: header + units row + data) ──
 function nfDownloadCsv() {
-  if(!NF2.rows || !NF2.rows.length) {
-    alert('No data loaded.'); return;
-  }
-  const rows = NF2.rows;
+  if(!NF2.rows || !NF2.rows.length) { alert('No data loaded.'); return; }
+  const rows  = NF2.rows;
   const nBins = NF2.nBins;
-  const depCol = NF2.depUnit === 'm' ? 'DEPTH_M' : 'DEPTH';
+  const depUnit = NF2.depUnit || 'm';
+  const depCol  = depUnit === 'm' ? 'Depth' : 'Depth';
 
-  // Build header
-  const binHdr = NF2.binNames
-    ? NF2.binNames.join(',')
-    : Array.from({length: nBins}, (_, i) => 'INTSC_LFP' + (i+1)).join(',');
-  let hdr = depCol + ',' + binHdr;
-  if(NF2.hasEnergy)   hdr += ',ENERGY';
-  if(NF2.hasCentroid) hdr += ',CENTROID';
+  // Header row
+  const binNames = NF2.binNames
+    ? NF2.binNames
+    : Array.from({length: nBins}, (_, i) => 'CH' + (i+1));
+  const hdrCols  = [depCol, ...binNames];
+  if (NF2.hasEnergy)   hdrCols.push('ENERGY');
+  if (NF2.hasCentroid) hdrCols.push('CENTROID');
 
-  // Build rows
-  const lines = [hdr];
+  // Units row (Emeraude format — line 2)
+  const unitCols = [depUnit];
+  for (let b = 0; b < nBins; b++) unitCols.push('dB');
+  if (NF2.hasEnergy)   unitCols.push('');
+  if (NF2.hasCentroid) unitCols.push('');
+
+  // Data rows
+  const lines = [hdrCols.join(','), unitCols.join(',')];
   rows.forEach(r => {
-    let line = r.depth.toFixed(3);
-    for(let b = 0; b < nBins; b++) {
-      line += ',' + (r.lfp[b] !== undefined ? r.lfp[b].toFixed(4) : '');
-    }
-    if(NF2.hasEnergy)   line += ',' + (r.energy   !== undefined ? r.energy.toFixed(4)   : '');
-    if(NF2.hasCentroid) line += ',' + (r.centroid  !== undefined ? r.centroid.toFixed(4) : '');
-    lines.push(line);
+    const cols = [r.depth.toFixed(3)];
+    for (let b = 0; b < nBins; b++)
+      cols.push(r.lfp[b] !== undefined ? r.lfp[b].toFixed(4) : '');
+    if (NF2.hasEnergy)   cols.push(r.energy   !== undefined ? r.energy.toFixed(4)   : '');
+    if (NF2.hasCentroid) cols.push(r.centroid  !== undefined ? r.centroid.toFixed(4) : '');
+    lines.push(cols.join(','));
   });
 
   const blob = new Blob([lines.join('\r\n')], {type: 'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
   const base = NF2.filename ? NF2.filename.replace(/\.[^.]+$/, '') : 'spectrogram';
-  a.href = url; a.download = base + '_export.csv';
+  a.href = url; a.download = base + '_emeraude.csv';
   a.click(); URL.revokeObjectURL(url);
 }
 
