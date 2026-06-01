@@ -4138,7 +4138,7 @@ function parseNF2CSV(text, fname) {
 
   const hdr = lines[0].split(',').map(h => h.trim());
 
-  // detect units row: row 1 is units if it has no parseable numbers
+  // detect units row: row 1 is units if every cell is non-numeric
   const row1 = lines[1].split(',');
   const isUnitsRow = row1.every(p => { const v=p.trim(); return isNaN(parseFloat(v)) || v===''; });
   const units = isUnitsRow ? row1.map(p=>p.trim()) : [];
@@ -4148,41 +4148,60 @@ function parseNF2CSV(text, fname) {
   let depIdx = hdr.findIndex(h => /^(depth|md|tvd|dept)$/i.test(h));
   if(depIdx < 0) depIdx = 0;
 
-  // store depth unit
+  // find TIME column — used as Y-axis when depth is null (DLIS -999.25)
+  const timeIdx = hdr.findIndex(h => /^(time|elapsed|elapsedtime|elapsed_time)$/i.test(h));
+
+  // depth unit (or seconds if we fall back to time)
   const du = (units[depIdx]||'ft').toLowerCase();
-  const depUnit = (du==='m'||du==='meter'||du==='meters') ? 'm' : 'ft';
+  let depUnit = (du==='m'||du==='meter'||du==='meters') ? 'm' : 'ft';
 
   // optional overlay columns
   const engIdx = hdr.findIndex(h => /^energy$/i.test(h));
   const cntIdx = hdr.findIndex(h => /^centroid$/i.test(h));
 
-  // spectrum bin columns: everything except depth, energy, centroid
-  const skipSet = new Set([depIdx, engIdx, cntIdx].filter(i=>i>=0));
-  // if units row exists, also skip non-dB columns (Fraction, Hz, etc.)
+  // spectrum bin columns: exclude depth, time, energy, centroid + non-dB columns
+  const skipSet = new Set([depIdx, timeIdx, engIdx, cntIdx].filter(i=>i>=0));
   const binCols = hdr
     .map((_,i) => i)
     .filter(i => {
       if(skipSet.has(i)) return false;
       if(units.length && units[i]) {
         const u = units[i].toLowerCase();
-        if(u && u !== 'db' && u !== 'dB') return false; // skip non-dB units
+        if(u && u !== 'db') return false;  // skip non-dB columns (sec, hz, etc.)
       }
       return true;
     });
 
   if(!binCols.length) {
-    // fallback: take all columns except depIdx
-    hdr.forEach((_,i)=>{ if(i!==depIdx) binCols.push(i); });
+    // fallback: take all columns except depIdx and timeIdx
+    hdr.forEach((_,i)=>{ if(!skipSet.has(i)) binCols.push(i); });
   }
   const nBins = binCols.length;
   if(!nBins) { alert('No data columns found'); return; }
   const binNames = binCols.map(i => hdr[i]);
 
+  // -999.25 is the standard DLIS/LAS null sentinel for missing depth
+  const NULL_DEPTH = -999.25;
+  let usingTimeAxis = false;
+
   const rows = [];
   for(let i = dataStart; i < lines.length; i++) {
     const p = lines[i].split(',');
-    const depth = parseFloat(p[depIdx]);
+    let depth = parseFloat(p[depIdx]);
     if(!isFinite(depth)) continue;
+
+    // null depth → try Time column as axis value
+    if(depth === NULL_DEPTH) {
+      if(timeIdx >= 0) {
+        const t = parseFloat(p[timeIdx]);
+        if(!isFinite(t)) continue;
+        depth = t;
+        usingTimeAxis = true;
+      } else {
+        continue;  // no time column, skip null row
+      }
+    }
+
     const lfp = binCols.map(ci => { const v=parseFloat(p[ci]); return isFinite(v)?v:0; });
     rows.push({
       depth,
@@ -4194,6 +4213,18 @@ function parseNF2CSV(text, fname) {
 
   if(!rows.length) { alert('No numeric rows found in file'); return; }
   rows.sort((a,b) => a.depth - b.depth);
+
+  // if we used time as axis, update unit label
+  if(usingTimeAxis) {
+    const tu = timeIdx>=0 && units[timeIdx] ? units[timeIdx].toLowerCase() : '';
+    depUnit = (tu==='s'||tu==='sec'||tu==='seconds') ? 's' : 's';
+  }
+
+  // guard against zero-range axis (e.g. single depth value)
+  if(rows[0].depth === rows[rows.length-1].depth) {
+    const onlyVal = rows[0].depth;
+    rows.forEach((r, i) => { r.depth = onlyVal + i; });
+  }
 
   NF2.rows        = rows;
   NF2.filename    = fname;
